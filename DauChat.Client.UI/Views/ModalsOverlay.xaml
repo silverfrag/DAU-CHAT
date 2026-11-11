@@ -84,13 +84,36 @@
                     <Grid Margin="0,14,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="12" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition>
+                                <ColumnDefinition.Style>
+                                    <Style TargetType="ColumnDefinition">
+                                        <Setter Property="Width" Value="12" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRoomClassLinkVisible}" Value="False">
+                                                <Setter Property="Width" Value="0" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ColumnDefinition.Style>
+                            </ColumnDefinition>
+                            <ColumnDefinition>
+                                <ColumnDefinition.Style>
+                                    <Style TargetType="ColumnDefinition">
+                                        <Setter Property="Width" Value="*" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRoomClassLinkVisible}" Value="False">
+                                                <Setter Property="Width" Value="0" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ColumnDefinition.Style>
+                            </ColumnDefinition>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="Loại phòng" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6" />
                             <ComboBox ItemsSource="{Binding AvailableRoomTypes}"
                                       SelectedItem="{Binding SelectedRoomType}"
+                                      IsEnabled="{Binding IsRoomTypeEditable}"
                                       Height="42"
                                       Padding="10,8"
                                       FontFamily="{StaticResource PrimaryFont}"
@@ -102,7 +125,7 @@
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
                         </StackPanel>
-                        <StackPanel Grid.Column="2">
+                        <StackPanel Grid.Column="2" Visibility="{Binding IsRoomClassLinkVisible, Converter={StaticResource BoolToVis}}">
                             <TextBlock Text="Gắn lớp học (đồng bộ TV)" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6" />
                             <ComboBox ItemsSource="{Binding RoomClassOptions}"
                                       SelectedItem="{Binding SelectedRoomClassOption}"
@@ -114,6 +137,20 @@
                                       FontSize="12.5" />
                         </StackPanel>
                     </Grid>
+
+                    <Border Background="{StaticResource DauRedSoftBrush}"
+                            BorderBrush="{StaticResource DauRedBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="11,8"
+                            Margin="0,12,0,0"
+                            Visibility="{Binding IsStudentStudyGroupHintVisible, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="Nhóm học tập sẽ tự động cấp mã tham gia RM-XXXX để bạn chia sẻ cho thành viên khác tham gia."
+                                   FontSize="11.5"
+                                   FontWeight="Medium"
+                                   Foreground="{StaticResource DauRedTextBrush}"
+                                   TextWrapping="Wrap" />
+                    </Border>
 
                     <TextBlock Text="Mô tả phòng" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,14,0,6" />
                     <TextBox Style="{StaticResource ModernTextBoxStyle}"
@@ -771,13 +808,13 @@
                         </Button>
                     </Grid>
 
-                    <TextBlock Text="Nhập mã lớp do Giảng viên cung cấp (VD: 23XD1-KC8B). Hệ thống sẽ tự động ghi danh bạn vào lớp và mở phòng chat học phần tương ứng."
+                    <TextBlock Text="Nhập mã lớp học phần (VD: 23XD1-KC8B) hoặc mã nhóm học tập (RM-XXXX). Hệ thống sẽ tự động ghi danh bạn và mở phòng chat tương ứng."
                                FontSize="12"
                                Foreground="{StaticResource TextMutedBrush}"
                                TextWrapping="Wrap"
                                Margin="0,12,0,14" />
 
-                    <TextBlock Text="Mã tham gia lớp học" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6" />
+                    <TextBlock Text="Mã tham gia lớp học / nhóm" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6" />
                     <TextBox Style="{StaticResource ModernTextBoxStyle}"
                              FontFamily="{StaticResource MonoFont}"
                              FontSize="16"
@@ -844,6 +881,191 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
                         <Button Style="{StaticResource SecondaryButtonStyle}" Content="Hủy" Command="{Binding CloseModalsCommand}" Margin="0,0,10,0" />
                         <Button Style="{StaticResource PrimaryButtonStyle}" Content="Ghim thông báo" Command="{Binding SubmitPinNoticeCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 10. Modal Admin Cấp tài khoản hàng loạt (.CSV / .TXT) -->
+        <Grid Background="{StaticResource ModalBackdropBrush}"
+              Visibility="{Binding IsBatchAccountModalOpen, Converter={StaticResource BoolToVis}}">
+            <Border MaxWidth="640"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{StaticResource SurfaceWhiteBrush}"
+                    CornerRadius="22"
+                    Padding="28">
+                <StackPanel MinWidth="560">
+                    <Grid>
+                        <StackPanel Margin="0,0,36,0">
+                            <TextBlock Text="QUẢN TRỊ TÀI KHOẢN • NHẬP HÀNG LOẠT" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" />
+                            <TextBlock Text="Cấp tài khoản hàng loạt (.csv / .txt)" FontSize="19" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,3,0,0" />
+                        </StackPanel>
+                        <Button HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Command="{Binding CloseModalsCommand}">
+                            <Path Data="{StaticResource IconClose}" Stroke="{StaticResource TextMutedBrush}" StrokeThickness="2" Width="16" Height="16" Stretch="Uniform" />
+                        </Button>
+                    </Grid>
+
+                    <TextBlock Text="Mỗi dòng theo định dạng: Username, Họ tên, Email (tùy chọn), Vai trò (SV / GV / Admin), Mã lớp (tùy chọn)."
+                               FontSize="12"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,10,0,0" />
+
+                    <Grid Margin="0,10,0,8">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    MinHeight="32"
+                                    Padding="12,5"
+                                    Margin="0,0,8,0"
+                                    Command="{Binding ImportBatchAccountsCsvCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource IconUpload}" Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.9" Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
+                                    <TextBlock Text="Nhập file .csv / .txt" Margin="6,0,0,0" FontSize="11.5" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    MinHeight="32"
+                                    Padding="12,5"
+                                    Content="Điền dữ liệu mẫu"
+                                    Command="{Binding FillSampleBatchAccountsCommand}" />
+                        </StackPanel>
+
+                        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="MK mặc định:" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBox Width="92"
+                                     MinHeight="32"
+                                     Padding="8,4"
+                                     FontFamily="{StaticResource MonoFont}"
+                                     FontSize="12"
+                                     Style="{StaticResource ModernTextBoxStyle}"
+                                     Text="{Binding BatchDefaultPassword, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                             FontFamily="{StaticResource MonoFont}"
+                             FontSize="12"
+                             Height="104"
+                             AcceptsReturn="True"
+                             TextWrapping="NoWrap"
+                             HorizontalScrollBarVisibility="Auto"
+                             VerticalContentAlignment="Top"
+                             VerticalScrollBarVisibility="Auto"
+                             Text="{Binding BatchAccountsCsvText, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <Grid Margin="0,12,0,6">
+                        <TextBlock Text="XEM TRƯỚC PHÂN TÍCH DỮ LIỆU"
+                                   FontSize="10.5"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource TextFaintBrush}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock HorizontalAlignment="Right"
+                                   Text="{Binding BatchPreviewSummaryText}"
+                                   FontSize="11.5"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource DauRedTextBrush}"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Border BorderBrush="{StaticResource BorderSubtleBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Background="{StaticResource SurfaceSubtleBrush}">
+                        <ScrollViewer Height="148" VerticalScrollBarVisibility="Auto" Padding="8">
+                            <StackPanel>
+                                <ItemsControl ItemsSource="{Binding BatchAccountPreviewItems}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="White"
+                                                    BorderBrush="{StaticResource BorderLightBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="9"
+                                                    Padding="10,7"
+                                                    Margin="0,0,0,5">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="32" />
+                                                        <ColumnDefinition Width="105" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <TextBlock Grid.Column="0"
+                                                               Text="{Binding LineNumber, StringFormat='#{0}'}"
+                                                               FontFamily="{StaticResource MonoFont}"
+                                                               FontSize="10.5"
+                                                               Foreground="{StaticResource TextFaintBrush}"
+                                                               VerticalAlignment="Center" />
+
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{Binding Username}"
+                                                               FontFamily="{StaticResource MonoFont}"
+                                                               FontSize="11.5"
+                                                               FontWeight="Bold"
+                                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               VerticalAlignment="Center"
+                                                               Margin="0,0,6,0" />
+
+                                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                        <TextBlock Text="{Binding FullName}"
+                                                                   FontSize="12"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding Email}"
+                                                                   FontSize="10.5"
+                                                                   Foreground="{StaticResource TextMutedBrush}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+
+                                                    <Border Grid.Column="3"
+                                                            VerticalAlignment="Center"
+                                                            Margin="0,0,6,0"
+                                                            Background="{StaticResource SurfaceInputBrush}"
+                                                            CornerRadius="6"
+                                                            Padding="7,3">
+                                                        <TextBlock Text="{Binding Role, Converter={StaticResource RoleDisplay}}"
+                                                                   FontSize="10"
+                                                                   FontWeight="Bold"
+                                                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                                                    </Border>
+
+                                                    <Border Grid.Column="4"
+                                                            VerticalAlignment="Center"
+                                                            Background="{Binding StatusBgHex, Converter={StaticResource HexToBrush}}"
+                                                            CornerRadius="6"
+                                                            Padding="8,3"
+                                                            MaxWidth="165">
+                                                        <TextBlock Text="{Binding StatusNote}"
+                                                                   FontSize="10"
+                                                                   FontWeight="Bold"
+                                                                   Foreground="{Binding StatusFgHex, Converter={StaticResource HexToBrush}}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <TextBlock Text="Chưa có dữ liệu. Nhập danh sách hoặc bấm 'Điền dữ liệu mẫu' để xem trước."
+                                           Margin="16,42"
+                                           HorizontalAlignment="Center"
+                                           FontSize="12"
+                                           Foreground="{StaticResource TextFaintBrush}"
+                                           Visibility="{Binding BatchAccountPreviewItems.Count, Converter={StaticResource ZeroToVis}}" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="Đóng" Command="{Binding CloseModalsCommand}" Margin="0,0,10,0" />
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Command="{Binding SubmitBatchCreateAccountsCommand}">
+                            <TextBlock Text="{Binding ValidBatchAccountsCount, StringFormat='Tạo {0} tài khoản hợp lệ'}" FontWeight="SemiBold" />
+                        </Button>
                     </StackPanel>
                 </StackPanel>
             </Border>

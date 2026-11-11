@@ -27,6 +27,7 @@
             <conv:EnumEqualsConverter x:Key="EnumEquals" />
             <conv:EnumEqualsToVisibilityConverter x:Key="EnumEqualsToVis" />
             <conv:PercentWidthConverter x:Key="PercentWidth" />
+            <conv:PathToThumbnailConverter x:Key="PathToThumbnail" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -101,7 +101,7 @@ internal sealed class DemoMessagingService : IMessagingService
             var key = DemoDataStore.GetDirectConversationKey(currentUserId, partnerId);
             _store.MessagesByConversation.TryGetValue(key, out var list);
             var cutoff = _store.GetClearedCutoffUtc(currentUserId, key);
-            var last = list?.LastOrDefault(m => m.ServerTimestampUtc > cutoff);
+            var last = list?.LastOrDefault(m => m.ServerTimestampUtc > cutoff && !_store.IsMessageHiddenForUser(currentUserId, m.MessageId));
 
             var summary = new ConversationSummaryDto
             {
@@ -109,7 +109,9 @@ internal sealed class DemoMessagingService : IMessagingService
                 PartnerName = partner.FullName,
                 PartnerAvatarPath = partner.AvatarPath,
                 PartnerPresence = partner.Presence,
-                LastMessagePreview = last?.Content ?? "Bắt đầu cuộc trò chuyện nội bộ",
+                LastMessagePreview = last is null
+                    ? "Bắt đầu cuộc trò chuyện nội bộ"
+                    : MessageQuoteCodec.FormatSidebarPreview(last.Content),
                 LastMessageAtUtc = last?.ServerTimestampUtc ?? DateTime.UtcNow,
                 UnreadCount = _store.UnreadByConversation.GetValueOrDefault(partnerId, 0)
             };
@@ -132,7 +134,7 @@ internal sealed class DemoMessagingService : IMessagingService
                     var key = DemoDataStore.GetDirectConversationKey(currentUserId, a.User.UserId);
                     _store.MessagesByConversation.TryGetValue(key, out var msgs);
                     var cutoff = _store.GetClearedCutoffUtc(currentUserId, key);
-                    var last = msgs?.LastOrDefault(m => m.ServerTimestampUtc > cutoff);
+                    var last = msgs?.LastOrDefault(m => m.ServerTimestampUtc > cutoff && !_store.IsMessageHiddenForUser(currentUserId, m.MessageId));
                     return new ConversationSummaryDto
                     {
                         PartnerId = a.User.UserId,
@@ -141,7 +143,7 @@ internal sealed class DemoMessagingService : IMessagingService
                         PartnerPresence = a.User.Presence,
                         LastMessagePreview = last is null
                             ? $"{a.User.Username} • Sẵn sàng nhắn tin"
-                            : (last.Type == MessageType.FileAttachment ? $"[Tệp] {last.AttachmentFileName}" : last.Content),
+                            : (last.Type == MessageType.FileAttachment ? $"[Tệp] {last.AttachmentFileName}" : MessageQuoteCodec.FormatSidebarPreview(last.Content)),
                         LastMessageAtUtc = last?.ServerTimestampUtc ?? a.User.LastSeenAtUtc,
                         UnreadCount = _store.UnreadByConversation.GetValueOrDefault(a.User.UserId, 0)
                     };
@@ -223,7 +225,7 @@ internal sealed class DemoMessagingService : IMessagingService
             }
 
             var cutoff = _store.GetClearedCutoffUtc(currentUserId, key);
-            var filtered = list.Where(m => m.ServerTimestampUtc > cutoff).ToList();
+            var filtered = list.Where(m => m.ServerTimestampUtc > cutoff && !_store.IsMessageHiddenForUser(currentUserId, m.MessageId)).ToList();
             var paged = filtered
                 .Skip(Math.Max(0, filtered.Count - (pageIndex + 1) * pageSize))
                 .Take(pageSize)
@@ -284,7 +286,7 @@ internal sealed class DemoMessagingService : IMessagingService
             _store.MessagesByConversation.TryGetValue(roomId, out var list);
             var cutoff = _store.GetClearedCutoffUtc(currentUserId, roomId);
             IReadOnlyList<MessageDto> recent = list?
-                .Where(m => m.ServerTimestampUtc > cutoff)
+                .Where(m => m.ServerTimestampUtc > cutoff && !_store.IsMessageHiddenForUser(currentUserId, m.MessageId))
                 .TakeLast(initialPageSize)
                 .ToList() ?? new List<MessageDto>();
             return Task.FromResult(OperationResult<(RoomDto, IReadOnlyList<MessageDto>, PinnedNoticeDto?)>.Ok((room, recent, room.PinnedNotice)));
@@ -393,7 +395,7 @@ internal sealed class DemoMessagingService : IMessagingService
             }
 
             var cutoff = _store.GetClearedCutoffUtc(currentUserId, roomId);
-            var filtered = list.Where(m => m.ServerTimestampUtc > cutoff).ToList();
+            var filtered = list.Where(m => m.ServerTimestampUtc > cutoff && !_store.IsMessageHiddenForUser(currentUserId, m.MessageId)).ToList();
             var paged = filtered
                 .Skip(Math.Max(0, filtered.Count - (pageIndex + 1) * pageSize))
                 .Take(pageSize)
@@ -417,6 +419,92 @@ internal sealed class DemoMessagingService : IMessagingService
         return Task.FromResult(OperationResult.Ok("Đã xóa file lịch sử .jsonl trên thiết bị."));
     }
 
+    public Task<OperationResult<(bool PinnedNoticeCleared, bool AttachmentRemoved)>> RecallMessageAsync(
+        string senderId,
+        string targetRoomOrPartnerId,
+        bool isRoom,
+        string messageId,
+        CancellationToken cancellationToken = default)
+    {
+        var convKey = isRoom
+            ? targetRoomOrPartnerId
+            : DemoDataStore.GetDirectConversationKey(senderId, targetRoomOrPartnerId);
+
+        var outcome = _store.MutateAndSave(() =>
+        {
+            if (!_store.MessagesByConversation.TryGetValue(convKey, out var list))
+            {
+                return (Success: false, Error: "Không tìm thấy hội thoại chứa tin nhắn.", PinCleared: false, AttachmentRemoved: false);
+            }
+
+            var target = list.FirstOrDefault(m => m.MessageId == messageId);
+            if (target is null)
+            {
+                return (Success: false, Error: "Không tìm thấy tin nhắn cần thu hồi.", PinCleared: false, AttachmentRemoved: false);
+            }
+
+            if (target.Type == MessageType.SystemNotice)
+            {
+                return (Success: false, Error: "Không thể thu hồi thông báo hệ thống.", PinCleared: false, AttachmentRemoved: false);
+            }
+
+            if (!string.Equals(target.SenderId, senderId, StringComparison.OrdinalIgnoreCase))
+            {
+                return (Success: false, Error: "Bạn chỉ có thể thu hồi tin nhắn do chính mình gửi.", PinCleared: false, AttachmentRemoved: false);
+            }
+
+            if (_store.RecalledMessageIds.Contains(target.MessageId) || MessageQuoteCodec.IsRecalledRaw(target.Content))
+            {
+                return (Success: false, Error: "Tin nhắn này đã được thu hồi trước đó.", PinCleared: false, AttachmentRemoved: false);
+            }
+
+            _store.RecalledMessageIds.Add(target.MessageId);
+            var oldFileId = target.AttachmentFileId;
+
+            target.Content = MessageQuoteCodec.RecalledMarker;
+            target.Type = MessageType.Text;
+            target.AttachmentFileId = null;
+            target.AttachmentFileName = null;
+            target.AttachmentFileSize = null;
+            target.LocalFilePath = null;
+            target.IsPinned = false;
+
+            var attachmentRemoved = false;
+            if (!string.IsNullOrEmpty(oldFileId))
+            {
+                attachmentRemoved = _store.LocalFiles.RemoveAll(f => f.FileId == oldFileId) > 0;
+            }
+
+            var pinCleared = false;
+            if (isRoom)
+            {
+                var room = _store.Rooms.FirstOrDefault(r => r.RoomId == targetRoomOrPartnerId);
+                if (room?.PinnedNotice?.MessageId == target.MessageId)
+                {
+                    room.PinnedNotice = null;
+                    pinCleared = true;
+                }
+            }
+
+            _store.TotalPacketsSent++;
+            return (Success: true, Error: string.Empty, PinCleared: pinCleared, AttachmentRemoved: attachmentRemoved);
+        });
+
+        if (!outcome.Success)
+        {
+            return Task.FromResult(OperationResult<(bool PinnedNoticeCleared, bool AttachmentRemoved)>.Fail(outcome.Error));
+        }
+
+        if (outcome.PinCleared)
+        {
+            PinnedAnnouncementChanged?.Invoke(this, (targetRoomOrPartnerId, null));
+        }
+
+        return Task.FromResult(OperationResult<(bool PinnedNoticeCleared, bool AttachmentRemoved)>.Ok(
+            (outcome.PinCleared, outcome.AttachmentRemoved),
+            "Đã thu hồi tin nhắn với mọi người."));
+    }
+
     public Task<OperationResult<PinnedNoticeDto>> PinRoomAnnouncementAsync(
         string roomId,
         string lecturerId,
@@ -424,6 +512,7 @@ internal sealed class DemoMessagingService : IMessagingService
         bool isMessageId = false,
         CancellationToken cancellationToken = default)
     {
+        var blockedByRecall = false;
         var notice = _store.MutateAndSave(() =>
         {
             var room = _store.Rooms.FirstOrDefault(r => r.RoomId == roomId);
@@ -436,7 +525,17 @@ internal sealed class DemoMessagingService : IMessagingService
                 var found = list.FirstOrDefault(m => m.MessageId == contentOrMessageId);
                 if (found is not null)
                 {
-                    content = found.Content;
+                    if (_store.RecalledMessageIds.Contains(found.MessageId) || MessageQuoteCodec.IsRecalledRaw(found.Content))
+                    {
+                        blockedByRecall = true;
+                        return null;
+                    }
+
+                    content = MessageQuoteCodec.ExtractPlainBody(found.Content);
+                    if (found.Type == MessageType.FileAttachment && !string.IsNullOrEmpty(found.AttachmentFileName))
+                    {
+                        content = $"[Tài liệu] {found.AttachmentFileName}";
+                    }
                     found.IsPinned = true;
                 }
             }
@@ -453,6 +552,11 @@ internal sealed class DemoMessagingService : IMessagingService
             room.PinnedNotice = n;
             return n;
         });
+
+        if (blockedByRecall)
+        {
+            return Task.FromResult(OperationResult<PinnedNoticeDto>.Fail("Không thể ghim tin nhắn đã được thu hồi."));
+        }
 
         if (notice is null)
         {

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 using DauChat.Client.UI.Infrastructure;
 using DauChat.Client.UI.Models;
 using DauChat.Client.UI.Services;
@@ -32,6 +33,8 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
     private string? _pinnedNoticeAuthor;
     private bool _hasPinnedNotice;
     private bool _isRefreshingSync;
+    private MessageItemModel? _replyingToMessage;
+    private int _unseenScrollCount;
 
     public ChatWorkspaceViewModel(
         Action<string> notify,
@@ -68,7 +71,7 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
                 await SelectConversationAsync(item);
             }
         });
-        OpenCreateRoomCommand = new RelayCommand(() => _onOpenCreateRoom(), () => CanManageRooms);
+        OpenCreateRoomCommand = new RelayCommand(() => _onOpenCreateRoom(), () => CanCreateRoom);
         OpenEditRoomCommand = new RelayCommand(() =>
         {
             if (SelectedConversation?.RoomData is { } room)
@@ -86,7 +89,7 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
             {
                 _onOpenAddMember(SelectedConversation.Id);
             }
-        }, () => CanManageRooms && SelectedConversation is { IsRoom: true });
+        }, () => CanManageSelectedRoomMembers);
 
         RemoveMemberCommand = new AsyncRelayCommand(RemoveMemberFromRoomAsync);
 
@@ -101,25 +104,66 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
         UnpinNoticeCommand = new AsyncRelayCommand(UnpinNoticeAsync, () => CanPinThisRoom && HasPinnedNotice);
         OpenFileCommand = new AsyncRelayCommand(async param =>
         {
-            var path = param switch
+            var path = string.Empty;
+            if (param is MessageItemModel msg)
             {
-                MessageItemModel msg => msg.LocalFilePath ?? string.Empty,
-                FileItemModel f => f.LocalFullPath,
-                _ => string.Empty
-            };
+                path = ResolveAttachmentLocalPath(msg.LocalFilePath, msg.AttachmentFileId) ?? string.Empty;
+            }
+            else if (param is FileItemModel f)
+            {
+                path = f.LocalFullPath;
+            }
+
             var res = await ClientServiceHost.Current.FileStorage.OpenLocalFileAsync(path);
             _notify(res.Message);
         });
         ToggleMuteCommand = new RelayCommand(() =>
         {
-            if (SelectedConversation is null) return;
-            SelectedConversation.IsMuted = !SelectedConversation.IsMuted;
-            _notify(SelectedConversation.IsMuted
+            if (SelectedConversation is null || ClientServiceHost.Current.AuthRoom.CurrentUser is not { } cu) return;
+            var nextMuted = !SelectedConversation.IsMuted;
+            SelectedConversation.IsMuted = nextMuted;
+            ClientServiceHost.Current.DemoStore.SetConversationMuted(cu.UserId, SelectedConversation.Id, nextMuted);
+            OnPropertyChanged(nameof(IsSelectedConversationMuted));
+            OnPropertyChanged(nameof(SelectedConversationMuteLabel));
+            _notify(nextMuted
                 ? $"Đã tắt thông báo cho '{SelectedConversation.Title}'."
                 : $"Đã bật lại thông báo cho '{SelectedConversation.Title}'.");
         });
         DeleteLocalHistoryCommand = new AsyncRelayCommand(DeleteLocalHistoryAsync, () => SelectedConversation is not null && CanSendMessages);
         LeaveRoomCommand = new AsyncRelayCommand(LeaveRoomAsync, () => CanLeaveSelectedRoom);
+
+        ReplyToMessageCommand = new RelayCommand(param =>
+        {
+            if (param is MessageItemModel msg && !msg.IsSystemNotice && !msg.IsRecalled && CanSendMessages)
+            {
+                ReplyingToMessage = msg;
+                FocusComposerRequested?.Invoke();
+            }
+        });
+        CancelReplyCommand = new RelayCommand(() => ReplyingToMessage = null);
+        CopyMessageCommand = new RelayCommand(param =>
+        {
+            if (param is not MessageItemModel msg || msg.IsRecalled || msg.IsSystemNotice) return;
+            var copyText = msg.IsAttachment ? (msg.AttachmentFileName ?? msg.BodyContent) : msg.BodyContent;
+            if (string.IsNullOrWhiteSpace(copyText)) return;
+            try
+            {
+                Clipboard.SetText(copyText);
+                _notify("Đã sao chép nội dung tin nhắn.");
+            }
+            catch
+            {
+                _notify("Không thể truy cập Clipboard của hệ thống.");
+            }
+        });
+        PinMessageCommand = new AsyncRelayCommand(PinSingleMessageAsync);
+        RecallMessageCommand = new AsyncRelayCommand(RecallMessageAsync);
+        DeleteSingleMessageLocalCommand = new RelayCommand(DeleteSingleMessageLocal);
+        JumpToLatestCommand = new RelayCommand(() =>
+        {
+            ClearUnseenScrollIndicator();
+            ScrollToEndRequested?.Invoke();
+        });
 
         var host = ClientServiceHost.Current;
         host.FileStorage.TransferProgressChanged += OnTransferProgressChanged;
@@ -159,14 +203,31 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
     public ICommand ToggleMuteCommand { get; }
     public ICommand DeleteLocalHistoryCommand { get; }
     public ICommand LeaveRoomCommand { get; }
+    public ICommand ReplyToMessageCommand { get; }
+    public ICommand CancelReplyCommand { get; }
+    public ICommand CopyMessageCommand { get; }
+    public ICommand PinMessageCommand { get; }
+    public ICommand RecallMessageCommand { get; }
+    public ICommand DeleteSingleMessageLocalCommand { get; }
+    public ICommand JumpToLatestCommand { get; }
+
+    public event Action? ScrollToEndRequested;
+    public event Action<bool>? ThreadMessageAppended;
+    public event Action? FocusComposerRequested;
 
     public bool IsAdminMode => ClientServiceHost.Current.AuthRoom.CurrentUser?.Role == UserRole.Admin;
     public bool CanSendMessages => !IsAdminMode;
     public bool CanManageRooms => ClientServiceHost.Current.AuthRoom.CurrentUser?.Role is UserRole.Admin or UserRole.GiangVien;
+    public bool CanCreateRoom => ClientServiceHost.Current.AuthRoom.CurrentUser is not null;
     public bool CanJoinByCode => ClientServiceHost.Current.AuthRoom.CurrentUser?.Role == UserRole.SinhVien;
+    public string CreateRoomTooltip => IsAdminMode || CanManageRooms ? "Tạo phòng học mới" : "Tạo nhóm học tập mới";
     public bool CanPinThisRoom => ClientServiceHost.Current.AuthRoom.CurrentUser?.Role == UserRole.GiangVien
                                   && SelectedConversation?.IsRoom == true;
-    public bool CanEditOrDeleteSelectedRoom => CanManageRooms && SelectedConversation?.IsRoom == true;
+    public bool CanManageSelectedRoomMembers => SelectedConversation is { IsRoom: true }
+                                                && (CanManageRooms
+                                                    || (SelectedConversation.RoomData?.RoomType == RoomType.StudyGroup
+                                                        && SelectedConversation.RoomData?.OwnerId == ClientServiceHost.Current.AuthRoom.CurrentUser?.UserId));
+    public bool CanEditOrDeleteSelectedRoom => CanManageSelectedRoomMembers;
     public bool CanLeaveSelectedRoom => CanSendMessages
                                         && SelectedConversation is { IsRoom: true }
                                         && SelectedConversation.RoomData?.OwnerId != ClientServiceHost.Current.AuthRoom.CurrentUser?.UserId;
@@ -244,10 +305,62 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
                 OnPropertyChanged(nameof(ComposerPlaceholder));
                 OnPropertyChanged(nameof(InfoHeaderTitle));
                 OnPropertyChanged(nameof(CanPinThisRoom));
+                OnPropertyChanged(nameof(CanManageSelectedRoomMembers));
                 OnPropertyChanged(nameof(CanEditOrDeleteSelectedRoom));
                 OnPropertyChanged(nameof(CanLeaveSelectedRoom));
+                OnPropertyChanged(nameof(IsSelectedConversationMuted));
+                OnPropertyChanged(nameof(SelectedConversationMuteLabel));
             }
         }
+    }
+
+    public bool IsSelectedConversationMuted => SelectedConversation?.IsMuted == true;
+    public string SelectedConversationMuteLabel => SelectedConversation?.IsMuted == true ? "Đã tắt tiếng" : "Thông báo";
+
+    public MessageItemModel? ReplyingToMessage
+    {
+        get => _replyingToMessage;
+        set
+        {
+            if (SetProperty(ref _replyingToMessage, value))
+            {
+                OnPropertyChanged(nameof(HasReplyingTo));
+                OnPropertyChanged(nameof(ReplyingToAuthor));
+                OnPropertyChanged(nameof(ReplyingToSnippet));
+            }
+        }
+    }
+
+    public bool HasReplyingTo => ReplyingToMessage is not null;
+    public string ReplyingToAuthor => ReplyingToMessage?.SenderName ?? string.Empty;
+    public string ReplyingToSnippet
+    {
+        get
+        {
+            if (ReplyingToMessage is null) return string.Empty;
+            var txt = ReplyingToMessage.IsAttachment
+                ? $"[Tệp] {ReplyingToMessage.AttachmentFileName}"
+                : ReplyingToMessage.BodyContent.Replace("\r", " ").Replace("\n", " ").Trim();
+            return txt.Length > 75 ? txt[..75] + "..." : txt;
+        }
+    }
+
+    public bool HasUnseenScrollMessages => _unseenScrollCount > 0;
+    public string UnseenScrollPillText => _unseenScrollCount > 1 ? $"{_unseenScrollCount} tin nhắn mới" : "Tin nhắn mới";
+
+    public void NotifyUnseenScrollMessageArrived()
+    {
+        _unseenScrollCount++;
+        OnPropertyChanged(nameof(HasUnseenScrollMessages));
+        OnPropertyChanged(nameof(UnseenScrollPillText));
+    }
+
+    public void ClearUnseenScrollIndicator()
+    {
+        if (_unseenScrollCount == 0) return;
+        _unseenScrollCount = 0;
+        OnPropertyChanged(nameof(HasUnseenScrollMessages));
+        OnPropertyChanged(nameof(UnseenScrollPillText));
     }
 
     public string ComposerPlaceholder => SelectedConversation is null
@@ -295,8 +408,11 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
         OnPropertyChanged(nameof(IsAdminMode));
         OnPropertyChanged(nameof(CanSendMessages));
         OnPropertyChanged(nameof(CanManageRooms));
+        OnPropertyChanged(nameof(CanCreateRoom));
+        OnPropertyChanged(nameof(CreateRoomTooltip));
         OnPropertyChanged(nameof(CanJoinByCode));
         OnPropertyChanged(nameof(CanPinThisRoom));
+        OnPropertyChanged(nameof(CanManageSelectedRoomMembers));
         OnPropertyChanged(nameof(CanEditOrDeleteSelectedRoom));
         OnPropertyChanged(nameof(CanLeaveSelectedRoom));
         OnPropertyChanged(nameof(SidebarHeading));
@@ -336,9 +452,12 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
                     AvatarFgHex = "#B70C16",
                     Subtitle = last is null
                         ? (room.Description ?? "Phòng học nội bộ DAU")
-                        : (last.Type == MessageType.FileAttachment ? $"[Tệp] {last.AttachmentFileName}" : $"{ShortFirstName(last.SenderName)}: {last.Content}"),
+                        : (last.Type == MessageType.FileAttachment
+                            ? $"[Tệp] {last.AttachmentFileName}"
+                            : $"{(last.SenderId == currentUser.UserId ? "Bạn" : ShortFirstName(last.SenderName))}: {MessageQuoteCodec.FormatSidebarPreview(last.Content)}"),
                     TimeLabel = FormatShortTime(last?.ServerTimestampUtc ?? room.LastActivityAtUtc),
                     UnreadCount = unread,
+                    IsMuted = host.DemoStore.IsConversationMuted(currentUser.UserId, room.RoomId),
                     MetaCaption = $"{room.MemberIds.Count} thành viên • {codeTag}",
                     RoomData = room
                 });
@@ -363,6 +482,7 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
                 Subtitle = dm.LastMessagePreview,
                 TimeLabel = FormatShortTime(dm.LastMessageAtUtc),
                 UnreadCount = dm.UnreadCount,
+                IsMuted = host.DemoStore.IsConversationMuted(currentUser.UserId, dm.PartnerId),
                 IsOnline = dm.PartnerPresence == PresenceStatus.Online,
                 MetaCaption = partner is null
                     ? "Thành viên DAU"
@@ -396,12 +516,19 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
 
     public async Task SelectConversationAsync(ConversationItemModel target)
     {
+        var isSameConv = _selectedConversation?.Id == target.Id;
+
         foreach (var item in _allConversations)
         {
             item.IsSelected = item.Id == target.Id;
         }
 
         SelectedConversation = target;
+        if (!isSameConv)
+        {
+            ReplyingToMessage = null;
+            ClearUnseenScrollIndicator();
+        }
         target.UnreadCount = 0;
         ClientServiceHost.Current.DemoStore.UnreadByConversation[target.Id] = 0;
         OnPropertyChanged(nameof(TotalUnreadCount));
@@ -420,6 +547,7 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
 
             var membersRes = await host.AuthRoom.GetRoomMembersAsync(target.Id);
             var ownerId = target.RoomData?.OwnerId;
+            var canRemoveThisRoomMembers = CanManageSelectedRoomMembers;
             RoomMembers.Clear();
             if (membersRes.Success && membersRes.Data is not null)
             {
@@ -436,7 +564,7 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
                         AvatarFgHex = fg,
                         Role = m.Role,
                         Presence = m.Presence,
-                        CanBeRemoved = CanManageRooms && m.UserId != ownerId
+                        CanBeRemoved = canRemoveThisRoomMembers && m.UserId != ownerId
                     });
                 }
             }
@@ -450,7 +578,19 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
 
         var allUsers = (await host.AuthRoom.GetAllUsersAsync()).Data?.ToDictionary(u => u.UserId, u => u) ?? new();
         _currentThreadMessages = rawMsgs.Select(m => ToMessageItem(m, currentUser.UserId, allUsers)).ToList();
+        if (ReplyingToMessage is not null)
+        {
+            var activeReply = _currentThreadMessages.FirstOrDefault(m => m.MessageId == ReplyingToMessage.MessageId);
+            if (activeReply is null || activeReply.IsRecalled)
+            {
+                ReplyingToMessage = null;
+            }
+        }
         ApplyMessageSearchFilter();
+        if (!isSameConv)
+        {
+            ScrollToEndRequested?.Invoke();
+        }
 
         var shared = await host.FileStorage.GetConversationFilesAsync(currentUser.UserId, target.Id);
         RoomSharedFiles.Clear();
@@ -478,11 +618,12 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
                 return;
             }
 
+            var previewText = MessageQuoteCodec.FormatSidebarPreview(msg.Content);
             conv.Subtitle = msg.Type == MessageType.FileAttachment
                 ? $"[Tệp] {msg.AttachmentFileName}"
                 : (msg.IsRoomMessage
-                    ? (msg.SenderId == currentUser.UserId ? $"Bạn: {msg.Content}" : $"{ShortFirstName(msg.SenderName)}: {msg.Content}")
-                    : msg.Content);
+                    ? (msg.SenderId == currentUser.UserId ? $"Bạn: {previewText}" : $"{ShortFirstName(msg.SenderName)}: {previewText}")
+                    : previewText);
             conv.TimeLabel = FormatShortTime(msg.ServerTimestampUtc);
 
             if (SelectedConversation?.Id == convId)
@@ -490,8 +631,10 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
                 if (_currentThreadMessages.All(m => m.MessageId != msg.MessageId))
                 {
                     var users = (await ClientServiceHost.Current.AuthRoom.GetAllUsersAsync()).Data?.ToDictionary(u => u.UserId, u => u) ?? new();
-                    _currentThreadMessages.Add(ToMessageItem(msg, currentUser.UserId, users));
-                    ApplyMessageSearchFilter();
+                    var item = ToMessageItem(msg, currentUser.UserId, users);
+                    _currentThreadMessages.Add(item);
+                    AppendVisibleMessageIfMatchesFilter(item);
+                    ThreadMessageAppended?.Invoke(msg.SenderId == currentUser.UserId);
                 }
 
                 if (msg.Type == MessageType.FileAttachment)
@@ -504,7 +647,7 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
                     }
                 }
             }
-            else if (msg.SenderId != currentUser.UserId)
+            else if (msg.SenderId != currentUser.UserId && !conv.IsMuted)
             {
                 conv.UnreadCount++;
                 ClientServiceHost.Current.DemoStore.UnreadByConversation[convId] = conv.UnreadCount;
@@ -539,23 +682,35 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
 
         var text = DraftMessage.Trim();
         if (string.IsNullOrEmpty(text)) return;
+
+        var payload = ReplyingToMessage is not null
+            ? MessageQuoteCodec.Encode(
+                ReplyingToMessage.SenderName,
+                ReplyingToMessage.IsAttachment ? $"[Tệp] {ReplyingToMessage.AttachmentFileName}" : ReplyingToMessage.BodyContent,
+                text)
+            : text;
+
         DraftMessage = string.Empty;
+        ReplyingToMessage = null;
 
         var host = ClientServiceHost.Current;
         var res = SelectedConversation.IsRoom
-            ? await host.Messaging.SendRoomMessageAsync(currentUser.UserId, SelectedConversation.Id, text)
-            : await host.Messaging.SendDirectMessageAsync(currentUser.UserId, SelectedConversation.Id, text);
+            ? await host.Messaging.SendRoomMessageAsync(currentUser.UserId, SelectedConversation.Id, payload)
+            : await host.Messaging.SendDirectMessageAsync(currentUser.UserId, SelectedConversation.Id, payload);
 
         if (res.Success && res.Data is not null)
         {
             if (_currentThreadMessages.All(m => m.MessageId != res.Data.MessageId))
             {
                 var users = (await host.AuthRoom.GetAllUsersAsync()).Data?.ToDictionary(u => u.UserId, u => u) ?? new();
-                _currentThreadMessages.Add(ToMessageItem(res.Data, currentUser.UserId, users));
-                ApplyMessageSearchFilter();
+                var item = ToMessageItem(res.Data, currentUser.UserId, users);
+                _currentThreadMessages.Add(item);
+                AppendVisibleMessageIfMatchesFilter(item);
             }
-            SelectedConversation.Subtitle = SelectedConversation.IsRoom ? $"Bạn: {text}" : text;
+            var preview = MessageQuoteCodec.FormatSidebarPreview(payload);
+            SelectedConversation.Subtitle = SelectedConversation.IsRoom ? $"Bạn: {preview}" : preview;
             SelectedConversation.TimeLabel = "Vừa xong";
+            ScrollToEndRequested?.Invoke();
         }
     }
 
@@ -567,59 +722,113 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
         var dlg = new OpenFileDialog
         {
             Title = "Chọn tài liệu hoặc bản vẽ gửi qua DAU Chat (Chunked 64KB + SHA-256)",
-            Filter = "Tất cả tệp (*.*)|*.*|Bản vẽ CAD (*.dwg;*.dxf;*.rvt;*.skp)|*.dwg;*.dxf;*.rvt;*.skp|PDF & Văn phòng (*.pdf;*.docx;*.xlsx)|*.pdf;*.docx;*.xlsx|Tệp nén (*.zip;*.rar)|*.zip;*.rar|Hình ảnh (*.png;*.jpg)|*.png;*.jpg"
+            Multiselect = true,
+            Filter = "Tất cả tệp (*.*)|*.*|Hình ảnh (*.png;*.jpg;*.jpeg;*.bmp;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.webp|Bản vẽ CAD (*.dwg;*.dxf;*.rvt;*.skp)|*.dwg;*.dxf;*.rvt;*.skp|PDF & Văn phòng (*.pdf;*.docx;*.xlsx)|*.pdf;*.docx;*.xlsx|Tệp nén (*.zip;*.rar)|*.zip;*.rar"
         };
 
         if (dlg.ShowDialog() != true) return;
+        await SendFilesFromPathsAsync(dlg.FileNames);
+    }
+
+    public async Task SendClipboardImageAsync(BitmapSource image)
+    {
+        var currentUser = ClientServiceHost.Current.AuthRoom.CurrentUser;
+        if (currentUser is null || SelectedConversation is null || !CanSendMessages) return;
+
+        try
+        {
+            var mediaDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "DauChat",
+                "PastedMedia");
+            Directory.CreateDirectory(mediaDir);
+
+            var pngPath = Path.Combine(
+                mediaDir,
+                $"screenshot_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid().ToString("N")[..4]}.png");
+
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(image));
+            await using (var fs = File.Create(pngPath))
+            {
+                encoder.Save(fs);
+            }
+
+            await SendFilesFromPathsAsync(new[] { pngPath });
+        }
+        catch (Exception ex)
+        {
+            _notify($"Không thể dán ảnh từ Clipboard: {ex.Message}");
+        }
+    }
+
+    public async Task SendFilesFromPathsAsync(IEnumerable<string> filePaths)
+    {
+        var currentUser = ClientServiceHost.Current.AuthRoom.CurrentUser;
+        if (currentUser is null || SelectedConversation is null || !CanSendMessages) return;
 
         var host = ClientServiceHost.Current;
-        var res = await host.FileStorage.SendFileAsync(
-            currentUser.UserId,
-            SelectedConversation.Id,
-            SelectedConversation.IsRoom,
-            dlg.FileName);
+        var sentCount = 0;
 
-        if (!res.Success || res.Data is null)
+        foreach (var filePath in filePaths.Where(p => !string.IsNullOrWhiteSpace(p) && File.Exists(p)))
         {
-            _notify(res.Message);
-            return;
+            var res = await host.FileStorage.SendFileAsync(
+                currentUser.UserId,
+                SelectedConversation.Id,
+                SelectedConversation.IsRoom,
+                filePath);
+
+            if (!res.Success || res.Data is null)
+            {
+                _notify(res.Message);
+                continue;
+            }
+
+            var manifest = res.Data;
+            var msgRes = SelectedConversation.IsRoom
+                ? await host.Messaging.SendRoomMessageAsync(
+                    currentUser.UserId,
+                    SelectedConversation.Id,
+                    manifest.FileName,
+                    MessageType.FileAttachment,
+                    manifest.FileId,
+                    manifest.FileName,
+                    manifest.FileSizeBytes)
+                : await host.Messaging.SendDirectMessageAsync(
+                    currentUser.UserId,
+                    SelectedConversation.Id,
+                    manifest.FileName,
+                    MessageType.FileAttachment,
+                    manifest.FileId,
+                    manifest.FileName,
+                    manifest.FileSizeBytes);
+
+            if (msgRes.Success && msgRes.Data is not null)
+            {
+                msgRes.Data.LocalFilePath = manifest.LocalFullPath;
+                if (_currentThreadMessages.All(m => m.MessageId != msgRes.Data.MessageId))
+                {
+                    var users = (await host.AuthRoom.GetAllUsersAsync()).Data?.ToDictionary(u => u.UserId, u => u) ?? new();
+                    var item = ToMessageItem(msgRes.Data, currentUser.UserId, users);
+                    _currentThreadMessages.Add(item);
+                    AppendVisibleMessageIfMatchesFilter(item);
+                }
+                if (RoomSharedFiles.All(f => f.FileId != manifest.FileId))
+                {
+                    RoomSharedFiles.Insert(0, ToFileItem(manifest, SelectedConversation.Title));
+                }
+                SelectedConversation.Subtitle = $"[Tệp] {manifest.FileName}";
+                SelectedConversation.TimeLabel = "Vừa xong";
+                sentCount++;
+            }
         }
 
-        var manifest = res.Data;
-        var msgRes = SelectedConversation.IsRoom
-            ? await host.Messaging.SendRoomMessageAsync(
-                currentUser.UserId,
-                SelectedConversation.Id,
-                manifest.FileName,
-                MessageType.FileAttachment,
-                manifest.FileId,
-                manifest.FileName,
-                manifest.FileSizeBytes)
-            : await host.Messaging.SendDirectMessageAsync(
-                currentUser.UserId,
-                SelectedConversation.Id,
-                manifest.FileName,
-                MessageType.FileAttachment,
-                manifest.FileId,
-                manifest.FileName,
-                manifest.FileSizeBytes);
-
-        if (msgRes.Success && msgRes.Data is not null)
+        if (sentCount > 0)
         {
-            msgRes.Data.LocalFilePath = manifest.LocalFullPath;
-            if (_currentThreadMessages.All(m => m.MessageId != msgRes.Data.MessageId))
-            {
-                var users = (await host.AuthRoom.GetAllUsersAsync()).Data?.ToDictionary(u => u.UserId, u => u) ?? new();
-                _currentThreadMessages.Add(ToMessageItem(msgRes.Data, currentUser.UserId, users));
-                ApplyMessageSearchFilter();
-            }
-            if (RoomSharedFiles.All(f => f.FileId != manifest.FileId))
-            {
-                RoomSharedFiles.Insert(0, ToFileItem(manifest, SelectedConversation.Title));
-            }
-            SelectedConversation.Subtitle = $"[Tệp] {manifest.FileName}";
-            SelectedConversation.TimeLabel = "Vừa xong";
-            _notify($"Đã gửi tệp '{manifest.FileName}' kèm mã kiểm tra SHA-256.");
+            ScrollToEndRequested?.Invoke();
+            _notify(sentCount == 1
+                ? $"Đã gửi tệp '{SelectedConversation.Subtitle[6..]}' kèm mã kiểm tra SHA-256."
+                : $"Đã gửi thành công {sentCount} tệp kèm xác thực SHA-256.");
         }
     }
 
@@ -637,9 +846,143 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
         }
     }
 
+    private async Task PinSingleMessageAsync(object? param)
+    {
+        var currentUser = ClientServiceHost.Current.AuthRoom.CurrentUser;
+        if (currentUser is null || SelectedConversation is not { IsRoom: true } || !CanPinThisRoom || param is not MessageItemModel msg || msg.IsRecalled || msg.IsSystemNotice)
+        {
+            return;
+        }
+
+        var res = await ClientServiceHost.Current.Messaging.PinRoomAnnouncementAsync(
+            SelectedConversation.Id,
+            currentUser.UserId,
+            msg.MessageId,
+            isMessageId: true);
+        _notify(res.Message);
+    }
+
+    private async Task RecallMessageAsync(object? param)
+    {
+        var currentUser = ClientServiceHost.Current.AuthRoom.CurrentUser;
+        if (currentUser is null || SelectedConversation is null || !CanSendMessages || param is not MessageItemModel msg)
+        {
+            return;
+        }
+
+        if (!msg.IsOwnMessage || msg.IsSystemNotice || msg.IsRecalled)
+        {
+            _notify("Chỉ có thể thu hồi tin nhắn chưa thu hồi do chính bạn gửi.");
+            return;
+        }
+
+        var conv = SelectedConversation;
+        var res = await ClientServiceHost.Current.DemoMessaging.RecallMessageAsync(
+            currentUser.UserId,
+            conv.Id,
+            conv.IsRoom,
+            msg.MessageId);
+
+        if (!res.Success)
+        {
+            _notify(res.Message);
+            return;
+        }
+
+        if (ReplyingToMessage?.MessageId == msg.MessageId)
+        {
+            ReplyingToMessage = null;
+        }
+
+        var utcTs = DateTime.SpecifyKind(msg.LocalTimestamp, DateTimeKind.Local).ToUniversalTime();
+        var recalledDto = new MessageDto
+        {
+            MessageId = msg.MessageId,
+            ConversationId = conv.IsRoom ? conv.Id : DemoDataStore.GetDirectConversationKey(currentUser.UserId, conv.Id),
+            RoomId = conv.IsRoom ? conv.Id : null,
+            ReceiverId = conv.IsRoom ? null : conv.Id,
+            SenderId = msg.SenderId,
+            SenderName = msg.SenderName,
+            Content = MessageQuoteCodec.RecalledMarker,
+            Type = MessageType.Text,
+            IsRoomMessage = conv.IsRoom,
+            IsPinned = false,
+            SentAtClientUtc = utcTs,
+            ServerTimestampUtc = utcTs
+        };
+
+        var users = (await ClientServiceHost.Current.AuthRoom.GetAllUsersAsync()).Data?.ToDictionary(u => u.UserId, u => u) ?? new();
+        var idx = _currentThreadMessages.FindIndex(m => m.MessageId == msg.MessageId);
+        if (idx >= 0)
+        {
+            _currentThreadMessages[idx] = ToMessageItem(recalledDto, currentUser.UserId, users);
+            ApplyMessageSearchFilter();
+        }
+
+        var last = _currentThreadMessages.LastOrDefault();
+        if (last is not null && last.MessageId == msg.MessageId)
+        {
+            conv.Subtitle = conv.IsRoom ? "Bạn: Tin nhắn đã được thu hồi" : "Tin nhắn đã được thu hồi";
+        }
+
+        if (res.Data.PinnedNoticeCleared)
+        {
+            SetPinnedNotice(null);
+        }
+
+        if (res.Data.AttachmentRemoved)
+        {
+            var shared = await ClientServiceHost.Current.FileStorage.GetConversationFilesAsync(currentUser.UserId, conv.Id);
+            RoomSharedFiles.Clear();
+            foreach (var f in shared)
+            {
+                RoomSharedFiles.Add(ToFileItem(f, conv.Title));
+            }
+        }
+
+        _notify("Đã thu hồi tin nhắn với mọi người.");
+    }
+
+    private void DeleteSingleMessageLocal(object? param)
+    {
+        var currentUser = ClientServiceHost.Current.AuthRoom.CurrentUser;
+        if (currentUser is null || SelectedConversation is null || !CanSendMessages || param is not MessageItemModel msg || msg.IsSystemNotice)
+        {
+            return;
+        }
+
+        if (ReplyingToMessage?.MessageId == msg.MessageId)
+        {
+            ReplyingToMessage = null;
+        }
+
+        ClientServiceHost.Current.DemoStore.HideMessageForUser(currentUser.UserId, msg.MessageId);
+        _currentThreadMessages.RemoveAll(m => m.MessageId == msg.MessageId);
+        ApplyMessageSearchFilter();
+
+        var last = _currentThreadMessages.LastOrDefault();
+        if (last is null)
+        {
+            SelectedConversation.Subtitle = "Chưa có tin nhắn hiển thị";
+        }
+        else if (last.IsAttachment)
+        {
+            SelectedConversation.Subtitle = $"[Tệp] {last.AttachmentFileName}";
+        }
+        else
+        {
+            var preview = MessageQuoteCodec.FormatSidebarPreview(last.Content);
+            SelectedConversation.Subtitle = SelectedConversation.IsRoom
+                ? $"{(last.IsOwnMessage ? "Bạn" : ShortFirstName(last.SenderName))}: {preview}"
+                : preview;
+        }
+
+        _notify("Đã xóa tin nhắn ở phía bạn (người khác vẫn nhìn thấy).");
+    }
+
     private async Task RemoveMemberFromRoomAsync(object? param)
     {
-        if (!CanManageRooms || SelectedConversation is not { IsRoom: true } || param is not RoomMemberItemModel member)
+        if (!CanManageSelectedRoomMembers || SelectedConversation is not { IsRoom: true } || param is not RoomMemberItemModel member)
         {
             return;
         }
@@ -809,30 +1152,115 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
     {
         VisibleMessages.Clear();
         var q = MessageSearchQuery.Trim();
+        DateTime? lastDate = null;
         foreach (var msg in _currentThreadMessages)
         {
-            if (!string.IsNullOrEmpty(q) && !msg.Content.Contains(q, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrEmpty(q)
+                && !msg.BodyContent.Contains(q, StringComparison.OrdinalIgnoreCase)
+                && !msg.Content.Contains(q, StringComparison.OrdinalIgnoreCase)
+                && !msg.SenderName.Contains(q, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
+
+            if (lastDate is null || msg.LocalDate != lastDate.Value)
+            {
+                msg.ShowDateDivider = true;
+                msg.DateDividerLabel = FormatDateDivider(msg.LocalDate);
+                lastDate = msg.LocalDate;
+            }
+            else
+            {
+                msg.ShowDateDivider = false;
+                msg.DateDividerLabel = string.Empty;
+            }
+
             VisibleMessages.Add(msg);
         }
+    }
+
+    private void AppendVisibleMessageIfMatchesFilter(MessageItemModel msg)
+    {
+        var q = MessageSearchQuery.Trim();
+        if (!string.IsNullOrEmpty(q)
+            && !msg.BodyContent.Contains(q, StringComparison.OrdinalIgnoreCase)
+            && !msg.Content.Contains(q, StringComparison.OrdinalIgnoreCase)
+            && !msg.SenderName.Contains(q, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var prevDate = VisibleMessages.LastOrDefault()?.LocalDate;
+        if (prevDate is null || msg.LocalDate != prevDate.Value)
+        {
+            msg.ShowDateDivider = true;
+            msg.DateDividerLabel = FormatDateDivider(msg.LocalDate);
+        }
+        else
+        {
+            msg.ShowDateDivider = false;
+            msg.DateDividerLabel = string.Empty;
+        }
+
+        VisibleMessages.Add(msg);
     }
 
     private MessageItemModel ToMessageItem(MessageDto dto, string currentUserId, Dictionary<string, UserDto> users)
     {
         var isOwn = dto.SenderId == currentUserId;
+        var isRecalled = dto.Type != MessageType.SystemNotice
+                         && (ClientServiceHost.Current.DemoStore.IsMessageRecalled(dto.MessageId)
+                             || MessageQuoteCodec.IsRecalledRaw(dto.Content));
+
         users.TryGetValue(dto.SenderId, out var sender);
         var (bg, fg) = ClientServiceHost.Current.DemoStore.GetAvatarTone(dto.SenderId);
+        var localTs = dto.ServerTimestampUtc.ToLocalTime();
+
+        if (isRecalled)
+        {
+            return new MessageItemModel
+            {
+                MessageId = dto.MessageId,
+                SenderId = dto.SenderId,
+                SenderName = dto.SenderName,
+                SenderInitials = DemoDataStore.GetInitials(dto.SenderName),
+                AvatarBgHex = bg,
+                AvatarFgHex = fg,
+                SenderRoleLabel = sender?.Role == UserRole.GiangVien ? "GIẢNG VIÊN"
+                    : (sender?.Role == UserRole.Admin ? "QUẢN TRỊ" : string.Empty),
+                IsOwnMessage = isOwn,
+                CanSendFromClient = CanSendMessages,
+                IsRecalled = true,
+                IsAttachment = false,
+                IsSystemNotice = false,
+                CanPinThisMessage = false,
+                LocalTimestamp = localTs,
+                Content = MessageQuoteCodec.RecalledMarker,
+                BodyContent = isOwn ? "Bạn đã thu hồi tin nhắn" : "Tin nhắn đã được thu hồi",
+                HasReplyQuote = false,
+                TimeText = localTs.ToString("HH:mm"),
+                HasImagePreview = false,
+                IsPinned = false
+            };
+        }
+
         var ext = Path.GetExtension(dto.AttachmentFileName ?? string.Empty).ToLowerInvariant();
         var (badge, bBg, bFg) = ext switch
         {
             ".pdf" => ("PDF", "#FEF2F2", "#DC2626"),
             ".dwg" or ".dxf" or ".rvt" or ".skp" => ("CAD", "#EFF6FF", "#2563EB"),
             ".zip" or ".rar" or ".7z" => ("ZIP", "#FFFBEB", "#D97706"),
-            ".png" or ".jpg" or ".jpeg" => ("ẢNH", "#F5F3FF", "#7C3AED"),
+            ".png" or ".jpg" or ".jpeg" or ".bmp" or ".webp" => ("ẢNH", "#F5F3FF", "#7C3AED"),
             _ => ("TỆP", "#F1F5F9", "#475569")
         };
+
+        var hasQuote = MessageQuoteCodec.TryDecode(dto.Content, out var replyAuthor, out var replySnippet, out var body);
+        var resolvedPath = ResolveAttachmentLocalPath(dto.LocalFilePath, dto.AttachmentFileId);
+        var isImg = ext is ".png" or ".jpg" or ".jpeg" or ".bmp" or ".webp";
+        var hasImgPreview = dto.Type == MessageType.FileAttachment
+                            && isImg
+                            && !string.IsNullOrWhiteSpace(resolvedPath)
+                            && File.Exists(resolvedPath);
 
         return new MessageItemModel
         {
@@ -845,10 +1273,18 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
             SenderRoleLabel = sender?.Role == UserRole.GiangVien ? "GIẢNG VIÊN"
                 : (sender?.Role == UserRole.Admin ? "QUẢN TRỊ" : string.Empty),
             IsOwnMessage = isOwn,
+            CanSendFromClient = CanSendMessages,
+            IsRecalled = false,
             IsAttachment = dto.Type == MessageType.FileAttachment,
             IsSystemNotice = dto.Type == MessageType.SystemNotice,
+            CanPinThisMessage = CanPinThisRoom && dto.Type != MessageType.SystemNotice,
+            LocalTimestamp = localTs,
             Content = dto.Content,
-            TimeText = dto.ServerTimestampUtc.ToLocalTime().ToString("HH:mm"),
+            BodyContent = hasQuote ? body : dto.Content,
+            HasReplyQuote = hasQuote,
+            ReplyAuthor = replyAuthor,
+            ReplySnippet = replySnippet,
+            TimeText = localTs.ToString("HH:mm"),
             AttachmentFileId = dto.AttachmentFileId,
             AttachmentFileName = dto.AttachmentFileName,
             AttachmentSizeText = dto.AttachmentFileSize.HasValue
@@ -857,9 +1293,40 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
             AttachmentBadgeText = badge,
             AttachmentBadgeBgHex = bBg,
             AttachmentBadgeFgHex = bFg,
-            LocalFilePath = dto.LocalFilePath,
+            LocalFilePath = resolvedPath,
+            HasImagePreview = hasImgPreview,
             IsPinned = dto.IsPinned
         };
+    }
+
+    private static string? ResolveAttachmentLocalPath(string? messageLocalPath, string? fileId)
+    {
+        if (!string.IsNullOrWhiteSpace(messageLocalPath) && File.Exists(messageLocalPath))
+        {
+            return messageLocalPath;
+        }
+
+        if (!string.IsNullOrEmpty(fileId))
+        {
+            lock (ClientServiceHost.Current.DemoStore.SyncRoot)
+            {
+                var manifestPath = ClientServiceHost.Current.DemoStore.LocalFiles
+                    .FirstOrDefault(f => f.FileId == fileId)?.LocalFullPath;
+                if (!string.IsNullOrWhiteSpace(manifestPath) && File.Exists(manifestPath))
+                {
+                    return manifestPath;
+                }
+            }
+        }
+
+        return messageLocalPath;
+    }
+
+    private static string FormatDateDivider(DateTime localDate)
+    {
+        if (localDate.Date == DateTime.Today) return "Hôm nay";
+        if (localDate.Date == DateTime.Today.AddDays(-1)) return "Hôm qua";
+        return localDate.ToString("dd/MM/yyyy");
     }
 
     private static FileItemModel ToFileItem(FileManifestDto f, string roomName)

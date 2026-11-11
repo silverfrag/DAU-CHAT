@@ -118,6 +118,13 @@ public sealed class MainShellViewModel : ObservableObject
     private string _pinRoomId = string.Empty;
     private string _pinContentText = string.Empty;
 
+    // 10. Admin Batch Create Accounts from CSV/TXT modal
+    private bool _isBatchAccountModalOpen;
+    private string _batchAccountsCsvText = string.Empty;
+    private string _batchDefaultPassword = "123456";
+    private int _validBatchAccountsCount;
+    private int _invalidBatchAccountsCount;
+
     public MainShellViewModel(Action<string?> onLoggedOut)
     {
         _onLoggedOut = onLoggedOut;
@@ -138,11 +145,12 @@ public sealed class MainShellViewModel : ObservableObject
             OpenRoomInChatAsync);
 
         Files = new FilesLibraryViewModel(ShowToast);
-        Storage = new StorageBackupViewModel(ShowToast);
+        Storage = new StorageBackupViewModel(ShowToast, OnStorageDataChangedAsync);
 
         Admin = new AdminCenterViewModel(
             ShowToast,
             OpenCreateAccountModal,
+            OpenBatchCreateAccountsModal,
             OpenEditAccountModal,
             OpenLockAccountModal,
             OpenCreateClassModal,
@@ -228,6 +236,10 @@ public sealed class MainShellViewModel : ObservableObject
         });
         SubmitJoinByCodeCommand = new AsyncRelayCommand(SubmitJoinByCodeAsync);
         SubmitPinNoticeCommand = new AsyncRelayCommand(SubmitPinNoticeAsync);
+
+        FillSampleBatchAccountsCommand = new RelayCommand(FillSampleBatchAccounts);
+        ImportBatchAccountsCsvCommand = new RelayCommand(ImportBatchAccountsCsv);
+        SubmitBatchCreateAccountsCommand = new AsyncRelayCommand(SubmitBatchCreateAccountsAsync, () => ValidBatchAccountsCount > 0);
     }
 
     public ChatWorkspaceViewModel Chat { get; }
@@ -256,6 +268,7 @@ public sealed class MainShellViewModel : ObservableObject
     public ObservableCollection<SelectableAccountItem> FilteredCandidates { get; } = new();
     public ObservableCollection<RoomMemberItemModel> ManagedMembers { get; } = new();
     public ObservableCollection<ClassItemModel> AvailableJoinCodeHints { get; } = new();
+    public ObservableCollection<BatchAccountPreviewItem> BatchAccountPreviewItems { get; } = new();
 
     public ICommand NavigateCommand { get; }
     public ICommand NavigateHomeCommand { get; }
@@ -281,6 +294,9 @@ public sealed class MainShellViewModel : ObservableObject
     public ICommand PickJoinCodeHintCommand { get; }
     public ICommand SubmitJoinByCodeCommand { get; }
     public ICommand SubmitPinNoticeCommand { get; }
+    public ICommand FillSampleBatchAccountsCommand { get; }
+    public ICommand ImportBatchAccountsCsvCommand { get; }
+    public ICommand SubmitBatchCreateAccountsCommand { get; }
 
     public NavSection ActiveSection
     {
@@ -323,13 +339,18 @@ public sealed class MainShellViewModel : ObservableObject
                 OnPropertyChanged(nameof(RoomModalTitle));
                 OnPropertyChanged(nameof(RoomModalSubmitLabel));
                 OnPropertyChanged(nameof(IsRoomClassPickerEnabled));
+                OnPropertyChanged(nameof(IsStudentStudyGroupHintVisible));
             }
         }
     }
-    public string RoomModalBadge => IsEditRoomMode ? "CẬP NHẬT PHÒNG" : "PHÒNG MỚI";
-    public string RoomModalTitle => IsEditRoomMode ? "Chỉnh sửa phòng trò chuyện" : "Tạo phòng trò chuyện";
-    public string RoomModalSubmitLabel => IsEditRoomMode ? "Lưu thay đổi" : "Tạo phòng";
-    public bool IsRoomClassPickerEnabled => !IsEditRoomMode;
+    public bool IsRoomCreatorLecturerOrAdmin => _currentRole is UserRole.GiangVien or UserRole.Admin;
+    public bool IsRoomTypeEditable => IsRoomCreatorLecturerOrAdmin;
+    public bool IsRoomClassLinkVisible => IsRoomCreatorLecturerOrAdmin;
+    public bool IsStudentStudyGroupHintVisible => IsStudent && !IsEditRoomMode;
+    public string RoomModalBadge => IsEditRoomMode ? "CẬP NHẬT PHÒNG" : (IsStudent ? "NHÓM HỌC TẬP MỚI" : "PHÒNG MỚI");
+    public string RoomModalTitle => IsEditRoomMode ? "Chỉnh sửa phòng trò chuyện" : (IsStudent ? "Tạo nhóm học tập" : "Tạo phòng trò chuyện");
+    public string RoomModalSubmitLabel => IsEditRoomMode ? "Lưu thay đổi" : (IsStudent ? "Tạo nhóm" : "Tạo phòng");
+    public bool IsRoomClassPickerEnabled => !IsEditRoomMode && IsRoomCreatorLecturerOrAdmin;
     public string NewRoomName { get => _newRoomName; set => SetProperty(ref _newRoomName, value); }
     public string NewRoomDescription { get => _newRoomDescription; set => SetProperty(ref _newRoomDescription, value); }
     public RoomType SelectedRoomType { get => _selectedRoomType; set => SetProperty(ref _selectedRoomType, value); }
@@ -465,6 +486,45 @@ public sealed class MainShellViewModel : ObservableObject
     public bool IsPinModalOpen { get => _isPinModalOpen; set => SetProperty(ref _isPinModalOpen, value); }
     public string PinContentText { get => _pinContentText; set => SetProperty(ref _pinContentText, value); }
 
+    // Batch Create Accounts Modal Bindings
+    public bool IsBatchAccountModalOpen { get => _isBatchAccountModalOpen; set => SetProperty(ref _isBatchAccountModalOpen, value); }
+    public string BatchAccountsCsvText
+    {
+        get => _batchAccountsCsvText;
+        set
+        {
+            if (SetProperty(ref _batchAccountsCsvText, value))
+            {
+                ParseBatchAccountsInput();
+            }
+        }
+    }
+    public string BatchDefaultPassword { get => _batchDefaultPassword; set => SetProperty(ref _batchDefaultPassword, value); }
+    public int ValidBatchAccountsCount
+    {
+        get => _validBatchAccountsCount;
+        set
+        {
+            if (SetProperty(ref _validBatchAccountsCount, value))
+            {
+                OnPropertyChanged(nameof(BatchPreviewSummaryText));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+    }
+    public int InvalidBatchAccountsCount
+    {
+        get => _invalidBatchAccountsCount;
+        set
+        {
+            if (SetProperty(ref _invalidBatchAccountsCount, value))
+            {
+                OnPropertyChanged(nameof(BatchPreviewSummaryText));
+            }
+        }
+    }
+    public string BatchPreviewSummaryText => $"{ValidBatchAccountsCount} hợp lệ • {InvalidBatchAccountsCount} lỗi";
+
     public event Action? PasswordFieldsResetRequested;
 
     public async Task InitializeForUserAsync(UserDto user)
@@ -486,9 +546,23 @@ public sealed class MainShellViewModel : ObservableObject
         {
             await Admin.RefreshAsync();
         }
-        else if (user.Role == UserRole.GiangVien)
+        else
         {
-            await Classes.RefreshAsync();
+            if (user.Role == UserRole.GiangVien)
+            {
+                await Classes.RefreshAsync();
+            }
+            await Storage.RunStartupAutoCleanIfEnabledAsync();
+        }
+    }
+
+    private async Task OnStorageDataChangedAsync()
+    {
+        await Chat.LoadAsync(Chat.SelectedConversation?.Id);
+        await Files.RefreshAsync();
+        if (IsLecturer)
+        {
+            await Classes.RefreshAsync(Classes.SelectedClass?.ClassId);
         }
     }
 
@@ -584,6 +658,14 @@ public sealed class MainShellViewModel : ObservableObject
         OnPropertyChanged(nameof(IsNotAdmin));
         OnPropertyChanged(nameof(RoomsNavLabel));
         OnPropertyChanged(nameof(IsLecturerPickerVisible));
+        OnPropertyChanged(nameof(IsRoomCreatorLecturerOrAdmin));
+        OnPropertyChanged(nameof(IsRoomTypeEditable));
+        OnPropertyChanged(nameof(IsRoomClassLinkVisible));
+        OnPropertyChanged(nameof(IsRoomClassPickerEnabled));
+        OnPropertyChanged(nameof(IsStudentStudyGroupHintVisible));
+        OnPropertyChanged(nameof(RoomModalBadge));
+        OnPropertyChanged(nameof(RoomModalTitle));
+        OnPropertyChanged(nameof(RoomModalSubmitLabel));
         Chat.RefreshRoleBindings();
     }
 
@@ -692,6 +774,7 @@ public sealed class MainShellViewModel : ObservableObject
         IsMembersManagerOpen = false;
         IsJoinByCodeOpen = false;
         IsPinModalOpen = false;
+        IsBatchAccountModalOpen = false;
     }
 
     // =====================================================
@@ -705,8 +788,12 @@ public sealed class MainShellViewModel : ObservableObject
         _editingRoom = null;
         NewRoomName = string.Empty;
         NewRoomDescription = string.Empty;
-        SelectedRoomType = RoomType.ClassRoom;
+        SelectedRoomType = IsRoomCreatorLecturerOrAdmin ? RoomType.ClassRoom : RoomType.StudyGroup;
         SelectedRoomClassOption = RoomClassOptions.FirstOrDefault();
+        OnPropertyChanged(nameof(RoomModalBadge));
+        OnPropertyChanged(nameof(RoomModalTitle));
+        OnPropertyChanged(nameof(RoomModalSubmitLabel));
+        OnPropertyChanged(nameof(IsStudentStudyGroupHintVisible));
         IsCreateRoomOpen = true;
     }
 
@@ -720,6 +807,10 @@ public sealed class MainShellViewModel : ObservableObject
         NewRoomDescription = room.Description ?? string.Empty;
         SelectedRoomType = room.RoomType;
         SelectedRoomClassOption = RoomClassOptions.FirstOrDefault(o => o.ClassId == room.ClassId) ?? RoomClassOptions.FirstOrDefault();
+        OnPropertyChanged(nameof(RoomModalBadge));
+        OnPropertyChanged(nameof(RoomModalTitle));
+        OnPropertyChanged(nameof(RoomModalSubmitLabel));
+        OnPropertyChanged(nameof(IsStudentStudyGroupHintVisible));
         IsCreateRoomOpen = true;
     }
 
@@ -729,7 +820,7 @@ public sealed class MainShellViewModel : ObservableObject
         if (user is null) return;
         if (string.IsNullOrWhiteSpace(NewRoomName))
         {
-            ShowToast("Vui lòng nhập tên phòng trò chuyện.");
+            ShowToast(IsRoomCreatorLecturerOrAdmin ? "Vui lòng nhập tên phòng trò chuyện." : "Vui lòng nhập tên nhóm học tập.");
             return;
         }
 
@@ -740,7 +831,7 @@ public sealed class MainShellViewModel : ObservableObject
                 RoomId = _editingRoom.RoomId,
                 RoomName = NewRoomName.Trim(),
                 Description = NewRoomDescription.Trim(),
-                RoomType = SelectedRoomType
+                RoomType = IsRoomCreatorLecturerOrAdmin ? SelectedRoomType : RoomType.StudyGroup
             });
             ShowToast(upd.Message);
             if (upd.Success)
@@ -752,17 +843,40 @@ public sealed class MainShellViewModel : ObservableObject
             return;
         }
 
-        var selectedCls = SelectedRoomClassOption?.RawClass;
-        var res = await ClientServiceHost.Current.AuthRoom.CreateRoomAsync(new RoomDto
+        RoomDto newRoomDto;
+        IReadOnlyList<string>? initialMembers;
+        if (!IsRoomCreatorLecturerOrAdmin)
         {
-            RoomName = NewRoomName.Trim(),
-            Description = NewRoomDescription.Trim(),
-            RoomType = selectedCls is not null ? RoomType.ClassRoom : SelectedRoomType,
-            ClassId = selectedCls?.ClassId,
-            OwnerId = selectedCls?.LecturerId ?? (user.Role == UserRole.GiangVien ? user.UserId : "u_gv_demo01")
-        }, selectedCls?.MemberIds);
+            newRoomDto = new RoomDto
+            {
+                RoomName = NewRoomName.Trim(),
+                Description = NewRoomDescription.Trim(),
+                RoomType = RoomType.StudyGroup,
+                ClassId = null,
+                OwnerId = user.UserId
+            };
+            initialMembers = null;
+        }
+        else
+        {
+            var selectedCls = SelectedRoomClassOption?.RawClass;
+            newRoomDto = new RoomDto
+            {
+                RoomName = NewRoomName.Trim(),
+                Description = NewRoomDescription.Trim(),
+                RoomType = selectedCls is not null ? RoomType.ClassRoom : SelectedRoomType,
+                ClassId = selectedCls?.ClassId,
+                OwnerId = selectedCls?.LecturerId ?? (user.Role == UserRole.GiangVien ? user.UserId : "u_gv_demo01")
+            };
+            initialMembers = selectedCls?.MemberIds;
+        }
 
-        ShowToast(res.Message);
+        var res = await ClientServiceHost.Current.AuthRoom.CreateRoomAsync(newRoomDto, initialMembers);
+
+        ShowToast(!IsRoomCreatorLecturerOrAdmin && res.Success && res.Data is not null
+            ? $"Đã tạo nhóm học tập '{res.Data.RoomName}' (Mã tham gia: {res.Data.JoinCode})."
+            : res.Message);
+
         if (res.Success && res.Data is not null)
         {
             IsCreateRoomOpen = false;
@@ -1418,6 +1532,277 @@ public sealed class MainShellViewModel : ObservableObject
             IsPinModalOpen = false;
             ShowToast(res.Message);
         }
+    }
+
+    // =====================================================
+    // 10. ADMIN BATCH CREATE ACCOUNTS MODAL (.CSV / .TXT)
+    // =====================================================
+    private async void OpenBatchCreateAccountsModal()
+    {
+        CloseAllModals();
+        await RefreshLookupsAsync();
+        BatchDefaultPassword = "123456";
+        _batchAccountsCsvText = string.Empty;
+        OnPropertyChanged(nameof(BatchAccountsCsvText));
+        ParseBatchAccountsInput();
+        IsBatchAccountModalOpen = true;
+    }
+
+    private void FillSampleBatchAccounts()
+    {
+        BatchAccountsCsvText = string.Join(Environment.NewLine,
+            "Username,FullName,Email,Role,ClassCode",
+            "sv230101,Phan Minh Quân,quan.sv@dau.edu.vn,SV,23CT1",
+            "sv230102,Đặng Ngọc Hà,ha.sv@dau.edu.vn,SV,23KT1",
+            "sv230103,Hoàng Gia Bảo,,SV,23XD1",
+            "gv_demo03,TS. Huỳnh Tấn Đạt,dat.gv@dau.edu.vn,GV,");
+    }
+
+    private void ImportBatchAccountsCsv()
+    {
+        var dlg = new OpenFileDialog
+        {
+            Title = "Chọn tệp danh sách tài khoản (.csv hoặc .txt)",
+            Filter = "Danh sách tài khoản (*.csv;*.txt)|*.csv;*.txt|Tất cả tệp (*.*)|*.*"
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        try
+        {
+            BatchAccountsCsvText = File.ReadAllText(dlg.FileName);
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"Không thể đọc tệp CSV: {ex.Message}");
+        }
+    }
+
+    private void ParseBatchAccountsInput()
+    {
+        BatchAccountPreviewItems.Clear();
+        if (string.IsNullOrWhiteSpace(BatchAccountsCsvText))
+        {
+            ValidBatchAccountsCount = 0;
+            InvalidBatchAccountsCount = 0;
+            return;
+        }
+
+        var host = ClientServiceHost.Current;
+        HashSet<string> existingUsernames;
+        Dictionary<string, ClassDto> classByCode;
+        lock (host.DemoStore.SyncRoot)
+        {
+            existingUsernames = host.DemoStore.Accounts
+                .Select(a => a.User.Username)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            classByCode = host.DemoStore.Classes
+                .GroupBy(c => c.ClassCode, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+        }
+
+        var seenInBatch = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var validCount = 0;
+        var invalidCount = 0;
+
+        var lines = BatchAccountsCsvText.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None);
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var rawLine = lines[i].Trim();
+            if (string.IsNullOrEmpty(rawLine) || rawLine.StartsWith('#')) continue;
+
+            var cols = SplitCsvFields(rawLine);
+            if (cols.Count == 0) continue;
+
+            var firstCol = cols[0].Trim();
+            if (firstCol.Equals("username", StringComparison.OrdinalIgnoreCase)
+                || firstCol.Equals("mssv", StringComparison.OrdinalIgnoreCase)
+                || firstCol.Equals("ma_tai_khoan", StringComparison.OrdinalIgnoreCase)
+                || firstCol.Equals("mataikhoan", StringComparison.OrdinalIgnoreCase)
+                || firstCol.Equals("mã tài khoản", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var lineNum = i + 1;
+            var username = firstCol;
+            var fullName = cols.Count > 1 ? cols[1].Trim() : string.Empty;
+            var emailRaw = cols.Count > 2 ? cols[2].Trim() : string.Empty;
+            var roleRaw = cols.Count > 3 ? cols[3].Trim() : string.Empty;
+            var classRaw = cols.Count > 4 ? cols[4].Trim() : string.Empty;
+
+            var parsedRole = UserRole.SinhVien;
+            var roleValid = true;
+            if (!string.IsNullOrEmpty(roleRaw))
+            {
+                if (roleRaw.Equals("SV", StringComparison.OrdinalIgnoreCase)
+                    || roleRaw.Equals("SinhVien", StringComparison.OrdinalIgnoreCase)
+                    || roleRaw.Equals("Sinh viên", StringComparison.OrdinalIgnoreCase))
+                {
+                    parsedRole = UserRole.SinhVien;
+                }
+                else if (roleRaw.Equals("GV", StringComparison.OrdinalIgnoreCase)
+                         || roleRaw.Equals("GiangVien", StringComparison.OrdinalIgnoreCase)
+                         || roleRaw.Equals("Giảng viên", StringComparison.OrdinalIgnoreCase))
+                {
+                    parsedRole = UserRole.GiangVien;
+                }
+                else if (roleRaw.Equals("Admin", StringComparison.OrdinalIgnoreCase)
+                         || roleRaw.Equals("AD", StringComparison.OrdinalIgnoreCase)
+                         || roleRaw.Equals("QuanTri", StringComparison.OrdinalIgnoreCase)
+                         || roleRaw.Equals("Quản trị viên", StringComparison.OrdinalIgnoreCase))
+                {
+                    parsedRole = UserRole.Admin;
+                }
+                else
+                {
+                    roleValid = false;
+                }
+            }
+
+            string? errorReason = null;
+            if (string.IsNullOrWhiteSpace(username) || username.Length < 2 || username.Any(char.IsWhiteSpace))
+            {
+                errorReason = "Username không hợp lệ";
+            }
+            else if (string.IsNullOrWhiteSpace(fullName))
+            {
+                errorReason = "Thiếu Họ và tên";
+            }
+            else if (!roleValid)
+            {
+                errorReason = $"Vai trò '{roleRaw}' không hợp lệ";
+            }
+            else if (existingUsernames.Contains(username))
+            {
+                errorReason = "Đã tồn tại trên hệ thống";
+            }
+            else if (!seenInBatch.Add(username))
+            {
+                errorReason = "Trùng lặp trong danh sách";
+            }
+
+            string? resolvedClassId = null;
+            var statusNote = errorReason;
+            if (errorReason is null)
+            {
+                if (!string.IsNullOrWhiteSpace(classRaw))
+                {
+                    if (classByCode.TryGetValue(classRaw, out var cls))
+                    {
+                        resolvedClassId = cls.ClassId;
+                        statusNote = $"Hợp lệ • Lớp {cls.ClassCode}";
+                    }
+                    else
+                    {
+                        statusNote = $"Hợp lệ (chưa thấy lớp '{classRaw}')";
+                    }
+                }
+                else
+                {
+                    statusNote = "Hợp lệ";
+                }
+                validCount++;
+            }
+            else
+            {
+                invalidCount++;
+            }
+
+            BatchAccountPreviewItems.Add(new BatchAccountPreviewItem
+            {
+                LineNumber = lineNum,
+                Username = string.IsNullOrWhiteSpace(username) ? "—" : username,
+                FullName = string.IsNullOrWhiteSpace(fullName) ? "(Chưa có họ tên)" : fullName,
+                Email = string.IsNullOrWhiteSpace(emailRaw) && !string.IsNullOrWhiteSpace(username)
+                    ? $"{username}@dau.edu.vn"
+                    : emailRaw,
+                Role = parsedRole,
+                ClassCode = classRaw.ToUpperInvariant(),
+                ResolvedClassId = resolvedClassId,
+                IsValid = errorReason is null,
+                StatusNote = statusNote ?? "Hợp lệ"
+            });
+        }
+
+        ValidBatchAccountsCount = validCount;
+        InvalidBatchAccountsCount = invalidCount;
+    }
+
+    private static List<string> SplitCsvFields(string line)
+    {
+        var sep = ',';
+        if (!line.Contains(',') && line.Contains(';')) sep = ';';
+        else if (!line.Contains(',') && !line.Contains(';') && line.Contains('\t')) sep = '\t';
+
+        var fields = new List<string>();
+        var sb = new System.Text.StringBuilder();
+        var inQuotes = false;
+
+        for (var i = 0; i < line.Length; i++)
+        {
+            var ch = line[i];
+            if (ch == '"')
+            {
+                if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
+                {
+                    sb.Append('"');
+                    i++;
+                }
+                else
+                {
+                    inQuotes = !inQuotes;
+                }
+            }
+            else if (ch == sep && !inQuotes)
+            {
+                fields.Add(sb.ToString());
+                sb.Clear();
+            }
+            else
+            {
+                sb.Append(ch);
+            }
+        }
+        fields.Add(sb.ToString());
+        return fields;
+    }
+
+    private async Task SubmitBatchCreateAccountsAsync()
+    {
+        var validItems = BatchAccountPreviewItems.Where(x => x.IsValid).ToList();
+        if (validItems.Count == 0)
+        {
+            ShowToast("Chưa có dòng tài khoản hợp lệ nào để tạo.");
+            return;
+        }
+
+        var defaultPwd = string.IsNullOrWhiteSpace(BatchDefaultPassword) ? "123456" : BatchDefaultPassword.Trim();
+        var host = ClientServiceHost.Current;
+        var created = 0;
+
+        foreach (var item in validItems)
+        {
+            var res = await host.AuthRoom.CreateUserAsync(new CreateUserRequestDto
+            {
+                Username = item.Username,
+                FullName = item.FullName,
+                Email = item.Email,
+                InitialPassword = defaultPwd,
+                Role = item.Role,
+                ClassId = item.ResolvedClassId
+            });
+            if (res.Success)
+            {
+                created++;
+            }
+        }
+
+        IsBatchAccountModalOpen = false;
+        await RefreshLookupsAsync();
+        await Admin.RefreshAsync();
+        await Chat.LoadAsync(Chat.SelectedConversation?.Id);
+        ShowToast($"Đã tạo thành công {created}/{validItems.Count} tài khoản từ danh sách (MK mặc định: {defaultPwd}).");
     }
 
     private string ResolveRoomTitle(string roomId)

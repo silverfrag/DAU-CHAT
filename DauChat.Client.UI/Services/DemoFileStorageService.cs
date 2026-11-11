@@ -209,7 +209,7 @@ internal sealed class DemoFileStorageService : IFileStorageService
                 {
                     var cutoff = _store.GetClearedCutoffUtc(currentUserId, kvp.Key);
                     return (long)kvp.Value
-                        .Where(m => m.ServerTimestampUtc > cutoff)
+                        .Where(m => m.ServerTimestampUtc > cutoff && !_store.IsMessageHiddenForUser(currentUserId, m.MessageId))
                         .Sum(m => Encoding.UTF8.GetByteCount(m.Content) + 180);
                 });
 
@@ -223,6 +223,17 @@ internal sealed class DemoFileStorageService : IFileStorageService
             foreach (var convId in allConvIds)
             {
                 var room = _store.Rooms.FirstOrDefault(r => r.RoomId == convId);
+                if (room is not null && !room.MemberIds.Contains(currentUserId))
+                {
+                    continue;
+                }
+
+                if (convId.StartsWith("dm:", StringComparison.Ordinal)
+                    && !convId[3..].Split("::").Contains(currentUserId))
+                {
+                    continue;
+                }
+
                 string displayName = room?.RoomName ?? ResolveConvDisplayNameLocked(currentUserId, convId);
                 var files = visibleFiles.Where(f => f.RoomOrPartnerId == convId).ToList();
                 var mBytes = msgBytesByConv.GetValueOrDefault(convId, 0);
@@ -366,35 +377,74 @@ internal sealed class DemoFileStorageService : IFileStorageService
         try
         {
             ZipFile.ExtractToDirectory(sourceZipPath, tempDir, overwriteFiles: true);
+            var messagesPath = Path.Combine(tempDir, "messages_snapshot.json");
+            Dictionary<string, List<MessageDto>>? restoredMessages = null;
+            if (File.Exists(messagesPath))
+            {
+                var rawMsgs = await File.ReadAllTextAsync(messagesPath, cancellationToken);
+                restoredMessages = JsonSerializer.Deserialize<Dictionary<string, List<MessageDto>>>(rawMsgs);
+            }
+
+            List<FileManifestDto>? restoredManifests = null;
             var manifestPath = Path.Combine(tempDir, "file_manifest.jsonl");
             if (File.Exists(manifestPath))
             {
                 var raw = await File.ReadAllTextAsync(manifestPath, cancellationToken);
-                var entries = JsonSerializer.Deserialize<List<FileManifestDto>>(raw);
-                if (entries is not null)
-                {
-                    _store.MutateAndSave(() =>
-                    {
-                        if (overwriteExisting)
-                        {
-                            _store.HiddenFileIdsByUser.Remove(currentUserId);
-                        }
-                        foreach (var e in entries)
-                        {
-                            if (_store.LocalFiles.All(x => x.FileId != e.FileId))
-                            {
-                                _store.LocalFiles.Add(e);
-                            }
-                            if (_store.HiddenFileIdsByUser.TryGetValue(currentUserId, out var hidden))
-                            {
-                                hidden.Remove(e.FileId);
-                            }
-                        }
-                    });
-                }
+                restoredManifests = JsonSerializer.Deserialize<List<FileManifestDto>>(raw);
             }
 
-            return OperationResult.Ok("Đã khôi phục dữ liệu từ bản sao lưu .ZIP.");
+            _store.MutateAndSave(() =>
+            {
+                _store.ClearedBeforeUtc.Remove(currentUserId);
+                _store.HiddenMessageIdsByUser.Remove(currentUserId);
+                if (overwriteExisting)
+                {
+                    _store.HiddenFileIdsByUser.Remove(currentUserId);
+                }
+
+                if (restoredMessages is not null)
+                {
+                    foreach (var kvp in restoredMessages)
+                    {
+                        if (!_store.MessagesByConversation.TryGetValue(kvp.Key, out var list))
+                        {
+                            list = new List<MessageDto>();
+                            _store.MessagesByConversation[kvp.Key] = list;
+                        }
+
+                        var existingIds = list.Select(m => m.MessageId).ToHashSet();
+                        foreach (var m in kvp.Value)
+                        {
+                            if (_store.RecalledMessageIds.Contains(m.MessageId))
+                            {
+                                continue;
+                            }
+                            if (existingIds.Add(m.MessageId))
+                            {
+                                list.Add(m);
+                            }
+                        }
+                        list.Sort((a, b) => a.ServerTimestampUtc.CompareTo(b.ServerTimestampUtc));
+                    }
+                }
+
+                if (restoredManifests is not null)
+                {
+                    foreach (var e in restoredManifests)
+                    {
+                        if (_store.LocalFiles.All(x => x.FileId != e.FileId))
+                        {
+                            _store.LocalFiles.Add(e);
+                        }
+                        if (_store.HiddenFileIdsByUser.TryGetValue(currentUserId, out var hidden))
+                        {
+                            hidden.Remove(e.FileId);
+                        }
+                    }
+                }
+            });
+
+            return OperationResult.Ok("Đã khôi phục tin nhắn & tệp từ bản sao lưu .ZIP.");
         }
         catch (Exception ex)
         {

@@ -44,6 +44,11 @@ internal sealed class DemoDataStore
         public Dictionary<string, List<MessageDto>> MessagesByConversation { get; set; } = new();
         public Dictionary<string, Dictionary<string, DateTime>> ClearedBeforeUtc { get; set; } = new();
         public Dictionary<string, List<string>> HiddenFileIdsByUser { get; set; } = new();
+        public Dictionary<string, List<string>> HiddenMessageIdsByUser { get; set; } = new();
+        public List<string> RecalledMessageIds { get; set; } = new();
+        public Dictionary<string, List<string>> MutedConversationsByUser { get; set; } = new();
+        public Dictionary<string, bool> AutoCleanEnabledByUser { get; set; } = new();
+        public Dictionary<string, int> AutoCleanDaysByUser { get; set; } = new();
         public List<FileManifestDto> LocalFiles { get; set; } = new();
         public List<ClientConnectionDto> ConnectedClients { get; set; } = new();
         public List<ConnectionLogDto> ConnectionLogs { get; set; } = new();
@@ -53,6 +58,7 @@ internal sealed class DemoDataStore
     public sealed class ExternalSyncDiff
     {
         public List<MessageDto> NewMessages { get; init; } = new();
+        public List<string> NewlyRecalledMessageIds { get; init; } = new();
         public List<(string RoomId, PinnedNoticeDto? Notice)> PinnedChanges { get; init; } = new();
         public List<RoomDto> UpdatedRooms { get; init; } = new();
         public List<string> DeletedRoomIds { get; init; } = new();
@@ -83,6 +89,7 @@ internal sealed class DemoDataStore
     private DateTime _lastSeenFileWriteUtc = DateTime.MinValue;
     private long _lastSeenFileLength = -1;
     private readonly HashSet<string> _knownMessageIds = new();
+    private readonly HashSet<string> _knownRecalledIds = new();
     private Dictionary<string, string?> _knownPinnedSignatureByRoom = new();
     private Dictionary<string, int> _knownRoomMemberHashById = new();
     private int _knownLogsCount;
@@ -109,6 +116,11 @@ internal sealed class DemoDataStore
     public Dictionary<string, int> UnreadByConversation { get; } = new();
     public Dictionary<string, Dictionary<string, DateTime>> ClearedBeforeUtc { get; } = new();
     public Dictionary<string, List<string>> HiddenFileIdsByUser { get; } = new();
+    public Dictionary<string, List<string>> HiddenMessageIdsByUser { get; } = new();
+    public HashSet<string> RecalledMessageIds { get; } = new();
+    public Dictionary<string, List<string>> MutedConversationsByUser { get; } = new();
+    public Dictionary<string, bool> AutoCleanEnabledByUser { get; } = new();
+    public Dictionary<string, int> AutoCleanDaysByUser { get; } = new();
     public List<FileManifestDto> LocalFiles { get; } = new();
     public List<ClientConnectionDto> ConnectedClients { get; } = new();
     public List<ConnectionLogDto> ConnectionLogs { get; } = new();
@@ -268,6 +280,76 @@ internal sealed class DemoDataStore
     public bool IsFileHiddenForUser(string userId, string fileId)
         => HiddenFileIdsByUser.TryGetValue(userId, out var ids) && ids.Contains(fileId);
 
+    public bool IsMessageHiddenForUser(string userId, string messageId)
+        => HiddenMessageIdsByUser.TryGetValue(userId, out var ids) && ids.Contains(messageId);
+
+    public bool IsMessageRecalled(string messageId)
+    {
+        lock (SyncRoot)
+        {
+            return RecalledMessageIds.Contains(messageId);
+        }
+    }
+
+    public void HideMessageForUser(string userId, string messageId)
+    {
+        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(messageId)) return;
+        MutateAndSave(() =>
+        {
+            if (!HiddenMessageIdsByUser.TryGetValue(userId, out var ids))
+            {
+                ids = new List<string>();
+                HiddenMessageIdsByUser[userId] = ids;
+            }
+            if (!ids.Contains(messageId)) ids.Add(messageId);
+        });
+    }
+
+    public bool IsConversationMuted(string userId, string conversationId)
+        => MutedConversationsByUser.TryGetValue(userId, out var ids) && ids.Contains(conversationId);
+
+    public void SetConversationMuted(string userId, string conversationId, bool isMuted)
+    {
+        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(conversationId)) return;
+        MutateAndSave(() =>
+        {
+            if (!MutedConversationsByUser.TryGetValue(userId, out var ids))
+            {
+                ids = new List<string>();
+                MutedConversationsByUser[userId] = ids;
+            }
+
+            if (isMuted)
+            {
+                if (!ids.Contains(conversationId)) ids.Add(conversationId);
+            }
+            else
+            {
+                ids.Remove(conversationId);
+            }
+        });
+    }
+
+    public (bool Enabled, int Days) GetAutoCleanConfig(string userId)
+    {
+        lock (SyncRoot)
+        {
+            var enabled = AutoCleanEnabledByUser.TryGetValue(userId, out var e) && e;
+            var days = AutoCleanDaysByUser.TryGetValue(userId, out var d) && d > 0 ? d : 90;
+            return (enabled, days);
+        }
+    }
+
+    public void SetAutoCleanConfig(string userId, bool enabled, int days)
+    {
+        if (string.IsNullOrEmpty(userId)) return;
+        MutateAndSave(() =>
+        {
+            AutoCleanEnabledByUser[userId] = enabled;
+            AutoCleanDaysByUser[userId] = days > 0 ? days : 90;
+        });
+    }
+
     public DemoAccountRecord? FindAccountById(string userId)
         => Accounts.FirstOrDefault(a => a.User.UserId.Equals(userId, StringComparison.OrdinalIgnoreCase));
 
@@ -410,6 +492,11 @@ internal sealed class DemoDataStore
         MessagesByConversation = MessagesByConversation,
         ClearedBeforeUtc = ClearedBeforeUtc,
         HiddenFileIdsByUser = HiddenFileIdsByUser,
+        HiddenMessageIdsByUser = HiddenMessageIdsByUser,
+        RecalledMessageIds = RecalledMessageIds.ToList(),
+        MutedConversationsByUser = MutedConversationsByUser,
+        AutoCleanEnabledByUser = AutoCleanEnabledByUser,
+        AutoCleanDaysByUser = AutoCleanDaysByUser,
         LocalFiles = LocalFiles,
         ConnectedClients = ConnectedClients,
         ConnectionLogs = ConnectionLogs,
@@ -422,6 +509,7 @@ internal sealed class DemoDataStore
         var previousPins = new Dictionary<string, string?>(_knownPinnedSignatureByRoom);
         var previousRoomHashes = new Dictionary<string, int>(_knownRoomMemberHashById);
         var previousMsgIds = new HashSet<string>(_knownMessageIds);
+        var previousRecalledIds = new HashSet<string>(_knownRecalledIds);
         var previousLogCount = _knownLogsCount;
 
         ApplySnapshotLocked(snap);
@@ -430,6 +518,10 @@ internal sealed class DemoDataStore
             .SelectMany(list => list)
             .Where(m => !previousMsgIds.Contains(m.MessageId))
             .OrderBy(m => m.ServerTimestampUtc)
+            .ToList();
+
+        var newlyRecalled = RecalledMessageIds
+            .Where(id => !previousRecalledIds.Contains(id))
             .ToList();
 
         var pinnedChanges = new List<(string RoomId, PinnedNoticeDto? Notice)>();
@@ -463,6 +555,7 @@ internal sealed class DemoDataStore
         {
             HasChanges = true,
             NewMessages = newMessages,
+            NewlyRecalledMessageIds = newlyRecalled,
             PinnedChanges = pinnedChanges,
             UpdatedRooms = updatedRooms,
             DeletedRoomIds = deletedRoomIds,
@@ -505,9 +598,39 @@ internal sealed class DemoDataStore
         }
 
         HiddenFileIdsByUser.Clear();
-        foreach (var kvp in snap.HiddenFileIdsByUser)
+        foreach (var kvp in snap.HiddenFileIdsByUser ?? new Dictionary<string, List<string>>())
         {
             HiddenFileIdsByUser[kvp.Key] = kvp.Value;
+        }
+
+        HiddenMessageIdsByUser.Clear();
+        foreach (var kvp in snap.HiddenMessageIdsByUser ?? new Dictionary<string, List<string>>())
+        {
+            HiddenMessageIdsByUser[kvp.Key] = kvp.Value;
+        }
+
+        RecalledMessageIds.Clear();
+        foreach (var id in snap.RecalledMessageIds ?? new List<string>())
+        {
+            RecalledMessageIds.Add(id);
+        }
+
+        MutedConversationsByUser.Clear();
+        foreach (var kvp in snap.MutedConversationsByUser ?? new Dictionary<string, List<string>>())
+        {
+            MutedConversationsByUser[kvp.Key] = kvp.Value;
+        }
+
+        AutoCleanEnabledByUser.Clear();
+        foreach (var kvp in snap.AutoCleanEnabledByUser ?? new Dictionary<string, bool>())
+        {
+            AutoCleanEnabledByUser[kvp.Key] = kvp.Value;
+        }
+
+        AutoCleanDaysByUser.Clear();
+        foreach (var kvp in snap.AutoCleanDaysByUser ?? new Dictionary<string, int>())
+        {
+            AutoCleanDaysByUser[kvp.Key] = kvp.Value;
         }
 
         LocalFiles.Clear();
@@ -535,6 +658,12 @@ internal sealed class DemoDataStore
             {
                 _knownMessageIds.Add(msg.MessageId);
             }
+        }
+
+        _knownRecalledIds.Clear();
+        foreach (var id in RecalledMessageIds)
+        {
+            _knownRecalledIds.Add(id);
         }
 
         _knownPinnedSignatureByRoom = Rooms.ToDictionary(r => r.RoomId, r => BuildPinnedSignature(r.PinnedNotice));

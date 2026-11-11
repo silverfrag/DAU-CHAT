@@ -22,6 +22,15 @@ public enum AdminSubTab
     ServerMonitoring
 }
 
+public enum AccountFilterOption
+{
+    All,
+    Students,
+    Lecturers,
+    Admins,
+    Locked
+}
+
 public sealed class DemoQuickAccountModel
 {
     public string Label { get; init; } = string.Empty;
@@ -111,13 +120,36 @@ public sealed class MessageItemModel
     public string SenderRoleLabel { get; init; } = string.Empty;
     public bool HasRoleBadge => !string.IsNullOrEmpty(SenderRoleLabel);
     public bool IsOwnMessage { get; init; }
-    public bool IsIncomingText => !IsOwnMessage && !IsAttachment && !IsSystemNotice;
-    public bool IsOutgoingText => IsOwnMessage && !IsAttachment && !IsSystemNotice;
-    public bool IsIncomingAttachment => !IsOwnMessage && IsAttachment;
-    public bool IsOutgoingAttachment => IsOwnMessage && IsAttachment;
+    public bool CanSendFromClient { get; init; }
+    public bool IsRecalled { get; init; }
     public bool IsAttachment { get; init; }
     public bool IsSystemNotice { get; init; }
+    public bool CanPinThisMessage { get; init; }
+
+    public bool IsIncomingText => !IsOwnMessage && !IsAttachment && !IsSystemNotice && !IsRecalled;
+    public bool IsOutgoingText => IsOwnMessage && !IsAttachment && !IsSystemNotice && !IsRecalled;
+    public bool IsIncomingAttachment => !IsOwnMessage && IsAttachment && !IsRecalled;
+    public bool IsOutgoingAttachment => IsOwnMessage && IsAttachment && !IsRecalled;
+    public bool IsIncomingRecalled => !IsOwnMessage && IsRecalled && !IsSystemNotice;
+    public bool IsOutgoingRecalled => IsOwnMessage && IsRecalled && !IsSystemNotice;
+
+    public bool CanReplyThisMessage => CanSendFromClient && !IsRecalled && !IsSystemNotice;
+    public bool CanCopyThisMessage => !IsRecalled && !IsSystemNotice;
+    public bool CanRecallThisMessage => CanSendFromClient && IsOwnMessage && !IsRecalled && !IsSystemNotice;
+    public bool CanDeleteForMe => CanSendFromClient && !IsSystemNotice;
+    public bool ShowContextActionSeparator => CanCopyThisMessage && CanDeleteForMe;
+
+    public DateTime LocalTimestamp { get; init; }
+    public DateTime LocalDate => LocalTimestamp.Date;
+    public bool ShowDateDivider { get; set; }
+    public string DateDividerLabel { get; set; } = string.Empty;
+
     public string Content { get; init; } = string.Empty;
+    public string BodyContent { get; init; } = string.Empty;
+    public bool HasReplyQuote { get; init; }
+    public string ReplyAuthor { get; init; } = string.Empty;
+    public string ReplySnippet { get; init; } = string.Empty;
+
     public string TimeText { get; init; } = string.Empty;
     public string? AttachmentFileId { get; init; }
     public string? AttachmentFileName { get; init; }
@@ -126,6 +158,8 @@ public sealed class MessageItemModel
     public string AttachmentBadgeBgHex { get; init; } = "#EFF6FF";
     public string AttachmentBadgeFgHex { get; init; } = "#2563EB";
     public string? LocalFilePath { get; init; }
+    public bool HasImagePreview { get; init; }
+    public bool IsFileCardWithoutPreview => IsAttachment && !HasImagePreview;
     public bool IsPinned { get; init; }
 }
 
@@ -316,4 +350,19 @@ public sealed class RoomItemModel
     public int MemberCount => RawRoom.MemberIds.Count;
     public bool HasPinnedNotice => RawRoom.PinnedNotice is not null;
     public string MetaCaption => $"{RoomTypeLabel} • Chủ phòng: {OwnerName} • {MemberCount} thành viên";
+}
+
+public sealed class BatchAccountPreviewItem
+{
+    public int LineNumber { get; init; }
+    public string Username { get; init; } = string.Empty;
+    public string FullName { get; init; } = string.Empty;
+    public string Email { get; init; } = string.Empty;
+    public UserRole Role { get; init; } = UserRole.SinhVien;
+    public string ClassCode { get; init; } = string.Empty;
+    public string? ResolvedClassId { get; init; }
+    public bool IsValid { get; init; }
+    public string StatusNote { get; init; } = string.Empty;
+    public string StatusBgHex => IsValid ? "#ECFDF5" : "#FEF2F2";
+    public string StatusFgHex => IsValid ? "#047857" : "#DC2626";
 }

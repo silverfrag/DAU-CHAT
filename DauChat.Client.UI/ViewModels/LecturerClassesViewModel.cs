@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using DauChat.Client.UI.Infrastructure;
@@ -6,6 +8,7 @@ using DauChat.Client.UI.Models;
 using DauChat.Client.UI.Services;
 using DauChat.Shared.Enums;
 using DauChat.Shared.Models;
+using Microsoft.Win32;
 
 namespace DauChat.Client.UI.ViewModels;
 
@@ -19,6 +22,7 @@ public sealed class LecturerClassesViewModel : ObservableObject
 
     private List<ClassItemModel> _allClasses = new();
     private List<RoomMemberItemModel> _allSelectedMembers = new();
+    private List<UserDto> _rawSelectedMembers = new();
     private ClassItemModel? _selectedClass;
     private string _searchQuery = string.Empty;
     private string _memberSearchQuery = string.Empty;
@@ -61,6 +65,7 @@ public sealed class LecturerClassesViewModel : ObservableObject
             }
         }, () => SelectedClass is not null);
         RemoveMemberCommand = new AsyncRelayCommand(RemoveMemberAsync);
+        ExportMembersCsvCommand = new RelayCommand(ExportMembersCsv, () => SelectedClass is not null);
         OpenOrSyncLinkedRoomCommand = new AsyncRelayCommand(OpenOrSyncLinkedRoomAsync, () => SelectedClass is not null);
         RefreshCommand = new AsyncRelayCommand(() => RefreshAsync(SelectedClass?.ClassId));
     }
@@ -77,6 +82,7 @@ public sealed class LecturerClassesViewModel : ObservableObject
     public ICommand ToggleAllowJoinCodeCommand { get; }
     public ICommand OpenBulkAddMembersCommand { get; }
     public ICommand RemoveMemberCommand { get; }
+    public ICommand ExportMembersCsvCommand { get; }
     public ICommand OpenOrSyncLinkedRoomCommand { get; }
     public ICommand RefreshCommand { get; }
 
@@ -165,6 +171,7 @@ public sealed class LecturerClassesViewModel : ObservableObject
             {
                 SelectedClass = null;
                 _allSelectedMembers.Clear();
+                _rawSelectedMembers.Clear();
                 ApplyMemberFilter();
             }
         }
@@ -186,6 +193,10 @@ public sealed class LecturerClassesViewModel : ObservableObject
         var membersRes = await host.AuthRoom.GetClassMembersAsync(item.ClassId);
 
         _allSelectedMembers.Clear();
+        _rawSelectedMembers = membersRes.Success && membersRes.Data is not null
+            ? membersRes.Data.ToList()
+            : new List<UserDto>();
+
         if (membersRes.Success && membersRes.Data is not null)
         {
             foreach (var u in membersRes.Data)
@@ -343,6 +354,68 @@ public sealed class LecturerClassesViewModel : ObservableObject
         {
             await RefreshAsync();
         }
+    }
+
+    private void ExportMembersCsv()
+    {
+        if (SelectedClass is null) return;
+
+        var members = _rawSelectedMembers;
+        var dlg = new SaveFileDialog
+        {
+            Title = $"Xuất danh sách thành viên lớp {SelectedClass.ClassCode}",
+            Filter = "Tệp CSV UTF-8 (*.csv)|*.csv",
+            FileName = $"DanhSachLop_{SelectedClass.ClassCode}_{DateTime.Now:yyyyMMdd}.csv"
+        };
+
+        if (dlg.ShowDialog() != true) return;
+
+        try
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("STT,MaTaiKhoan,HoVaTen,Email,VaiTro,TrangThaiOnline");
+            for (var i = 0; i < members.Count; i++)
+            {
+                var u = members[i];
+                var roleLabel = u.Role switch
+                {
+                    UserRole.GiangVien => "Giảng viên",
+                    UserRole.Admin => "Quản trị viên",
+                    _ => "Sinh viên"
+                };
+                var onlineLabel = u.Presence switch
+                {
+                    PresenceStatus.Online => "Online",
+                    PresenceStatus.Busy => "Busy",
+                    _ => "Offline"
+                };
+
+                sb.AppendLine(string.Join(",",
+                    (i + 1).ToString(),
+                    CsvEscape(u.Username),
+                    CsvEscape(u.FullName),
+                    CsvEscape(u.Email),
+                    CsvEscape(roleLabel),
+                    CsvEscape(onlineLabel)));
+            }
+
+            File.WriteAllText(dlg.FileName, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+            _notify($"Đã xuất {members.Count} thành viên lớp {SelectedClass.ClassCode} ra tệp {Path.GetFileName(dlg.FileName)}.");
+        }
+        catch (Exception ex)
+        {
+            _notify($"Không thể xuất tệp CSV: {ex.Message}");
+        }
+    }
+
+    private static string CsvEscape(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return string.Empty;
+        if (value.Contains(',') || value.Contains('"') || value.Contains('\r') || value.Contains('\n'))
+        {
+            return $"\"{value.Replace("\"", "\"\"")}\"";
+        }
+        return value;
     }
 }
 

@@ -361,13 +361,17 @@
                             <StackPanel>
                                 <Border BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,16">
                                     <Grid>
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="Danh sách thành viên &amp; sinh viên" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
-                                            <TextBlock Text="Thành viên được đồng bộ hai chiều với phòng chat của lớp học phần" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,14,0">
+                                            <TextBlock Text="Danh sách thành viên lớp" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="Thành viên được đồng bộ hai chiều với phòng chat của lớp học phần" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
                                         </StackPanel>
 
-                                        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
-                                            <Border Width="190" Height="36" Background="{StaticResource SurfaceInputBrush}" CornerRadius="9" Padding="10,0" Margin="0,0,10,0">
+                                        <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
+                                            <Border Width="156" Height="36" Background="{StaticResource SurfaceInputBrush}" CornerRadius="9" Padding="10,0" Margin="0,0,8,0">
                                                 <Grid>
                                                     <TextBlock Text="Tìm sinh viên / MSSV..." FontSize="11.5" Foreground="{StaticResource TextFaintBrush}" VerticalAlignment="Center" IsHitTestVisible="False"
                                                                Visibility="{Binding MemberSearchQuery, Converter={StaticResource InverseStringToVis}}" />
@@ -375,9 +379,21 @@
                                                 </Grid>
                                             </Border>
 
+                                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                                    MinHeight="36"
+                                                    Padding="11,7"
+                                                    Margin="0,0,8,0"
+                                                    Command="{Binding ExportMembersCsvCommand}"
+                                                    ToolTip="Xuất danh sách thành viên lớp ra tệp Excel (.csv)">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path Data="{StaticResource IconDownload}" Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.9" Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
+                                                    <TextBlock Text="Xuất CSV" Margin="6,0,0,0" FontSize="12" FontWeight="SemiBold" />
+                                                </StackPanel>
+                                            </Button>
+
                                             <Button Style="{StaticResource PrimaryButtonStyle}"
                                                     MinHeight="36"
-                                                    Padding="14,7"
+                                                    Padding="13,7"
                                                     Command="{Binding OpenBulkAddMembersCommand}">
                                                 <StackPanel Orientation="Horizontal">
                                                     <Path Data="{StaticResource IconUserPlus}" Stroke="White" StrokeThickness="2" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" />

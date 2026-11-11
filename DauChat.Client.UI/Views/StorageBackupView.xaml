@@ -210,17 +210,18 @@
                         <Border Style="{StaticResource CardBorderStyle}">
                             <StackPanel>
                                 <Grid Margin="0,0,0,12">
-                                    <StackPanel>
+                                    <StackPanel Margin="0,0,54,0">
                                         <TextBlock Text="Dọn dẹp bộ nhớ (Oldest-first)" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
-                                        <TextBlock Text="Xóa các tệp cũ ít truy cập trước để giải phóng ổ đĩa" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                                        <TextBlock Text="Bật để tự động dọn tệp cũ quá hạn mỗi khi đăng nhập" FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
                                     </StackPanel>
                                     <CheckBox HorizontalAlignment="Right"
                                               VerticalAlignment="Center"
+                                              ToolTip="Tự động dọn tệp quá hạn khi khởi động / đăng nhập"
                                               Style="{StaticResource ModernToggleSwitchStyle}"
                                               IsChecked="{Binding AutoClean90Days}" />
                                 </Grid>
 
-                                <TextBlock Text="Xóa tệp không mở quá (ngày):" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,6" />
+                                <TextBlock Text="Dọn tệp không mở quá (ngày):" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,6" />
                                 <TextBox Style="{StaticResource ModernTextBoxStyle}"
                                          MinHeight="38"
                                          Text="{Binding CleanupDaysText, UpdateSourceTrigger=PropertyChanged}" />

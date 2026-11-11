@@ -11,6 +11,8 @@ namespace DauChat.Client.UI.ViewModels;
 public sealed class StorageBackupViewModel : ObservableObject
 {
     private readonly Action<string> _notify;
+    private readonly Func<Task>? _onStorageDataChangedAsync;
+    private bool _suppressSettingsSave;
     private string _usedCapacityText = "0 B";
     private string _quotaCapacityText = "10.00 GB";
     private string _documentsBytesText = "0 B";
@@ -21,14 +23,15 @@ public sealed class StorageBackupViewModel : ObservableObject
     private double _imagesSharePercent = 20;
     private double _messagesSharePercent = 12;
     private double _otherSharePercent = 8;
-    private bool _autoClean90Days = true;
+    private bool _autoClean90Days;
     private string _cleanupDaysText = "90";
     private string _lastBackupLabel = "Chưa sao lưu trong phiên này";
     private string _localFolderPathLabel = "LocalData/{UserId}/";
 
-    public StorageBackupViewModel(Action<string> notify)
+    public StorageBackupViewModel(Action<string> notify, Func<Task>? onStorageDataChangedAsync = null)
     {
         _notify = notify;
+        _onStorageDataChangedAsync = onStorageDataChangedAsync;
         ExportBackupZipCommand = new AsyncRelayCommand(ExportBackupZipAsync);
         RestoreBackupZipCommand = new AsyncRelayCommand(RestoreBackupZipAsync);
         CleanupOldFilesCommand = new AsyncRelayCommand(CleanupOldFilesAsync);
@@ -54,13 +57,25 @@ public sealed class StorageBackupViewModel : ObservableObject
     public bool AutoClean90Days
     {
         get => _autoClean90Days;
-        set => SetProperty(ref _autoClean90Days, value);
+        set
+        {
+            if (SetProperty(ref _autoClean90Days, value) && !_suppressSettingsSave)
+            {
+                PersistAutoCleanSettings(allowDefaultDays: true);
+            }
+        }
     }
 
     public string CleanupDaysText
     {
         get => _cleanupDaysText;
-        set => SetProperty(ref _cleanupDaysText, value);
+        set
+        {
+            if (SetProperty(ref _cleanupDaysText, value) && !_suppressSettingsSave)
+            {
+                PersistAutoCleanSettings(allowDefaultDays: false);
+            }
+        }
     }
 
     public string LastBackupLabel
@@ -79,6 +94,18 @@ public sealed class StorageBackupViewModel : ObservableObject
     {
         var user = ClientServiceHost.Current.AuthRoom.CurrentUser;
         if (user is null) return;
+
+        var (enabled, days) = ClientServiceHost.Current.DemoStore.GetAutoCleanConfig(user.UserId);
+        _suppressSettingsSave = true;
+        try
+        {
+            AutoClean90Days = enabled;
+            CleanupDaysText = days.ToString();
+        }
+        finally
+        {
+            _suppressSettingsSave = false;
+        }
 
         LocalFolderPathLabel = $"Thư mục cục bộ: LocalData/{user.UserId}/Messages & Files";
         var storage = ClientServiceHost.Current.FileStorage;
@@ -164,6 +191,10 @@ public sealed class StorageBackupViewModel : ObservableObject
         if (res.Success)
         {
             await RefreshAsync();
+            if (_onStorageDataChangedAsync is not null)
+            {
+                await _onStorageDataChangedAsync();
+            }
         }
     }
 
@@ -176,6 +207,46 @@ public sealed class StorageBackupViewModel : ObservableObject
         var res = await ClientServiceHost.Current.FileStorage.CleanupOldFilesAsync(user.UserId, olderThanDays: days);
         _notify(res.Message);
         await RefreshAsync();
+        if (res.Success && res.Data is { DeletedFilesCount: > 0 } && _onStorageDataChangedAsync is not null)
+        {
+            await _onStorageDataChangedAsync();
+        }
+    }
+
+    public async Task RunStartupAutoCleanIfEnabledAsync()
+    {
+        var user = ClientServiceHost.Current.AuthRoom.CurrentUser;
+        if (user is null) return;
+
+        var (enabled, days) = ClientServiceHost.Current.DemoStore.GetAutoCleanConfig(user.UserId);
+        if (!enabled) return;
+
+        var res = await ClientServiceHost.Current.FileStorage.CleanupOldFilesAsync(user.UserId, olderThanDays: days);
+        if (res.Success && res.Data is { DeletedFilesCount: > 0 } data)
+        {
+            await RefreshAsync();
+            if (_onStorageDataChangedAsync is not null)
+            {
+                await _onStorageDataChangedAsync();
+            }
+            _notify($"Tự động dọn {data.DeletedFilesCount} tệp cũ quá {days} ngày ({DemoFileStorageService.FormatBytes(data.FreedBytes)}).");
+        }
+    }
+
+    private void PersistAutoCleanSettings(bool allowDefaultDays)
+    {
+        var cu = ClientServiceHost.Current.AuthRoom.CurrentUser;
+        if (cu is null) return;
+
+        if (int.TryParse(CleanupDaysText.Trim(), out var parsedDays) && parsedDays > 0)
+        {
+            ClientServiceHost.Current.DemoStore.SetAutoCleanConfig(cu.UserId, AutoClean90Days, parsedDays);
+        }
+        else if (allowDefaultDays)
+        {
+            var (_, currentDays) = ClientServiceHost.Current.DemoStore.GetAutoCleanConfig(cu.UserId);
+            ClientServiceHost.Current.DemoStore.SetAutoCleanConfig(cu.UserId, AutoClean90Days, currentDays);
+        }
     }
 }
 

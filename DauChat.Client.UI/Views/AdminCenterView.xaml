@@ -133,34 +133,107 @@
                             CornerRadius="16">
                         <StackPanel>
                             <Border BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,16">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Margin="0,0,14,0" VerticalAlignment="Center">
-                                        <TextBlock Text="Danh sách tài khoản (Demo nội bộ)" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
-                                        <TextBlock Text="Admin tạo nick, sửa hồ sơ, gán quyền RBAC, đặt lại mật khẩu hoặc khóa phiên online" FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Border Width="170" Height="36" Background="{StaticResource SurfaceInputBrush}" CornerRadius="9" Padding="10,0" Margin="0,0,10,0">
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Margin="0,0,14,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Danh sách tài khoản (Demo nội bộ)" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Admin tạo nick, nhập CSV hàng loạt, gán quyền RBAC, đặt lại mật khẩu hoặc khóa phiên" FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                                    MinHeight="36"
+                                                    Padding="12,7"
+                                                    Margin="0,0,8,0"
+                                                    Command="{Binding OpenBatchCreateAccountsCommand}"
+                                                    ToolTip="Cấp phát hàng loạt tài khoản từ tệp CSV / TXT">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path Data="{StaticResource IconUpload}" Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.9" Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
+                                                    <TextBlock Text="Nhập CSV" Margin="6,0,0,0" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Style="{StaticResource PrimaryButtonStyle}"
+                                                    MinHeight="36"
+                                                    Padding="14,7"
+                                                    Command="{Binding OpenCreateAccountCommand}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path Data="{StaticResource IconUserPlus}" Stroke="White" StrokeThickness="2" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" />
+                                                    <TextBlock Text="Cấp tài khoản" Margin="7,0,0,0" FontSize="12" FontWeight="SemiBold" Foreground="White" />
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Thanh tìm kiếm & bộ lọc vai trò / trạng thái -->
+                                    <Grid Margin="0,12,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="154" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border Grid.Column="0" Height="34" Background="{StaticResource SurfaceInputBrush}" CornerRadius="9" Padding="10,0">
                                             <Grid>
                                                 <TextBlock Text="Lọc mã / tên..." FontSize="11.5" Foreground="{StaticResource TextFaintBrush}" VerticalAlignment="Center" IsHitTestVisible="False"
                                                            Visibility="{Binding AccountSearchQuery, Converter={StaticResource InverseStringToVis}}" />
                                                 <TextBox Text="{Binding AccountSearchQuery, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" FontSize="12" VerticalContentAlignment="Center" />
                                             </Grid>
                                         </Border>
-                                        <Button Style="{StaticResource PrimaryButtonStyle}"
-                                                MinHeight="36"
-                                                Padding="14,7"
-                                                Command="{Binding OpenCreateAccountCommand}">
-                                            <StackPanel Orientation="Horizontal">
-                                                <Path Data="{StaticResource IconUserPlus}" Stroke="White" StrokeThickness="2" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" />
-                                                <TextBlock Text="Cấp tài khoản" Margin="7,0,0,0" FontSize="12" FontWeight="SemiBold" Foreground="White" />
-                                            </StackPanel>
-                                        </Button>
-                                    </StackPanel>
-                                </Grid>
+
+                                        <WrapPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0" VerticalAlignment="Center">
+                                            <RadioButton Content="Tất cả"
+                                                         Style="{StaticResource FilterPillRadioStyle}"
+                                                         FontSize="11"
+                                                         Padding="9,5"
+                                                         Margin="0,0,5,0"
+                                                         IsChecked="{Binding SelectedAccountFilter, Converter={StaticResource EnumEquals}, ConverterParameter=All, Mode=OneWay}"
+                                                         Command="{Binding SelectAccountFilterCommand}"
+                                                         CommandParameter="All" />
+                                            <RadioButton Content="Sinh viên"
+                                                         Style="{StaticResource FilterPillRadioStyle}"
+                                                         FontSize="11"
+                                                         Padding="9,5"
+                                                         Margin="0,0,5,0"
+                                                         IsChecked="{Binding SelectedAccountFilter, Converter={StaticResource EnumEquals}, ConverterParameter=Students, Mode=OneWay}"
+                                                         Command="{Binding SelectAccountFilterCommand}"
+                                                         CommandParameter="Students" />
+                                            <RadioButton Content="Giảng viên"
+                                                         Style="{StaticResource FilterPillRadioStyle}"
+                                                         FontSize="11"
+                                                         Padding="9,5"
+                                                         Margin="0,0,5,0"
+                                                         IsChecked="{Binding SelectedAccountFilter, Converter={StaticResource EnumEquals}, ConverterParameter=Lecturers, Mode=OneWay}"
+                                                         Command="{Binding SelectAccountFilterCommand}"
+                                                         CommandParameter="Lecturers" />
+                                            <RadioButton Content="Admin"
+                                                         Style="{StaticResource FilterPillRadioStyle}"
+                                                         FontSize="11"
+                                                         Padding="9,5"
+                                                         Margin="0,0,5,0"
+                                                         IsChecked="{Binding SelectedAccountFilter, Converter={StaticResource EnumEquals}, ConverterParameter=Admins, Mode=OneWay}"
+                                                         Command="{Binding SelectAccountFilterCommand}"
+                                                         CommandParameter="Admins" />
+                                            <RadioButton Content="Đã khóa"
+                                                         Style="{StaticResource FilterPillRadioStyle}"
+                                                         FontSize="11"
+                                                         Padding="9,5"
+                                                         IsChecked="{Binding SelectedAccountFilter, Converter={StaticResource EnumEquals}, ConverterParameter=Locked, Mode=OneWay}"
+                                                         Command="{Binding SelectAccountFilterCommand}"
+                                                         CommandParameter="Locked" />
+                                        </WrapPanel>
+
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding FilteredUsersSummary}"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextFaintBrush}"
+                                                   VerticalAlignment="Center"
+                                                   Margin="8,0,0,0" />
+                                    </Grid>
+                                </StackPanel>
                             </Border>
 
                             <ItemsControl ItemsSource="{Binding FilteredUsers}">
@@ -262,6 +335,13 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+
+                            <TextBlock Text="Không có tài khoản nào khớp bộ lọc."
+                                       Margin="24"
+                                       HorizontalAlignment="Center"
+                                       FontSize="12.5"
+                                       Foreground="{StaticResource TextFaintBrush}"
+                                       Visibility="{Binding FilteredUsers.Count, Converter={StaticResource ZeroToVis}}" />
                         </StackPanel>
                     </Border>
 

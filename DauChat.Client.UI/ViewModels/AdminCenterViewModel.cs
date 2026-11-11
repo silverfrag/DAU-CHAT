@@ -13,6 +13,7 @@ public sealed class AdminCenterViewModel : ObservableObject
 {
     private readonly Action<string> _notify;
     private readonly Action _onOpenCreateAccount;
+    private readonly Action _onOpenBatchCreateAccounts;
     private readonly Action<AccountItemModel> _onOpenEditAccount;
     private readonly Action<AccountItemModel> _onOpenLockAccount;
     private readonly Action _onOpenCreateClass;
@@ -25,6 +26,7 @@ public sealed class AdminCenterViewModel : ObservableObject
 
     private AdminSubTab _activeTab = AdminSubTab.OverviewAndUsers;
     private string _accountSearchQuery = string.Empty;
+    private AccountFilterOption _selectedAccountFilter = AccountFilterOption.All;
     private string _classSearchQuery = string.Empty;
     private string _roomSearchQuery = string.Empty;
 
@@ -53,6 +55,7 @@ public sealed class AdminCenterViewModel : ObservableObject
     public AdminCenterViewModel(
         Action<string> notify,
         Action onOpenCreateAccount,
+        Action onOpenBatchCreateAccounts,
         Action<AccountItemModel> onOpenEditAccount,
         Action<AccountItemModel> onOpenLockAccount,
         Action onOpenCreateClass,
@@ -65,6 +68,7 @@ public sealed class AdminCenterViewModel : ObservableObject
     {
         _notify = notify;
         _onOpenCreateAccount = onOpenCreateAccount;
+        _onOpenBatchCreateAccounts = onOpenBatchCreateAccounts;
         _onOpenEditAccount = onOpenEditAccount;
         _onOpenLockAccount = onOpenLockAccount;
         _onOpenCreateClass = onOpenCreateClass;
@@ -87,6 +91,14 @@ public sealed class AdminCenterViewModel : ObservableObject
 
         // Tab 1: Users & RBAC
         OpenCreateAccountCommand = new RelayCommand(() => _onOpenCreateAccount());
+        OpenBatchCreateAccountsCommand = new RelayCommand(() => _onOpenBatchCreateAccounts());
+        SelectAccountFilterCommand = new RelayCommand(param =>
+        {
+            if (param is string fStr && Enum.TryParse<AccountFilterOption>(fStr, out var opt))
+            {
+                SelectedAccountFilter = opt;
+            }
+        });
         OpenEditAccountCommand = new RelayCommand(param =>
         {
             if (param is AccountItemModel account) _onOpenEditAccount(account);
@@ -154,6 +166,8 @@ public sealed class AdminCenterViewModel : ObservableObject
     public ICommand SwitchTabCommand { get; }
     public ICommand RefreshCommand { get; }
     public ICommand OpenCreateAccountCommand { get; }
+    public ICommand OpenBatchCreateAccountsCommand { get; }
+    public ICommand SelectAccountFilterCommand { get; }
     public ICommand OpenEditAccountCommand { get; }
     public ICommand ToggleLockAccountCommand { get; }
     public ICommand ResetPasswordCommand { get; }
@@ -193,6 +207,20 @@ public sealed class AdminCenterViewModel : ObservableObject
             }
         }
     }
+
+    public AccountFilterOption SelectedAccountFilter
+    {
+        get => _selectedAccountFilter;
+        set
+        {
+            if (SetProperty(ref _selectedAccountFilter, value))
+            {
+                ApplyUserFilter();
+            }
+        }
+    }
+
+    public string FilteredUsersSummary => $"{FilteredUsers.Count}/{TotalUsersCount} tài khoản";
 
     public string ClassSearchQuery
     {
@@ -392,6 +420,19 @@ public sealed class AdminCenterViewModel : ObservableObject
         var q = AccountSearchQuery.Trim();
         foreach (var u in _allUsers)
         {
+            var matchesFilter = SelectedAccountFilter switch
+            {
+                AccountFilterOption.Students => u.Role == UserRole.SinhVien,
+                AccountFilterOption.Lecturers => u.Role == UserRole.GiangVien,
+                AccountFilterOption.Admins => u.Role == UserRole.Admin,
+                AccountFilterOption.Locked => u.IsLocked,
+                _ => true
+            };
+            if (!matchesFilter)
+            {
+                continue;
+            }
+
             if (!string.IsNullOrEmpty(q)
                 && !u.Username.Contains(q, StringComparison.OrdinalIgnoreCase)
                 && !u.FullName.Contains(q, StringComparison.OrdinalIgnoreCase)
@@ -401,6 +442,8 @@ public sealed class AdminCenterViewModel : ObservableObject
             }
             FilteredUsers.Add(u);
         }
+
+        OnPropertyChanged(nameof(FilteredUsersSummary));
     }
 
     private void ApplyClassFilter()
