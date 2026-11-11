@@ -1,0 +1,26 @@
+<Window x:Class="DauChat.Client.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DauChat.Client.UI"
+        mc:Ignorable="d"
+        Title="DAU Chat - Trường Đại học Kiến trúc Đà Nẵng"
+        Height="600"
+        Width="960"
+        WindowStartupLocation="CenterScreen">
+    <Grid Background="#F5F7FA">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock Text="DAU CHAT - ĐẠI HỌC KIẾN TRÚC ĐÀ NẴNG"
+                       FontSize="22"
+                       FontWeight="Bold"
+                       Foreground="#1E3A8A"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="Khung giao diện WPF (.NET 10.0 LTS) - TV1 Leader (Team 5)"
+                       FontSize="14"
+                       Foreground="#475569"
+                       Margin="0,8,0,0"
+                       HorizontalAlignment="Center" />
+        </StackPanel>
+    </Grid>
+</Window>

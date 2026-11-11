@@ -1,0 +1,20 @@
+﻿## .NET / Visual Studio
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+## DAU Chat Local & Temp Data
+LocalData/
+ServerTempQueue/
+*.part
+*.jsonl
+*.idx
+*.db
+*.db-shm
+*.db-wal
