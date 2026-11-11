@@ -1,0 +1,792 @@
+<UserControl x:Class="DauChat.Client.UI.Views.AdminCenterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="820"
+             d:DesignWidth="1120"
+             Background="{StaticResource CanvasBgBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="74" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0"
+                Background="{StaticResource SurfaceWhiteBrush}"
+                BorderBrush="{StaticResource BorderSubtleBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="28,0">
+            <Grid>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="QUẢN TRỊ VIÊN HỆ THỐNG (ADMIN ONLY)"
+                               FontSize="10.5"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource DauRedTextBrush}" />
+                    <TextBlock Text="Trung tâm quản trị"
+                               FontSize="20"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               Margin="0,2,0,0" />
+                </StackPanel>
+
+                <!-- 4 Tab con điều hướng phân hệ Admin -->
+                <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
+                    <RadioButton Content="Tài khoản &amp; RBAC"
+                                 Style="{StaticResource FilterPillRadioStyle}"
+                                 IsChecked="{Binding ActiveTab, Converter={StaticResource EnumEquals}, ConverterParameter=OverviewAndUsers, Mode=OneWay}"
+                                 Command="{Binding SwitchTabCommand}"
+                                 CommandParameter="OverviewAndUsers"
+                                 Margin="0,0,8,0" />
+                    <RadioButton Content="Lớp học"
+                                 Style="{StaticResource FilterPillRadioStyle}"
+                                 IsChecked="{Binding ActiveTab, Converter={StaticResource EnumEquals}, ConverterParameter=Classes, Mode=OneWay}"
+                                 Command="{Binding SwitchTabCommand}"
+                                 CommandParameter="Classes"
+                                 Margin="0,0,8,0" />
+                    <RadioButton Content="Phòng chat"
+                                 Style="{StaticResource FilterPillRadioStyle}"
+                                 IsChecked="{Binding ActiveTab, Converter={StaticResource EnumEquals}, ConverterParameter=Rooms, Mode=OneWay}"
+                                 Command="{Binding SwitchTabCommand}"
+                                 CommandParameter="Rooms"
+                                 Margin="0,0,8,0" />
+                    <RadioButton Content="Socket Server &amp; Log"
+                                 Style="{StaticResource FilterPillRadioStyle}"
+                                 IsChecked="{Binding ActiveTab, Converter={StaticResource EnumEquals}, ConverterParameter=ServerMonitoring, Mode=OneWay}"
+                                 Command="{Binding SwitchTabCommand}"
+                                 CommandParameter="ServerMonitoring" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel MaxWidth="1120" Margin="28,24,28,36">
+                <!-- 4 Thẻ KPI -->
+                <Grid Margin="0,0,0,22">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
+                        <StackPanel>
+                            <Border Width="38" Height="38" CornerRadius="11" Background="{StaticResource BlueSoftBrush}" HorizontalAlignment="Left">
+                                <Path Data="{StaticResource IconUsers}" Stroke="{StaticResource BlueBrush}" StrokeThickness="1.9" Width="18" Height="18" Stretch="Uniform" />
+                            </Border>
+                            <TextBlock Text="{Binding TotalUsersCount}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,12,0,0" />
+                            <TextBlock Text="Tài khoản cấp phát" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}">
+                        <StackPanel>
+                            <Border Width="38" Height="38" CornerRadius="11" Background="{StaticResource AmberSoftBrush}" HorizontalAlignment="Left">
+                                <Path Data="{StaticResource IconBookOpen}" Stroke="{StaticResource AmberBrush}" StrokeThickness="1.9" Width="18" Height="18" Stretch="Uniform" />
+                            </Border>
+                            <TextBlock Text="{Binding TotalClassesCount}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,12,0,0" />
+                            <TextBlock Text="{Binding ClassesAndRoomsSummary}" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="4" Style="{StaticResource CardBorderStyle}">
+                        <StackPanel>
+                            <Border Width="38" Height="38" CornerRadius="11" Background="{StaticResource EmeraldSoftBrush}" HorizontalAlignment="Left">
+                                <Path Data="{StaticResource IconShieldCheck}" Stroke="{StaticResource EmeraldTextBrush}" StrokeThickness="1.9" Width="18" Height="18" Stretch="Uniform" />
+                            </Border>
+                            <TextBlock Text="{Binding OnlineClientsCount}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,12,0,0" />
+                            <TextBlock Text="Client đang kết nối" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="6" Style="{StaticResource CardBorderStyle}">
+                        <StackPanel>
+                            <Border Width="38" Height="38" CornerRadius="11" Background="{StaticResource DauRedSoftBrush}" HorizontalAlignment="Left">
+                                <Path Data="{StaticResource IconServer}" Stroke="{StaticResource DauRedTextBrush}" StrokeThickness="1.9" Width="18" Height="18" Stretch="Uniform" />
+                            </Border>
+                            <TextBlock Text="{Binding TotalBytesText}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,12,0,0" />
+                            <TextBlock Text="{Binding PacketsTodayText, StringFormat='Lưu lượng TCP ({0} gói)'}" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- TAB 1: TỔNG QUAN & TÀI KHOẢN RBAC -->
+                <Grid Visibility="{Binding ActiveTab, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=OverviewAndUsers}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.5*" />
+                        <ColumnDefinition Width="20" />
+                        <ColumnDefinition Width="0.72*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Bảng Tài khoản cấp phát nội bộ -->
+                    <Border Grid.Column="0"
+                            Background="{StaticResource SurfaceWhiteBrush}"
+                            BorderBrush="{StaticResource BorderSubtleBrush}"
+                            BorderThickness="1"
+                            CornerRadius="16">
+                        <StackPanel>
+                            <Border BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,14,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Danh sách tài khoản (Demo nội bộ)" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                        <TextBlock Text="Admin tạo nick, sửa hồ sơ, gán quyền RBAC, đặt lại mật khẩu hoặc khóa phiên online" FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Width="170" Height="36" Background="{StaticResource SurfaceInputBrush}" CornerRadius="9" Padding="10,0" Margin="0,0,10,0">
+                                            <Grid>
+                                                <TextBlock Text="Lọc mã / tên..." FontSize="11.5" Foreground="{StaticResource TextFaintBrush}" VerticalAlignment="Center" IsHitTestVisible="False"
+                                                           Visibility="{Binding AccountSearchQuery, Converter={StaticResource InverseStringToVis}}" />
+                                                <TextBox Text="{Binding AccountSearchQuery, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" FontSize="12" VerticalContentAlignment="Center" />
+                                            </Grid>
+                                        </Border>
+                                        <Button Style="{StaticResource PrimaryButtonStyle}"
+                                                MinHeight="36"
+                                                Padding="14,7"
+                                                Command="{Binding OpenCreateAccountCommand}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource IconUserPlus}" Stroke="White" StrokeThickness="2" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" />
+                                                <TextBlock Text="Cấp tài khoản" Margin="7,0,0,0" FontSize="12" FontWeight="SemiBold" Foreground="White" />
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <ItemsControl ItemsSource="{Binding FilteredUsers}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="18,13">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="11" Margin="0,0,12,0"
+                                                        Background="{Binding AvatarBgHex, Converter={StaticResource HexToBrush}}">
+                                                    <TextBlock Text="{Binding Initials}" FontSize="11" FontWeight="Bold" Foreground="{Binding AvatarFgHex, Converter={StaticResource HexToBrush}}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,10,0">
+                                                    <TextBlock Text="{Binding FullName}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                        <TextBlock Text="{Binding Username}" FontFamily="{StaticResource MonoFont}" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" />
+                                                        <TextBlock Text="{Binding ClassCaption, StringFormat=' • {0}'}" FontSize="10.5" Foreground="{StaticResource TextFaintBrush}" TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                </StackPanel>
+
+                                                <Button Grid.Column="2"
+                                                        Margin="0,0,10,0"
+                                                        VerticalAlignment="Center"
+                                                        Cursor="Hand"
+                                                        BorderThickness="0"
+                                                        Background="Transparent"
+                                                        ToolTip="Bấm để chuyển vai trò RBAC"
+                                                        Command="{Binding DataContext.CycleRoleCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <Border CornerRadius="8" Padding="9,4" Background="{Binding RoleBadgeBgHex, Converter={StaticResource HexToBrush}}">
+                                                        <TextBlock Text="{Binding Role, Converter={StaticResource RoleDisplay}}"
+                                                                   FontSize="10.5"
+                                                                   FontWeight="Bold"
+                                                                   Foreground="{Binding RoleBadgeFgHex, Converter={StaticResource HexToBrush}}" />
+                                                    </Border>
+                                                </Button>
+
+                                                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0" Width="76">
+                                                    <Ellipse Width="7" Height="7" Fill="{StaticResource EmeraldBrush}" Visibility="{Binding IsActive, Converter={StaticResource BoolToVis}}" />
+                                                    <Ellipse Width="7" Height="7" Fill="{StaticResource DauRedBrush}" Visibility="{Binding IsLocked, Converter={StaticResource BoolToVis}}" />
+                                                    <TextBlock Text="{Binding Status, Converter={StaticResource AccountStatusDisplay}}" FontSize="11" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" Margin="6,0,0,0" />
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Button Style="{StaticResource SecondaryButtonStyle}"
+                                                            MinHeight="30"
+                                                            Padding="8,4"
+                                                            FontSize="11"
+                                                            Command="{Binding DataContext.OpenEditAccountCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="Chỉnh sửa họ tên, email, lớp và vai trò">
+                                                        <Path Data="{StaticResource IconEdit}" Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.9" Width="13" Height="13" Stretch="Uniform" />
+                                                    </Button>
+                                                    <Button Margin="6,0,0,0"
+                                                            Content="Reset MK"
+                                                            Style="{StaticResource SecondaryButtonStyle}"
+                                                            MinHeight="30"
+                                                            Padding="9,4"
+                                                            FontSize="11"
+                                                            Command="{Binding DataContext.ResetPasswordCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="Cấp lại mật khẩu mặc định" />
+                                                    <Button Margin="6,0,0,0"
+                                                            Style="{StaticResource SecondaryButtonStyle}"
+                                                            MinHeight="30"
+                                                            Padding="9,4"
+                                                            FontSize="11"
+                                                            IsEnabled="{Binding CanToggleLock}"
+                                                            Command="{Binding DataContext.ToggleLockAccountCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}">
+                                                        <Button.Content>
+                                                            <TextBlock FontSize="11" FontWeight="SemiBold">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Text" Value="Khóa" />
+                                                                        <Setter Property="Foreground" Value="{StaticResource DangerTextBrush}" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsLocked}" Value="True">
+                                                                                <Setter Property="Text" Value="Mở khóa" />
+                                                                                <Setter Property="Foreground" Value="{StaticResource EmeraldTextBrush}" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </Button.Content>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Cột phải: Thẻ Socket Server + Truy cập nhanh -->
+                    <StackPanel Grid.Column="2">
+                        <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,18">
+                            <StackPanel>
+                                <Grid>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="40" Height="40" CornerRadius="12" Background="{StaticResource EmeraldSoftBrush}">
+                                            <Path Data="{StaticResource IconServer}" Stroke="{StaticResource EmeraldTextBrush}" StrokeThickness="1.9" Width="19" Height="19" Stretch="Uniform" />
+                                        </Border>
+                                        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Socket Server" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{Binding ServerStatusSummary}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <CheckBox HorizontalAlignment="Right"
+                                              VerticalAlignment="Center"
+                                              Style="{StaticResource ServerToggleSwitchStyle}"
+                                              IsChecked="{Binding IsServerRunning, Mode=OneWay}"
+                                              Command="{Binding ToggleServerCommand}" />
+                                </Grid>
+
+                                <UniformGrid Columns="2" Margin="0,18,0,0">
+                                    <Border Background="{StaticResource SurfaceSubtleBrush}" CornerRadius="11" Padding="11" Margin="0,0,5,5">
+                                        <StackPanel>
+                                            <TextBlock Text="ĐỊA CHỈ IP" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextFaintBrush}" />
+                                            <TextBlock Text="{Binding LiveListenIp}" FontFamily="{StaticResource MonoFont}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Background="{StaticResource SurfaceSubtleBrush}" CornerRadius="11" Padding="11" Margin="5,0,0,5">
+                                        <StackPanel>
+                                            <TextBlock Text="CỔNG TCP" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextFaintBrush}" />
+                                            <TextBlock Text="{Binding LiveListenPort}" FontFamily="{StaticResource MonoFont}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" Margin="0,4,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Background="{StaticResource SurfaceSubtleBrush}" CornerRadius="11" Padding="11" Margin="0,5,5,0">
+                                        <StackPanel>
+                                            <TextBlock Text="UPTIME" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextFaintBrush}" />
+                                            <TextBlock Text="{Binding ServerUptimeText}" FontFamily="{StaticResource MonoFont}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Background="{StaticResource SurfaceSubtleBrush}" CornerRadius="11" Padding="11" Margin="5,5,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="PENDING QUEUE" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextFaintBrush}" />
+                                            <TextBlock Text="{Binding PendingQueueCount, StringFormat='{}{0} gói'}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Điều hướng quản trị nhanh" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10" />
+                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                        HorizontalContentAlignment="Left"
+                                        Margin="0,0,0,8"
+                                        Content="→  Quản lý Lớp học &amp; Sinh viên"
+                                        Command="{Binding SwitchTabCommand}"
+                                        CommandParameter="Classes" />
+                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                        HorizontalContentAlignment="Left"
+                                        Margin="0,0,0,8"
+                                        Content="→  Quản lý Phòng chat &amp; Thành viên"
+                                        Command="{Binding SwitchTabCommand}"
+                                        CommandParameter="Rooms" />
+                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                        HorizontalContentAlignment="Left"
+                                        Content="→  Cấu hình TCP &amp; Nhật ký Server"
+                                        Command="{Binding SwitchTabCommand}"
+                                        CommandParameter="ServerMonitoring" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+
+                <!-- TAB 2: QUẢN LÝ LỚP HỌC -->
+                <Border Visibility="{Binding ActiveTab, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Classes}"
+                        Background="{StaticResource SurfaceWhiteBrush}"
+                        BorderBrush="{StaticResource BorderSubtleBrush}"
+                        BorderThickness="1"
+                        CornerRadius="16">
+                    <StackPanel>
+                        <Border BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,14,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Quản lý Lớp học &amp; Phân công Giảng viên" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Tạo lớp, phân công giảng viên phụ trách, quản lý danh sách sinh viên và đồng bộ phòng chat" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="210" Height="36" Background="{StaticResource SurfaceInputBrush}" CornerRadius="9" Padding="10,0" Margin="0,0,10,0">
+                                        <Grid>
+                                            <TextBlock Text="Tìm mã lớp, tên, GV..." FontSize="11.5" Foreground="{StaticResource TextFaintBrush}" VerticalAlignment="Center" IsHitTestVisible="False"
+                                                       Visibility="{Binding ClassSearchQuery, Converter={StaticResource InverseStringToVis}}" />
+                                            <TextBox Text="{Binding ClassSearchQuery, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" FontSize="12" VerticalContentAlignment="Center" />
+                                        </Grid>
+                                    </Border>
+                                    <Button Style="{StaticResource PrimaryButtonStyle}"
+                                            MinHeight="36"
+                                            Padding="14,7"
+                                            Command="{Binding OpenCreateClassCommand}"
+                                            Content="+ Thêm lớp học" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <ItemsControl ItemsSource="{Binding FilteredClasses}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,15">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Border Grid.Column="0" Background="{StaticResource DauRedSoftBrush}" CornerRadius="11" Padding="12,8" Margin="0,0,14,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding ClassCode}" FontFamily="{StaticResource MonoFont}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" />
+                                            </Border>
+
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding ClassName}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                                    <Border Margin="8,0,0,0" Background="{StaticResource SurfaceInputBrush}" CornerRadius="6" Padding="7,2" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding JoinCode}" FontFamily="{StaticResource MonoFont}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0">
+                                                    <Run Text="{Binding Department, Mode=OneWay}" />
+                                                    <Run Text=" • GV: " />
+                                                    <Run Text="{Binding LecturerName, Mode=OneWay}" />
+                                                    <Run Text="{Binding MemberCount, StringFormat=' • {0} thành viên', Mode=OneWay}" />
+                                                </TextBlock>
+                                            </StackPanel>
+
+                                            <Border Grid.Column="2" VerticalAlignment="Center" Margin="0,0,14,0" CornerRadius="8" Padding="9,5"
+                                                    Background="{StaticResource EmeraldSoftBrush}"
+                                                    Visibility="{Binding HasLinkedRoom, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="Đã đồng bộ phòng" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource EmeraldTextBrush}" />
+                                            </Border>
+
+                                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                                        MinHeight="34"
+                                                        Padding="11,5"
+                                                        Margin="0,0,8,0"
+                                                        Content="{Binding MemberCount, StringFormat='Thành viên ({0})'}"
+                                                        Command="{Binding DataContext.OpenManageClassMembersCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                                        MinHeight="34"
+                                                        Padding="11,5"
+                                                        Margin="0,0,8,0"
+                                                        Content="Sửa"
+                                                        Command="{Binding DataContext.OpenEditClassCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                                        MinHeight="34"
+                                                        Padding="11,5"
+                                                        Content="Đồng bộ phòng"
+                                                        Command="{Binding DataContext.LinkClassRoomCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Margin="8,0,0,0"
+                                                        Width="34" Height="34"
+                                                        Style="{StaticResource IconButtonStyle}"
+                                                        Command="{Binding DataContext.DeleteClassCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="Xóa lớp học">
+                                                    <Path Data="{StaticResource IconTrash}" Stroke="{StaticResource DangerTextBrush}" StrokeThickness="1.8" Width="15" Height="15" Stretch="Uniform" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="Không tìm thấy lớp học phù hợp."
+                                   Margin="24"
+                                   HorizontalAlignment="Center"
+                                   FontSize="12.5"
+                                   Foreground="{StaticResource TextFaintBrush}"
+                                   Visibility="{Binding FilteredClasses.Count, Converter={StaticResource ZeroToVis}}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- TAB 3: QUẢN LÝ PHÒNG CHAT -->
+                <Border Visibility="{Binding ActiveTab, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Rooms}"
+                        Background="{StaticResource SurfaceWhiteBrush}"
+                        BorderBrush="{StaticResource BorderSubtleBrush}"
+                        BorderThickness="1"
+                        CornerRadius="16">
+                    <StackPanel>
+                        <Border BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,14,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Quản lý Phòng chat &amp; Nhóm học tập" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Tạo phòng, chỉnh sửa tên / mô tả, điều phối thành viên và giải tán phòng chat" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="210" Height="36" Background="{StaticResource SurfaceInputBrush}" CornerRadius="9" Padding="10,0" Margin="0,0,10,0">
+                                        <Grid>
+                                            <TextBlock Text="Tìm phòng, chủ phòng, mã..." FontSize="11.5" Foreground="{StaticResource TextFaintBrush}" VerticalAlignment="Center" IsHitTestVisible="False"
+                                                       Visibility="{Binding RoomSearchQuery, Converter={StaticResource InverseStringToVis}}" />
+                                            <TextBox Text="{Binding RoomSearchQuery, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" FontSize="12" VerticalContentAlignment="Center" />
+                                        </Grid>
+                                    </Border>
+                                    <Button Style="{StaticResource PrimaryButtonStyle}"
+                                            MinHeight="36"
+                                            Padding="14,7"
+                                            Command="{Binding OpenCreateRoomCommand}"
+                                            Content="+ Tạo phòng chat" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <ItemsControl ItemsSource="{Binding FilteredRooms}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,15">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Border Grid.Column="0" Background="{StaticResource SurfaceInputBrush}" CornerRadius="11" Padding="11,8" Margin="0,0,14,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding RoomTypeLabel}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            </Border>
+
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding RoomName}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                                    <Border Margin="8,0,0,0" Background="{StaticResource DauRedSoftBrush}" CornerRadius="6" Padding="7,2" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding JoinCode}" FontFamily="{StaticResource MonoFont}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" />
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding MetaCaption}" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0" />
+                                                <TextBlock Text="{Binding Description}" FontSize="11" Foreground="{StaticResource TextFaintBrush}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                                        MinHeight="34"
+                                                        Padding="11,5"
+                                                        Margin="0,0,8,0"
+                                                        Content="{Binding MemberCount, StringFormat='Thành viên ({0})'}"
+                                                        Command="{Binding DataContext.OpenManageRoomMembersCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                                        MinHeight="34"
+                                                        Padding="11,5"
+                                                        Margin="0,0,8,0"
+                                                        Content="Mở phòng"
+                                                        Command="{Binding DataContext.OpenRoomInChatCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                                        MinHeight="34"
+                                                        Padding="11,5"
+                                                        Content="Sửa"
+                                                        Command="{Binding DataContext.OpenEditRoomCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Margin="8,0,0,0"
+                                                        Width="34" Height="34"
+                                                        Style="{StaticResource IconButtonStyle}"
+                                                        Command="{Binding DataContext.DeleteRoomCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="Giải tán / Xóa phòng">
+                                                    <Path Data="{StaticResource IconTrash}" Stroke="{StaticResource DangerTextBrush}" StrokeThickness="1.8" Width="15" Height="15" Stretch="Uniform" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="Chưa có phòng chat nào phù hợp bộ lọc."
+                                   Margin="24"
+                                   HorizontalAlignment="Center"
+                                   FontSize="12.5"
+                                   Foreground="{StaticResource TextFaintBrush}"
+                                   Visibility="{Binding FilteredRooms.Count, Converter={StaticResource ZeroToVis}}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- TAB 4: SOCKET SERVER & GIÁM SÁT KẾT NỐI -->
+                <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=ServerMonitoring}">
+                    <!-- Cấu hình TCP Endpoint & Lưu lượng Byte -->
+                    <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.3*" />
+                                <ColumnDefinition Width="20" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Cấu hình TCP Socket Server" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <TextBlock Text="Thiết lập địa chỉ IP và cổng lắng nghe TCP, khởi động hoặc tạm dừng dịch vụ." FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,12" />
+
+                                <StackPanel Orientation="Horizontal">
+                                    <StackPanel Width="180" Margin="0,0,10,0">
+                                        <TextBlock Text="Địa chỉ IP lắng nghe" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                                 MinHeight="38"
+                                                 FontFamily="{StaticResource MonoFont}"
+                                                 Text="{Binding ServerListenIp, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+
+                                    <StackPanel Width="110" Margin="0,0,12,0">
+                                        <TextBlock Text="Cổng TCP" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                                 MinHeight="38"
+                                                 FontFamily="{StaticResource MonoFont}"
+                                                 Text="{Binding ServerListenPortText, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+
+                                    <Button VerticalAlignment="Bottom"
+                                            Style="{StaticResource PrimaryButtonStyle}"
+                                            MinHeight="38"
+                                            Padding="14,7"
+                                            Margin="0,0,8,0"
+                                            Command="{Binding ApplyServerConfigCommand}"
+                                            Content="Áp dụng &amp; Chạy" />
+
+                                    <Button VerticalAlignment="Bottom"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            MinHeight="38"
+                                            Padding="12,7"
+                                            Command="{Binding ToggleServerCommand}">
+                                        <Button.Content>
+                                            <TextBlock FontSize="12" FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="Bật Server" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsServerRunning}" Value="True">
+                                                                <Setter Property="Text" Value="Dừng Server" />
+                                                                <Setter Property="Foreground" Value="{StaticResource DangerTextBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Button.Content>
+                                    </Button>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Border Grid.Column="2"
+                                    Background="{StaticResource SurfaceSubtleBrush}"
+                                    BorderBrush="{StaticResource BorderLightBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="12"
+                                    Padding="16"
+                                    VerticalAlignment="Center">
+                                <StackPanel>
+                                    <TextBlock Text="LƯU LƯỢNG TRUYỀN TẢI &amp; PHIÊN" FontSize="10" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" />
+                                    <Grid Margin="0,8,0,0">
+                                        <TextBlock Text="{Binding TotalBytesText}" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                        <Border HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="8" Padding="9,4" Background="{StaticResource EmeraldSoftBrush}">
+                                            <TextBlock Text="{Binding ServerStatusSummary}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource EmeraldTextBrush}" />
+                                        </Border>
+                                    </Grid>
+                                    <TextBlock Text="{Binding BytesBreakdownText}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" />
+                                    <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0">
+                                        <Run Text="{Binding LiveListenIp, Mode=OneWay}" />
+                                        <Run Text=":" />
+                                        <Run Text="{Binding LiveListenPort, Mode=OneWay}" />
+                                        <Run Text=" • Uptime: " />
+                                        <Run Text="{Binding ServerUptimeText, Mode=OneWay}" />
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="20" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Client đang kết nối -->
+                        <Border Grid.Column="0"
+                                Background="{StaticResource SurfaceWhiteBrush}"
+                                BorderBrush="{StaticResource BorderSubtleBrush}"
+                                BorderThickness="1"
+                                CornerRadius="16">
+                            <StackPanel>
+                                <Border BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,16">
+                                    <Grid>
+                                        <StackPanel>
+                                            <TextBlock Text="Client đang trực tuyến" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{Binding LiveListenPort, StringFormat='TCP Port {0} • Theo dõi Heartbeat 15s'}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                        <Button HorizontalAlignment="Right"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                MinHeight="32"
+                                                Padding="11,5"
+                                                Content="Dọn PendingQueue"
+                                                Command="{Binding CleanupPendingQueueCommand}" />
+                                    </Grid>
+                                </Border>
+
+                                <ItemsControl ItemsSource="{Binding ConnectedClients}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="18,12">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Ellipse Width="8" Height="8" Fill="{Binding Status, Converter={StaticResource PresenceToBrush}}" VerticalAlignment="Center" />
+                                                            <TextBlock Text="{Binding Username}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="8,0,0,0" />
+                                                            <TextBlock Text="{Binding IpEndPoint, StringFormat=' • {0}'}" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                        <TextBlock FontSize="10.5" Foreground="{StaticResource TextFaintBrush}" Margin="16,3,0,0">
+                                                            <Run Text="{Binding PacketsSent, StringFormat='Gửi: {0}', Mode=OneWay}" />
+                                                            <Run Text=" • " />
+                                                            <Run Text="{Binding PacketsReceived, StringFormat='Nhận: {0} gói', Mode=OneWay}" />
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                    <Button Grid.Column="1"
+                                                            Style="{StaticResource SecondaryButtonStyle}"
+                                                            MinHeight="30"
+                                                            Padding="10,4"
+                                                            FontSize="11"
+                                                            Foreground="{StaticResource DangerTextBrush}"
+                                                            Content="Ngắt phiên"
+                                                            Command="{Binding DataContext.KickClientCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <TextBlock Text="Chưa có client nào kết nối trực tuyến."
+                                           Margin="20,24"
+                                           HorizontalAlignment="Center"
+                                           FontSize="12"
+                                           Foreground="{StaticResource TextFaintBrush}"
+                                           Visibility="{Binding ConnectedClients.Count, Converter={StaticResource ZeroToVis}}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Nhật ký kết nối Server -->
+                        <Border Grid.Column="2"
+                                Background="{StaticResource SurfaceWhiteBrush}"
+                                BorderBrush="{StaticResource BorderSubtleBrush}"
+                                BorderThickness="1"
+                                CornerRadius="16">
+                            <StackPanel>
+                                <Border BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,16">
+                                    <Grid>
+                                        <StackPanel>
+                                            <TextBlock Text="Nhật ký kết nối Socket" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Ghi nhận kết nối, PacketAck, từ chối khóa &amp; ngắt phiên" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                        <Button HorizontalAlignment="Right"
+                                                Style="{StaticResource IconButtonStyle}"
+                                                Width="32" Height="32"
+                                                Command="{Binding RefreshCommand}"
+                                                ToolTip="Làm mới log kết nối">
+                                            <Path Data="{StaticResource IconRefresh}" Stroke="{StaticResource TextMutedBrush}" StrokeThickness="1.9" Width="14" Height="14" Stretch="Uniform" />
+                                        </Button>
+                                    </Grid>
+                                </Border>
+
+                                <ItemsControl ItemsSource="{Binding ConnectionLogs}" Padding="16,12">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{StaticResource SurfaceSubtleBrush}"
+                                                    CornerRadius="10"
+                                                    Padding="12,9"
+                                                    Margin="0,0,0,8">
+                                                <StackPanel>
+                                                    <Grid>
+                                                        <TextBlock Text="{Binding EventType}"
+                                                                   FontFamily="{StaticResource MonoFont}"
+                                                                   FontSize="10.5"
+                                                                   FontWeight="Bold"
+                                                                   Foreground="{StaticResource DauRedTextBrush}" />
+                                                        <TextBlock HorizontalAlignment="Right"
+                                                                   Text="{Binding IpEndPoint}"
+                                                                   FontFamily="{StaticResource MonoFont}"
+                                                                   FontSize="10.5"
+                                                                   Foreground="{StaticResource TextFaintBrush}" />
+                                                    </Grid>
+                                                    <TextBlock Text="{Binding Description}"
+                                                               FontSize="12"
+                                                               Foreground="{StaticResource TextBodyBrush}"
+                                                               TextWrapping="Wrap"
+                                                               Margin="0,4,0,0" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

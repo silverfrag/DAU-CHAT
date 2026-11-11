@@ -1,0 +1,852 @@
+<UserControl x:Class="DauChat.Client.UI.Views.ModalsOverlay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="820"
+             d:DesignWidth="1280">
+
+    <UserControl.Resources>
+        <Style x:Key="ModalCheckBoxBoxStyle" TargetType="CheckBox">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid Background="Transparent">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="Box"
+                                    Grid.Column="0"
+                                    Width="18"
+                                    Height="18"
+                                    CornerRadius="5"
+                                    Background="White"
+                                    BorderBrush="{StaticResource BorderStrongBrush}"
+                                    BorderThickness="1.5"
+                                    VerticalAlignment="Center">
+                                <Path x:Name="CheckMark"
+                                      Data="{StaticResource IconCheck}"
+                                      Stroke="White"
+                                      StrokeThickness="2.4"
+                                      Width="11"
+                                      Height="11"
+                                      Stretch="Uniform"
+                                      Visibility="Collapsed"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                            </Border>
+                            <ContentPresenter Grid.Column="1" VerticalAlignment="Center" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="{StaticResource DauRedBrush}" />
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource DauRedBrush}" />
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource DauRedBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- 1. Modal Tạo / Sửa phòng trò chuyện -->
+        <Grid Background="{StaticResource ModalBackdropBrush}"
+              Visibility="{Binding IsCreateRoomOpen, Converter={StaticResource BoolToVis}}">
+            <Border MaxWidth="470"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{StaticResource SurfaceWhiteBrush}"
+                    CornerRadius="22"
+                    Padding="28">
+                <StackPanel MinWidth="400">
+                    <Grid>
+                        <StackPanel>
+                            <TextBlock Text="{Binding RoomModalBadge}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" />
+                            <TextBlock Text="{Binding RoomModalTitle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,3,0,0" />
+                        </StackPanel>
+                        <Button HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Command="{Binding CloseModalsCommand}">
+                            <Path Data="{StaticResource IconClose}" Stroke="{StaticResource TextMutedBrush}" StrokeThickness="2" Width="16" Height="16" Stretch="Uniform" />
+                        </Button>
+                    </Grid>
+
+                    <TextBlock Text="Tên phòng học / nhóm đồ án" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,18,0,6" />
+                    <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding NewRoomName, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <Grid Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Loại phòng" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6" />
+                            <ComboBox ItemsSource="{Binding AvailableRoomTypes}"
+                                      SelectedItem="{Binding SelectedRoomType}"
+                                      Height="42"
+                                      Padding="10,8"
+                                      FontFamily="{StaticResource PrimaryFont}"
+                                      FontSize="12.5">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Converter={StaticResource RoomTypeDisplay}}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Gắn lớp học (đồng bộ TV)" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6" />
+                            <ComboBox ItemsSource="{Binding RoomClassOptions}"
+                                      SelectedItem="{Binding SelectedRoomClassOption}"
+                                      DisplayMemberPath="DisplayName"
+                                      IsEnabled="{Binding IsRoomClassPickerEnabled}"
+                                      Height="42"
+                                      Padding="10,8"
+                                      FontFamily="{StaticResource PrimaryFont}"
+                                      FontSize="12.5" />
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="Mô tả phòng" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,14,0,6" />
+                    <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                             MinHeight="78"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             VerticalContentAlignment="Top"
+                             Text="{Binding NewRoomDescription, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0">
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="Hủy" Command="{Binding CloseModalsCommand}" Margin="0,0,10,0" />
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Content="{Binding RoomModalSubmitLabel}" Command="{Binding SubmitCreateRoomCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 2. Modal Hồ sơ cá nhân, Đổi mật khẩu & Đăng xuất -->
+        <Grid Background="{StaticResource ModalBackdropBrush}"
+              Visibility="{Binding IsProfileOpen, Converter={StaticResource BoolToVis}}">
+            <Border MaxWidth="500"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{StaticResource SurfaceWhiteBrush}"
+                    CornerRadius="22"
+                    Padding="28">
+                <StackPanel MinWidth="420">
+                    <Grid>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="48" Height="48" CornerRadius="15" Background="{StaticResource DarkAvatarBrush}">
+                                <TextBlock Text="{Binding CurrentUserInitials}" FontSize="15" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding CurrentUserName}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <TextBlock FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0">
+                                    <Run Text="{Binding CurrentUsername, Mode=OneWay}" />
+                                    <Run Text=" • " />
+                                    <Run Text="{Binding CurrentUserRoleLabel, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </StackPanel>
+                        <Button HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Command="{Binding CloseModalsCommand}">
+                            <Path Data="{StaticResource IconClose}" Stroke="{StaticResource TextMutedBrush}" StrokeThickness="2" Width="16" Height="16" Stretch="Uniform" />
+                        </Button>
+                    </Grid>
+
+                    <!-- Trạng thái trực tuyến -->
+                    <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                        <TextBlock Text="Trạng thái:" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <Button Command="{Binding SetPresenceCommand}" CommandParameter="Online" Margin="0,0,8,0">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+                                    <Setter Property="MinHeight" Value="32" />
+                                    <Setter Property="Padding" Value="12,4" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentPresence, Converter={StaticResource EnumEquals}, ConverterParameter=Online}" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource EmeraldSoftBrush}" />
+                                            <Setter Property="BorderBrush" Value="{StaticResource EmeraldBrush}" />
+                                            <Setter Property="Foreground" Value="{StaticResource EmeraldTextBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="8" Height="8" Fill="{StaticResource EmeraldBrush}" VerticalAlignment="Center" />
+                                <TextBlock Text="Đang hoạt động" Margin="7,0,0,0" FontSize="12" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding SetPresenceCommand}" CommandParameter="Busy">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+                                    <Setter Property="MinHeight" Value="32" />
+                                    <Setter Property="Padding" Value="12,4" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentPresence, Converter={StaticResource EnumEquals}, ConverterParameter=Busy}" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource AmberSoftBrush}" />
+                                            <Setter Property="BorderBrush" Value="{StaticResource AmberBrush}" />
+                                            <Setter Property="Foreground" Value="{StaticResource AmberBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="8" Height="8" Fill="{StaticResource AmberBrush}" VerticalAlignment="Center" />
+                                <TextBlock Text="Đang bận" Margin="7,0,0,0" FontSize="12" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Cập nhật hồ sơ -->
+                    <Border Background="{StaticResource SurfaceSubtleBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="14" Padding="14" Margin="0,16,0,0">
+                        <StackPanel>
+                            <TextBlock Text="HỒ SƠ CÁ NHÂN" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" />
+                            <TextBlock Text="Họ và tên" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,10,0,4" />
+                            <TextBox Style="{StaticResource ModernTextBoxStyle}" MinHeight="36" Text="{Binding ProfileFullName, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Text="Email nội bộ" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,10,0,4" />
+                            <TextBox Style="{StaticResource ModernTextBoxStyle}" MinHeight="36" Text="{Binding ProfileEmail, UpdateSourceTrigger=PropertyChanged}" />
+                            <Button Margin="0,12,0,0" HorizontalAlignment="Right" Style="{StaticResource SecondaryButtonStyle}" MinHeight="34" Content="Lưu thông tin hồ sơ" Command="{Binding SaveProfileCommand}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Đổi mật khẩu -->
+                    <Border Background="{StaticResource SurfaceSubtleBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="14" Padding="14" Margin="0,12,0,0">
+                        <StackPanel>
+                            <TextBlock Text="ĐỔI MẬT KHẨU" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Mật khẩu cũ" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4" />
+                                    <PasswordBox x:Name="OldPwdBox" Style="{StaticResource ModernPasswordBoxStyle}" MinHeight="36" PasswordChanged="OldPwdBox_PasswordChanged" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Mật khẩu mới" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4" />
+                                    <PasswordBox x:Name="NewPwdBox" Style="{StaticResource ModernPasswordBoxStyle}" MinHeight="36" PasswordChanged="NewPwdBox_PasswordChanged" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Text="Xác nhận" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4" />
+                                    <PasswordBox x:Name="ConfirmPwdBox" Style="{StaticResource ModernPasswordBoxStyle}" MinHeight="36" PasswordChanged="ConfirmPwdBox_PasswordChanged" />
+                                </StackPanel>
+                            </Grid>
+                            <Button Margin="0,12,0,0" HorizontalAlignment="Right" Style="{StaticResource PrimaryButtonStyle}" MinHeight="34" Content="Cập nhật mật khẩu" Command="{Binding ChangePasswordCommand}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Grid Margin="0,18,0,0">
+                        <Button HorizontalAlignment="Left" Style="{StaticResource DangerGhostButtonStyle}" Command="{Binding LogoutCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconLogOut}" Stroke="{StaticResource DangerTextBrush}" StrokeThickness="2" Width="15" Height="15" Stretch="Uniform" VerticalAlignment="Center" />
+                                <TextBlock Text="Đăng xuất khỏi phiên" Margin="8,0,0,0" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource DangerTextBrush}" />
+                            </StackPanel>
+                        </Button>
+                        <Button HorizontalAlignment="Right" Style="{StaticResource SecondaryButtonStyle}" Content="Đóng" Command="{Binding CloseModalsCommand}" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 3. Modal Admin Tạo / Sửa tài khoản -->
+        <Grid Background="{StaticResource ModalBackdropBrush}"
+              Visibility="{Binding IsCreateAccountOpen, Converter={StaticResource BoolToVis}}">
+            <Border MaxWidth="470"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{StaticResource SurfaceWhiteBrush}"
+                    CornerRadius="22"
+                    Padding="28">
+                <StackPanel MinWidth="400">
+                    <Grid>
+                        <StackPanel>
+                            <TextBlock Text="{Binding AccountModalBadge}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" />
+                            <TextBlock Text="{Binding AccountModalTitle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,3,0,0" />
+                        </StackPanel>
+                        <Button HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Command="{Binding CloseModalsCommand}">
+                            <Path Data="{StaticResource IconClose}" Stroke="{StaticResource TextMutedBrush}" StrokeThickness="2" Width="16" Height="16" Stretch="Uniform" />
+                        </Button>
+                    </Grid>
+
+                    <TextBlock Text="Mã tài khoản / MSSV (VD: sv230099 hoặc gv_demo03)" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,18,0,5" />
+                    <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                             IsEnabled="{Binding IsUsernameEditable}"
+                             Text="{Binding NewAccUsername, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBlock Text="Họ và tên" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,12,0,5" />
+                    <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding NewAccFullName, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBlock Text="Email nội bộ" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,12,0,5" />
+                    <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding NewAccEmail, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Vai trò RBAC" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5" />
+                            <ComboBox ItemsSource="{Binding AssignableRoles}"
+                                      SelectedItem="{Binding NewAccRole}"
+                                      Height="42"
+                                      Padding="10,8"
+                                      FontFamily="{StaticResource PrimaryFont}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Converter={StaticResource RoleDisplay}}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Visibility="{Binding IsInitialPasswordVisible, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Mật khẩu ban đầu" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5" />
+                            <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding NewAccInitialPassword, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="Gắn vào lớp học" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,12,0,5" />
+                    <ComboBox ItemsSource="{Binding AccountClassOptions}"
+                              SelectedItem="{Binding NewAccClassOption}"
+                              DisplayMemberPath="DisplayName"
+                              Height="42"
+                              Padding="10,8"
+                              FontFamily="{StaticResource PrimaryFont}" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="Hủy" Command="{Binding CloseModalsCommand}" Margin="0,0,10,0" />
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Content="{Binding AccountModalSubmitLabel}" Command="{Binding SubmitCreateAccountCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 4. Modal Khóa tài khoản nhập lý do -->
+        <Grid Background="{StaticResource ModalBackdropBrush}"
+              Visibility="{Binding IsLockModalOpen, Converter={StaticResource BoolToVis}}">
+            <Border MaxWidth="420"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{StaticResource SurfaceWhiteBrush}"
+                    CornerRadius="22"
+                    Padding="26">
+                <StackPanel MinWidth="360">
+                    <TextBlock Text="KHÓA TÀI KHOẢN &amp; NGẮT PHIÊN" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" />
+                    <TextBlock Text="{Binding LockTargetAccount.FullName, StringFormat='Khóa tài khoản {0}'}" FontSize="17" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" />
+
+                    <TextBlock Text="Lý do khóa (sẽ hiển thị khi người dùng đăng nhập)" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,16,0,6" />
+                    <TextBox Style="{StaticResource ModernTextBoxStyle}" MinHeight="64" TextWrapping="Wrap" Text="{Binding LockReasonText, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="Hủy" Command="{Binding CloseModalsCommand}" Margin="0,0,10,0" />
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Content="Xác nhận khóa" Command="{Binding SubmitLockAccountCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 5. Modal Tạo / Sửa lớp học phần (Admin & Giảng viên) -->
+        <Grid Background="{StaticResource ModalBackdropBrush}"
+              Visibility="{Binding IsCreateClassOpen, Converter={StaticResource BoolToVis}}">
+            <Border MaxWidth="480"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{StaticResource SurfaceWhiteBrush}"
+                    CornerRadius="22"
+                    Padding="28">
+                <StackPanel MinWidth="400">
+                    <Grid>
+                        <StackPanel>
+                            <TextBlock Text="{Binding ClassModalBadge}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" />
+                            <TextBlock Text="{Binding ClassModalTitle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,3,0,0" />
+                        </StackPanel>
+                        <Button HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Command="{Binding CloseModalsCommand}">
+                            <Path Data="{StaticResource IconClose}" Stroke="{StaticResource TextMutedBrush}" StrokeThickness="2" Width="16" Height="16" Stretch="Uniform" />
+                        </Button>
+                    </Grid>
+
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Mã lớp (VD: 23CT2)" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5" />
+                            <TextBox Style="{StaticResource ModernTextBoxStyle}" FontFamily="{StaticResource MonoFont}" Text="{Binding NewClassCode, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Niên khóa" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5" />
+                            <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding NewClassAcademicYear, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="Tên lớp / Môn học" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,12,0,5" />
+                    <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding NewClassName, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBlock Text="Khoa / Bộ môn" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,12,0,5" />
+                    <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding NewClassDepartment, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <StackPanel Visibility="{Binding IsLecturerPickerVisible, Converter={StaticResource BoolToVis}}" Margin="0,12,0,0">
+                        <TextBlock Text="Giảng viên phụ trách" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5" />
+                        <ComboBox ItemsSource="{Binding AvailableLecturers}"
+                                  SelectedItem="{Binding SelectedClassLecturer}"
+                                  DisplayMemberPath="FullName"
+                                  Height="42"
+                                  Padding="10,8"
+                                  FontFamily="{StaticResource PrimaryFont}" />
+                    </StackPanel>
+
+                    <Border Background="{StaticResource SurfaceSubtleBrush}" BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="1" CornerRadius="12" Padding="12" Margin="0,14,0,0">
+                        <StackPanel>
+                            <CheckBox Style="{StaticResource ModalCheckBoxBoxStyle}" IsChecked="{Binding AllowClassJoinByCode}" Margin="0,0,0,8">
+                                <TextBlock Text="Cho phép sinh viên tự tham gia bằng Mã lớp (Google Classroom)" Margin="10,0,0,0" FontSize="12" FontWeight="Medium" Foreground="{StaticResource TextBodyBrush}" />
+                            </CheckBox>
+                            <CheckBox Style="{StaticResource ModalCheckBoxBoxStyle}"
+                                      IsChecked="{Binding AutoCreateClassRoom}"
+                                      Visibility="{Binding IsAutoCreateRoomOptionVisible, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="Tự động tạo &amp; đồng bộ phòng chat cho lớp học này" Margin="10,0,0,0" FontSize="12" FontWeight="Medium" Foreground="{StaticResource TextBodyBrush}" />
+                            </CheckBox>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="Hủy" Command="{Binding CloseModalsCommand}" Margin="0,0,10,0" />
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Content="{Binding ClassModalSubmitLabel}" Command="{Binding SubmitCreateClassCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 6. Modal Thêm thành viên hàng loạt (2 Tab: Chọn CheckBox & Nhập danh sách MSSV / CSV) -->
+        <Grid Background="{StaticResource ModalBackdropBrush}"
+              Visibility="{Binding IsAddMemberOpen, Converter={StaticResource BoolToVis}}">
+            <Border MaxWidth="620"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{StaticResource SurfaceWhiteBrush}"
+                    CornerRadius="22"
+                    Padding="28">
+                <StackPanel MinWidth="540">
+                    <Grid>
+                        <StackPanel>
+                            <TextBlock Text="{Binding BulkModalBadge}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" />
+                            <TextBlock Text="{Binding BulkModalTitle}" FontSize="19" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <Button HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Command="{Binding CloseModalsCommand}">
+                            <Path Data="{StaticResource IconClose}" Stroke="{StaticResource TextMutedBrush}" StrokeThickness="2" Width="16" Height="16" Stretch="Uniform" />
+                        </Button>
+                    </Grid>
+
+                    <!-- 2 Tab Pill -->
+                    <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                        <RadioButton Content="Chọn theo danh sách"
+                                     Style="{StaticResource FilterPillRadioStyle}"
+                                     IsChecked="{Binding ActiveBulkAddTab, Converter={StaticResource EnumEquals}, ConverterParameter=SelectFromList, Mode=OneWay}"
+                                     Command="{Binding SwitchBulkAddTabCommand}"
+                                     CommandParameter="SelectFromList"
+                                     Margin="0,0,8,0" />
+                        <RadioButton Content="Nhập danh sách MSSV / CSV"
+                                     Style="{StaticResource FilterPillRadioStyle}"
+                                     IsChecked="{Binding ActiveBulkAddTab, Converter={StaticResource EnumEquals}, ConverterParameter=PasteOrCsv, Mode=OneWay}"
+                                     Command="{Binding SwitchBulkAddTabCommand}"
+                                     CommandParameter="PasteOrCsv" />
+                    </StackPanel>
+
+                    <!-- TAB 1: CHỌN CHECKBOX -->
+                    <StackPanel Margin="0,14,0,0"
+                                Visibility="{Binding ActiveBulkAddTab, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=SelectFromList}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="184" />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Height="38" Background="{StaticResource SurfaceInputBrush}" CornerRadius="10" Padding="12,0">
+                                <Grid>
+                                    <TextBlock Text="Tìm theo tên, MSSV hoặc tên lớp..." FontSize="12" Foreground="{StaticResource TextFaintBrush}" VerticalAlignment="Center" IsHitTestVisible="False"
+                                               Visibility="{Binding CandidateSearchQuery, Converter={StaticResource InverseStringToVis}}" />
+                                    <TextBox Text="{Binding CandidateSearchQuery, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" FontSize="12.5" VerticalContentAlignment="Center" />
+                                </Grid>
+                            </Border>
+                            <ComboBox Grid.Column="2"
+                                      ItemsSource="{Binding CandidateClassFilterOptions}"
+                                      SelectedItem="{Binding CandidateClassFilterOption}"
+                                      DisplayMemberPath="DisplayName"
+                                      Height="38"
+                                      Padding="10,6"
+                                      FontFamily="{StaticResource PrimaryFont}"
+                                      FontSize="12" />
+                        </Grid>
+
+                        <Grid Margin="0,12,0,8">
+                            <TextBlock Text="{Binding SelectedCandidatesCount, StringFormat='Đã chọn {0} thành viên'}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource DauRedTextBrush}"
+                                       VerticalAlignment="Center" />
+                            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                        MinHeight="30"
+                                        Padding="10,4"
+                                        FontSize="11.5"
+                                        Margin="0,0,6,0"
+                                        Content="Chọn tất cả đang lọc"
+                                        Command="{Binding SelectAllFilteredCandidatesCommand}" />
+                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                        MinHeight="30"
+                                        Padding="10,4"
+                                        FontSize="11.5"
+                                        Content="Bỏ chọn"
+                                        Command="{Binding DeselectAllCandidatesCommand}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Border BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Background="{StaticResource SurfaceSubtleBrush}">
+                            <ScrollViewer Height="250" VerticalScrollBarVisibility="Auto" Padding="8">
+                                <StackPanel>
+                                    <ItemsControl ItemsSource="{Binding FilteredCandidates}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="White"
+                                                        BorderBrush="{StaticResource BorderLightBrush}"
+                                                        BorderThickness="1"
+                                                        CornerRadius="10"
+                                                        Padding="12,9"
+                                                        Margin="0,0,0,6">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <CheckBox Grid.Column="0"
+                                                                  Style="{StaticResource ModalCheckBoxBoxStyle}"
+                                                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                  Margin="0,0,12,0" />
+
+                                                        <Border Grid.Column="1" Width="34" Height="34" CornerRadius="10" Margin="0,0,11,0"
+                                                                Background="{Binding AvatarBgHex, Converter={StaticResource HexToBrush}}">
+                                                            <TextBlock Text="{Binding Initials}" FontSize="10.5" FontWeight="Bold" Foreground="{Binding AvatarFgHex, Converter={StaticResource HexToBrush}}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        </Border>
+
+                                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                            <TextBlock Text="{Binding FullName}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                            <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0">
+                                                                <Run Text="{Binding Username, Mode=OneWay}" />
+                                                                <Run Text=" • " />
+                                                                <Run Text="{Binding ClassCaption, Mode=OneWay}" />
+                                                            </TextBlock>
+                                                        </StackPanel>
+
+                                                        <Border Grid.Column="3" VerticalAlignment="Center" CornerRadius="7" Padding="8,3"
+                                                                Background="{Binding RoleBadgeBgHex, Converter={StaticResource HexToBrush}}">
+                                                            <TextBlock Text="{Binding Role, Converter={StaticResource RoleDisplay}}" FontSize="10" FontWeight="Bold" Foreground="{Binding RoleBadgeFgHex, Converter={StaticResource HexToBrush}}" />
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <TextBlock Text="Không còn sinh viên hoặc giảng viên nào chưa tham gia khớp bộ lọc."
+                                               Margin="12,32"
+                                               HorizontalAlignment="Center"
+                                               FontSize="12"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Visibility="{Binding FilteredCandidates.Count, Converter={StaticResource ZeroToVis}}" />
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Đóng" Command="{Binding CloseModalsCommand}" Margin="0,0,10,0" />
+                            <Button Style="{StaticResource PrimaryButtonStyle}" Command="{Binding SubmitSelectedCandidatesCommand}">
+                                <TextBlock Text="{Binding SelectedCandidatesCount, StringFormat='Thêm {0} thành viên đã chọn'}" FontWeight="SemiBold" Foreground="White" />
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- TAB 2: NHẬP DANH SÁCH MSSV / CSV -->
+                    <StackPanel Margin="0,14,0,0"
+                                Visibility="{Binding ActiveBulkAddTab, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=PasteOrCsv}">
+                        <TextBlock Text="Dán danh sách Mã sinh viên / Tên đăng nhập (phân cách bằng xuống dòng, dấu phẩy hoặc chấm phẩy) hoặc nhập trực tiếp từ tệp CSV."
+                                   FontSize="12"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   TextWrapping="Wrap" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,8">
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    MinHeight="32"
+                                    Padding="12,5"
+                                    Margin="0,0,8,0"
+                                    Command="{Binding ImportMssvFileCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource IconUpload}" Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.9" Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
+                                    <TextBlock Text="Nhập file .csv / .txt" Margin="6,0,0,0" FontSize="11.5" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    MinHeight="32"
+                                    Padding="12,5"
+                                    Content="Điền nhanh SV mẫu chưa tham gia"
+                                    Command="{Binding FillAvailableStudentsMssvCommand}" />
+                        </StackPanel>
+
+                        <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                 FontFamily="{StaticResource MonoFont}"
+                                 FontSize="12.5"
+                                 Height="135"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 VerticalContentAlignment="Top"
+                                 VerticalScrollBarVisibility="Auto"
+                                 Text="{Binding BatchMssvText, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <!-- Kết quả đối chiếu tự động -->
+                        <Border Background="{StaticResource SurfaceSubtleBrush}"
+                                BorderBrush="{StaticResource BorderSubtleBrush}"
+                                BorderThickness="1"
+                                CornerRadius="12"
+                                Padding="12"
+                                Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock FontSize="12" FontWeight="Bold" Foreground="{StaticResource EmeraldTextBrush}">
+                                    <Run Text="{Binding MatchedMssvCount, StringFormat='Hợp lệ sẵn sàng thêm: {0} tài khoản', Mode=OneWay}" />
+                                </TextBlock>
+                                <TextBlock Text="{Binding MatchedPreviewText}"
+                                           FontSize="11.5"
+                                           Foreground="{StaticResource TextBodyBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,4,0,0"
+                                           Visibility="{Binding MatchedPreviewText, Converter={StaticResource StringToVis}}" />
+                                <TextBlock Text="{Binding AlreadyMembersNote}"
+                                           FontSize="11"
+                                           Foreground="{StaticResource AmberBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,4,0,0"
+                                           Visibility="{Binding AlreadyMembersNote, Converter={StaticResource StringToVis}}" />
+                                <TextBlock Text="{Binding UnmatchedTokensNote}"
+                                           FontSize="11"
+                                           Foreground="{StaticResource DangerTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,4,0,0"
+                                           Visibility="{Binding UnmatchedTokensNote, Converter={StaticResource StringToVis}}" />
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Đóng" Command="{Binding CloseModalsCommand}" Margin="0,0,10,0" />
+                            <Button Style="{StaticResource PrimaryButtonStyle}" Command="{Binding SubmitBatchMssvCommand}">
+                                <TextBlock Text="{Binding MatchedMssvCount, StringFormat='Thêm {0} MSSV hợp lệ'}" FontWeight="SemiBold" Foreground="White" />
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 7. Modal Admin Quản lý thành viên Lớp / Phòng -->
+        <Grid Background="{StaticResource ModalBackdropBrush}"
+              Visibility="{Binding IsMembersManagerOpen, Converter={StaticResource BoolToVis}}">
+            <Border MaxWidth="540"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{StaticResource SurfaceWhiteBrush}"
+                    CornerRadius="22"
+                    Padding="28">
+                <StackPanel MinWidth="460">
+                    <Grid>
+                        <StackPanel Margin="0,0,36,0">
+                            <TextBlock Text="{Binding MembersManagerBadge}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" />
+                            <TextBlock Text="{Binding MembersManagerTitle}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <Button HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Command="{Binding CloseModalsCommand}">
+                            <Path Data="{StaticResource IconClose}" Stroke="{StaticResource TextMutedBrush}" StrokeThickness="2" Width="16" Height="16" Stretch="Uniform" />
+                        </Button>
+                    </Grid>
+
+                    <Grid Margin="0,14,0,10">
+                        <TextBlock Text="{Binding ManagedMembers.Count, StringFormat='Hiện có {0} thành viên'}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                        <Button HorizontalAlignment="Right"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                MinHeight="34"
+                                Padding="13,6"
+                                Command="{Binding OpenBulkAddFromManagerCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconUserPlus}" Stroke="White" StrokeThickness="2" Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
+                                <TextBlock Text="Thêm thành viên" Margin="6,0,0,0" FontSize="11.5" FontWeight="SemiBold" Foreground="White" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <Border BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Background="{StaticResource SurfaceSubtleBrush}">
+                        <ScrollViewer Height="290" VerticalScrollBarVisibility="Auto" Padding="8">
+                            <StackPanel>
+                                <ItemsControl ItemsSource="{Binding ManagedMembers}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="White" BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="1" CornerRadius="10" Padding="12,9" Margin="0,0,0,6">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <Border Grid.Column="0" Width="34" Height="34" CornerRadius="10" Margin="0,0,11,0"
+                                                            Background="{Binding AvatarBgHex, Converter={StaticResource HexToBrush}}">
+                                                        <TextBlock Text="{Binding Initials}" FontSize="10.5" FontWeight="Bold" Foreground="{Binding AvatarFgHex, Converter={StaticResource HexToBrush}}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Border>
+
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                        <TextBlock Text="{Binding FullName}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                                        <TextBlock Text="{Binding Username}" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                                                    </StackPanel>
+
+                                                    <Border Grid.Column="2" VerticalAlignment="Center" CornerRadius="7" Padding="8,3" Margin="0,0,10,0"
+                                                            Background="{Binding RoleBadgeBgHex, Converter={StaticResource HexToBrush}}">
+                                                        <TextBlock Text="{Binding Role, Converter={StaticResource RoleDisplay}}" FontSize="10" FontWeight="Bold" Foreground="{Binding RoleBadgeFgHex, Converter={StaticResource HexToBrush}}" />
+                                                    </Border>
+
+                                                    <Button Grid.Column="3"
+                                                            Style="{StaticResource SecondaryButtonStyle}"
+                                                            MinHeight="28"
+                                                            Padding="9,3"
+                                                            FontSize="11"
+                                                            Foreground="{StaticResource DangerTextBrush}"
+                                                            Content="Xóa"
+                                                            Visibility="{Binding CanBeRemoved, Converter={StaticResource BoolToVis}}"
+                                                            Command="{Binding DataContext.RemoveManagedMemberCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="Chưa có thành viên nào."
+                                           Margin="16,36"
+                                           HorizontalAlignment="Center"
+                                           FontSize="12"
+                                           Foreground="{StaticResource TextFaintBrush}"
+                                           Visibility="{Binding ManagedMembers.Count, Converter={StaticResource ZeroToVis}}" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+
+                    <Button HorizontalAlignment="Right" Margin="0,16,0,0" Style="{StaticResource SecondaryButtonStyle}" Content="Đóng" Command="{Binding CloseModalsCommand}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 8. Modal Sinh viên Tham gia lớp học bằng Mã lớp (Kiểu Google Classroom) -->
+        <Grid Background="{StaticResource ModalBackdropBrush}"
+              Visibility="{Binding IsJoinByCodeOpen, Converter={StaticResource BoolToVis}}">
+            <Border MaxWidth="460"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{StaticResource SurfaceWhiteBrush}"
+                    CornerRadius="22"
+                    Padding="28">
+                <StackPanel MinWidth="390">
+                    <Grid>
+                        <StackPanel>
+                            <TextBlock Text="LỚP HỌC NỘI BỘ DAU" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" />
+                            <TextBlock Text="Tham gia lớp bằng Mã lớp" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,3,0,0" />
+                        </StackPanel>
+                        <Button HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Command="{Binding CloseModalsCommand}">
+                            <Path Data="{StaticResource IconClose}" Stroke="{StaticResource TextMutedBrush}" StrokeThickness="2" Width="16" Height="16" Stretch="Uniform" />
+                        </Button>
+                    </Grid>
+
+                    <TextBlock Text="Nhập mã lớp do Giảng viên cung cấp (VD: 23XD1-KC8B). Hệ thống sẽ tự động ghi danh bạn vào lớp và mở phòng chat học phần tương ứng."
+                               FontSize="12"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,12,0,14" />
+
+                    <TextBlock Text="Mã tham gia lớp học" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6" />
+                    <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                             FontFamily="{StaticResource MonoFont}"
+                             FontSize="16"
+                             FontWeight="Bold"
+                             Text="{Binding JoinCodeInput, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <!-- Gợi ý lớp Demo chưa tham gia -->
+                    <StackPanel Visibility="{Binding AvailableJoinCodeHints.Count, Converter={StaticResource NotZeroToVis}}" Margin="0,16,0,0">
+                        <TextBlock Text="LỚP ĐANG MỞ MÃ THAM GIA (BẤM ĐỂ ĐIỀN NHANH)" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextFaintBrush}" Margin="0,0,0,8" />
+                        <ItemsControl ItemsSource="{Binding AvailableJoinCodeHints}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Margin="0,0,0,6"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            MinHeight="40"
+                                            Padding="12,6"
+                                            HorizontalContentAlignment="Stretch"
+                                            Command="{Binding DataContext.PickJoinCodeHintCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
+                                        <Grid>
+                                            <StackPanel VerticalAlignment="Center" Margin="0,0,105,0">
+                                                <TextBlock Text="{Binding ClassName}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding LecturerName}" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" />
+                                            </StackPanel>
+                                            <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="{StaticResource DauRedSoftBrush}" CornerRadius="7" Padding="8,4">
+                                                <TextBlock Text="{Binding JoinCode}" FontFamily="{StaticResource MonoFont}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" />
+                                            </Border>
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="Hủy" Command="{Binding CloseModalsCommand}" Margin="0,0,10,0" />
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Content="Tham gia lớp ngay" Command="{Binding SubmitJoinByCodeCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 9. Modal Ghim thông báo giảng viên -->
+        <Grid Background="{StaticResource ModalBackdropBrush}"
+              Visibility="{Binding IsPinModalOpen, Converter={StaticResource BoolToVis}}">
+            <Border MaxWidth="460"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{StaticResource SurfaceWhiteBrush}"
+                    CornerRadius="22"
+                    Padding="26">
+                <StackPanel MinWidth="380">
+                    <TextBlock Text="THÔNG BÁO GIẢNG VIÊN" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" />
+                    <TextBlock Text="Ghim thông báo lên đầu phòng" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,3,0,0" />
+
+                    <TextBox Margin="0,16,0,0"
+                             Style="{StaticResource ModernTextBoxStyle}"
+                             MinHeight="90"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             VerticalContentAlignment="Top"
+                             Text="{Binding PinContentText, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="Hủy" Command="{Binding CloseModalsCommand}" Margin="0,0,10,0" />
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Content="Ghim thông báo" Command="{Binding SubmitPinNoticeCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

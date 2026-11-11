@@ -1,0 +1,290 @@
+<UserControl x:Class="DauChat.Client.UI.Views.FilesLibraryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="800"
+             d:DesignWidth="1120"
+             Background="{StaticResource CanvasBgBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="74" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0"
+                Background="{StaticResource SurfaceWhiteBrush}"
+                BorderBrush="{StaticResource BorderSubtleBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="28,0">
+            <Grid>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="KHO TỆP LOCAL (FILE_MANIFEST.JSONL)"
+                               FontSize="10.5"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource DauRedTextBrush}" />
+                    <TextBlock Text="Thư viện tài liệu"
+                               FontSize="20"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               Margin="0,2,0,0" />
+                </StackPanel>
+
+                <Border HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Background="{StaticResource EmeraldSoftBrush}"
+                        CornerRadius="10"
+                        Padding="12,7">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="{StaticResource IconShieldCheck}"
+                              Stroke="{StaticResource EmeraldTextBrush}"
+                              StrokeThickness="2"
+                              Width="15" Height="15" Stretch="Uniform"
+                              VerticalAlignment="Center" />
+                        <TextBlock Text="Xác thực SHA-256 toàn vẹn"
+                                   Margin="7,0,0,0"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource EmeraldTextBrush}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Nội dung chính -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel MaxWidth="1080" Margin="28,24,28,36">
+                <!-- 3 Thẻ thống kê -->
+                <Grid Margin="0,0,0,22">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="44" Height="44" CornerRadius="12" Background="{StaticResource DauRedSoftBrush}">
+                                <Path Data="{StaticResource IconFolderOpen}" Stroke="{StaticResource DauRedTextBrush}" StrokeThickness="1.9" Width="20" Height="20" Stretch="Uniform" />
+                            </Border>
+                            <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="Tất cả tài liệu" FontSize="12" Foreground="{StaticResource TextMutedBrush}" />
+                                <TextBlock Text="{Binding TotalFilesCount, StringFormat='{}{0} tệp'}" FontSize="19" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="44" Height="44" CornerRadius="12" Background="{StaticResource BlueSoftBrush}">
+                                <Path Data="{StaticResource IconDownload}" Stroke="{StaticResource BlueBrush}" StrokeThickness="1.9" Width="20" Height="20" Stretch="Uniform" />
+                            </Border>
+                            <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="Tải về trong 7 ngày" FontSize="12" Foreground="{StaticResource TextMutedBrush}" />
+                                <TextBlock Text="{Binding RecentFilesCount, StringFormat='{}{0} tệp'}" FontSize="19" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="4" Style="{StaticResource CardBorderStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="44" Height="44" CornerRadius="12" Background="{StaticResource AmberSoftBrush}">
+                                <Path Data="{StaticResource IconHardDrive}" Stroke="{StaticResource AmberBrush}" StrokeThickness="1.9" Width="20" Height="20" Stretch="Uniform" />
+                            </Border>
+                            <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="Dung lượng kho tệp" FontSize="12" Foreground="{StaticResource TextMutedBrush}" />
+                                <TextBlock Text="{Binding TotalSizeLabel}" FontSize="19" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Bảng kho tệp -->
+                <Border Background="{StaticResource SurfaceWhiteBrush}"
+                        BorderBrush="{StaticResource BorderSubtleBrush}"
+                        BorderThickness="1"
+                        CornerRadius="16">
+                    <StackPanel>
+                        <!-- Toolbar tìm kiếm & lọc FileCategory -->
+                        <Border BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,16">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <Grid Grid.Row="0" Margin="0,0,0,14">
+                                    <TextBlock Text="Tệp trên thiết bị"
+                                               FontSize="14.5"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center" />
+
+                                    <Border HorizontalAlignment="Right"
+                                            Width="280"
+                                            Height="38"
+                                            Background="{StaticResource SurfaceInputBrush}"
+                                            CornerRadius="10"
+                                            Padding="12,0">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Path Grid.Column="0" Data="{StaticResource IconSearch}" Stroke="{StaticResource TextFaintBrush}" StrokeThickness="2" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" />
+                                            <Grid Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="Tìm tên tệp hoặc mã SHA-256..."
+                                                           FontSize="12"
+                                                           Foreground="{StaticResource TextFaintBrush}"
+                                                           IsHitTestVisible="False"
+                                                           Visibility="{Binding SearchKeyword, Converter={StaticResource InverseStringToVis}}" />
+                                                <TextBox Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
+                                                         Background="Transparent"
+                                                         BorderThickness="0"
+                                                         FontSize="12.5" />
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+
+                                <WrapPanel Grid.Row="1">
+                                    <RadioButton Content="Tất cả"
+                                                 Style="{StaticResource FilterPillRadioStyle}"
+                                                 IsChecked="{Binding SelectedCategory, Converter={StaticResource EnumEquals}, ConverterParameter=All, Mode=OneWay}"
+                                                 Command="{Binding SelectCategoryCommand}"
+                                                 CommandParameter="All"
+                                                 Margin="0,0,8,0" />
+                                    <RadioButton Content="Bản vẽ CAD"
+                                                 Style="{StaticResource FilterPillRadioStyle}"
+                                                 IsChecked="{Binding SelectedCategory, Converter={StaticResource EnumEquals}, ConverterParameter=CAD, Mode=OneWay}"
+                                                 Command="{Binding SelectCategoryCommand}"
+                                                 CommandParameter="CAD"
+                                                 Margin="0,0,8,0" />
+                                    <RadioButton Content="PDF"
+                                                 Style="{StaticResource FilterPillRadioStyle}"
+                                                 IsChecked="{Binding SelectedCategory, Converter={StaticResource EnumEquals}, ConverterParameter=PDF, Mode=OneWay}"
+                                                 Command="{Binding SelectCategoryCommand}"
+                                                 CommandParameter="PDF"
+                                                 Margin="0,0,8,0" />
+                                    <RadioButton Content="Tệp nén ZIP"
+                                                 Style="{StaticResource FilterPillRadioStyle}"
+                                                 IsChecked="{Binding SelectedCategory, Converter={StaticResource EnumEquals}, ConverterParameter=Archive, Mode=OneWay}"
+                                                 Command="{Binding SelectCategoryCommand}"
+                                                 CommandParameter="Archive"
+                                                 Margin="0,0,8,0" />
+                                    <RadioButton Content="Hình ảnh"
+                                                 Style="{StaticResource FilterPillRadioStyle}"
+                                                 IsChecked="{Binding SelectedCategory, Converter={StaticResource EnumEquals}, ConverterParameter=Image, Mode=OneWay}"
+                                                 Command="{Binding SelectCategoryCommand}"
+                                                 CommandParameter="Image"
+                                                 Margin="0,0,8,0" />
+                                    <RadioButton Content="Văn bản"
+                                                 Style="{StaticResource FilterPillRadioStyle}"
+                                                 IsChecked="{Binding SelectedCategory, Converter={StaticResource EnumEquals}, ConverterParameter=Document, Mode=OneWay}"
+                                                 Command="{Binding SelectCategoryCommand}"
+                                                 CommandParameter="Document" />
+                                </WrapPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Danh sách tệp -->
+                        <ItemsControl ItemsSource="{Binding Files}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,14">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Border Grid.Column="0"
+                                                    Width="42" Height="42"
+                                                    CornerRadius="12"
+                                                    Margin="0,0,14,0"
+                                                    Background="{Binding IconBgHex, Converter={StaticResource HexToBrush}}">
+                                                <TextBlock Text="{Binding CategoryLabel}"
+                                                           FontSize="9"
+                                                           FontWeight="Bold"
+                                                           Foreground="{Binding IconFgHex, Converter={StaticResource HexToBrush}}"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           TextAlignment="Center" />
+                                            </Border>
+
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                <TextBlock Text="{Binding FileName}"
+                                                           FontSize="13"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding SizeAndTimeText}"
+                                                           FontSize="11"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           Margin="0,3,0,0" />
+                                            </StackPanel>
+
+                                            <Border Grid.Column="2"
+                                                    Margin="0,0,16,0"
+                                                    VerticalAlignment="Center"
+                                                    Background="{StaticResource EmeraldSoftBrush}"
+                                                    CornerRadius="7"
+                                                    Padding="8,4">
+                                                <TextBlock Text="{Binding Sha256Short}"
+                                                           FontFamily="{StaticResource MonoFont}"
+                                                           FontSize="10.5"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource EmeraldTextBrush}" />
+                                            </Border>
+
+                                            <TextBlock Grid.Column="3"
+                                                       Text="{Binding ConversationName}"
+                                                       FontSize="11.5"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,14,0" />
+
+                                            <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="Mở tệp"
+                                                        Style="{StaticResource SecondaryButtonStyle}"
+                                                        MinHeight="32"
+                                                        Padding="12,5"
+                                                        FontSize="11.5"
+                                                        Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Margin="6,0,0,0"
+                                                        Width="32" Height="32"
+                                                        Style="{StaticResource IconButtonStyle}"
+                                                        Command="{Binding DataContext.DeleteFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="Xóa tệp khỏi máy">
+                                                    <Path Data="{StaticResource IconTrash}" Stroke="{StaticResource DangerTextBrush}" StrokeThickness="1.8" Width="15" Height="15" Stretch="Uniform" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="Không có tệp nào khớp bộ lọc hiện tại."
+                                   Margin="24,36"
+                                   HorizontalAlignment="Center"
+                                   FontSize="13"
+                                   Foreground="{StaticResource TextFaintBrush}"
+                                   Visibility="{Binding Files.Count, Converter={StaticResource ZeroToVis}}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
+

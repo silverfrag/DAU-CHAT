@@ -1,0 +1,243 @@
+<UserControl x:Class="DauChat.Client.UI.Views.StorageBackupView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="800"
+             d:DesignWidth="1120"
+             Background="{StaticResource CanvasBgBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="74" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0"
+                Background="{StaticResource SurfaceWhiteBrush}"
+                BorderBrush="{StaticResource BorderSubtleBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="28,0">
+            <Grid>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="DỮ LIỆU LOCAL-FIRST"
+                               FontSize="10.5"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource DauRedTextBrush}" />
+                    <TextBlock Text="Lưu trữ &amp; sao lưu"
+                               FontSize="20"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               Margin="0,2,0,0" />
+                </StackPanel>
+
+                <TextBlock HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           Text="{Binding LocalFolderPathLabel}"
+                           FontFamily="{StaticResource MonoFont}"
+                           FontSize="11.5"
+                           Foreground="{StaticResource TextMutedBrush}" />
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel MaxWidth="1080" Margin="28,24,28,36">
+                <!-- Thẻ tổng dung lượng -->
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
+                    <StackPanel>
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="Dung lượng dữ liệu Local đã dùng" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" />
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                    <TextBlock Text="{Binding UsedCapacityText}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding QuotaCapacityText, StringFormat=' / {0} hạn mức thiết bị'}" FontSize="14" Foreground="{StaticResource TextFaintBrush}" VerticalAlignment="Bottom" Margin="4,0,0,4" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Border HorizontalAlignment="Right" VerticalAlignment="Top" Background="{StaticResource EmeraldSoftBrush}" CornerRadius="10" Padding="12,7">
+                                <TextBlock Text="Ổ đĩa đồng bộ ổn định" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource EmeraldTextBrush}" />
+                            </Border>
+                        </Grid>
+
+                        <!-- Thanh phân bổ dung lượng nhiều màu -->
+                        <Border Height="12" CornerRadius="6" Background="{StaticResource SurfaceInputBrush}" Margin="0,20,0,0" ClipToBounds="True">
+                            <Grid x:Name="TotalStorageTrackGrid">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Background="{StaticResource DauRedBrush}">
+                                        <Border.Width>
+                                            <MultiBinding Converter="{StaticResource PercentWidth}">
+                                                <Binding Path="DocsSharePercent" />
+                                                <Binding ElementName="TotalStorageTrackGrid" Path="ActualWidth" />
+                                            </MultiBinding>
+                                        </Border.Width>
+                                    </Border>
+                                    <Border Background="{StaticResource AmberBrush}">
+                                        <Border.Width>
+                                            <MultiBinding Converter="{StaticResource PercentWidth}">
+                                                <Binding Path="ImagesSharePercent" />
+                                                <Binding ElementName="TotalStorageTrackGrid" Path="ActualWidth" />
+                                            </MultiBinding>
+                                        </Border.Width>
+                                    </Border>
+                                    <Border Background="{StaticResource BlueBrush}">
+                                        <Border.Width>
+                                            <MultiBinding Converter="{StaticResource PercentWidth}">
+                                                <Binding Path="MessagesSharePercent" />
+                                                <Binding ElementName="TotalStorageTrackGrid" Path="ActualWidth" />
+                                            </MultiBinding>
+                                        </Border.Width>
+                                    </Border>
+                                    <Border Background="{StaticResource VioletBrush}">
+                                        <Border.Width>
+                                            <MultiBinding Converter="{StaticResource PercentWidth}">
+                                                <Binding Path="OtherSharePercent" />
+                                                <Binding ElementName="TotalStorageTrackGrid" Path="ActualWidth" />
+                                            </MultiBinding>
+                                        </Border.Width>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Chú giải 4 nhóm -->
+                        <UniformGrid Columns="4" Margin="0,18,0,0">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
+                                <Ellipse Width="10" Height="10" Fill="{StaticResource DauRedBrush}" />
+                                <TextBlock Text="Tài liệu (PDF/CAD)" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="8,0,8,0" />
+                                <TextBlock Text="{Binding DocumentsBytesText}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
+                                <Ellipse Width="10" Height="10" Fill="{StaticResource AmberBrush}" />
+                                <TextBlock Text="Hình ảnh" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="8,0,8,0" />
+                                <TextBlock Text="{Binding ImagesBytesText}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
+                                <Ellipse Width="10" Height="10" Fill="{StaticResource BlueBrush}" />
+                                <TextBlock Text="Log .jsonl" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="8,0,8,0" />
+                                <TextBlock Text="{Binding MessagesBytesText}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="10" Height="10" Fill="{StaticResource VioletBrush}" />
+                                <TextBlock Text="Tệp nén &amp; khác" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="8,0,8,0" />
+                                <TextBlock Text="{Binding OtherBytesText}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            </StackPanel>
+                        </UniformGrid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Chia 2 cột dưới -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.35*" />
+                        <ColumnDefinition Width="20" />
+                        <ColumnDefinition Width="0.85*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Cột trái: Dung lượng theo từng phòng học -->
+                    <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Dung lượng theo phòng học &amp; hội thoại" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="Bao gồm file đính kèm và tệp chỉ mục .jsonl / .idx trên máy hiện tại" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,20" />
+
+                            <ItemsControl ItemsSource="{Binding RoomBreakdowns}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,0,0,18">
+                                            <Grid Margin="0,0,0,6">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding DisplayName}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding DetailText}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                                                </StackPanel>
+                                                <TextBlock HorizontalAlignment="Right"
+                                                           VerticalAlignment="Center"
+                                                           Text="{Binding UsedText}"
+                                                           FontSize="12.5"
+                                                           FontWeight="Bold"
+                                                           Foreground="{StaticResource TextBodyBrush}" />
+                                            </Grid>
+                                            <Border Height="7" CornerRadius="3.5" Background="{StaticResource SurfaceInputBrush}">
+                                                <Grid x:Name="RoomTrackGrid">
+                                                    <Border HorizontalAlignment="Left" CornerRadius="3.5"
+                                                            Background="{Binding BarHex, Converter={StaticResource HexToBrush}}">
+                                                        <Border.Width>
+                                                            <MultiBinding Converter="{StaticResource PercentWidth}">
+                                                                <Binding Path="BarPercent" />
+                                                                <Binding ElementName="RoomTrackGrid" Path="ActualWidth" />
+                                                            </MultiBinding>
+                                                        </Border.Width>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Cột phải: Sao lưu .ZIP & Dọn rác Oldest-first -->
+                    <StackPanel Grid.Column="2">
+                        <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                    <Border Width="42" Height="42" CornerRadius="12" Background="{StaticResource DauRedSoftBrush}">
+                                        <Path Data="{StaticResource IconArchive}" Stroke="{StaticResource DauRedTextBrush}" StrokeThickness="1.9" Width="20" Height="20" Stretch="Uniform" />
+                                    </Border>
+                                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Sao lưu &amp; Khôi phục (.ZIP)" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{Binding LastBackupLabel}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <TextBlock Text="Đóng gói toàn bộ tin nhắn .jsonl, file_manifest và tài liệu để mang sang máy khác."
+                                           FontSize="12"
+                                           Foreground="{StaticResource TextMutedBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,16" />
+
+                                <Button Style="{StaticResource PrimaryButtonStyle}"
+                                        Content="Tạo bản sao lưu .ZIP"
+                                        Command="{Binding ExportBackupZipCommand}" />
+
+                                <Button Margin="0,10,0,0"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        Content="Khôi phục từ tệp .ZIP"
+                                        Command="{Binding RestoreBackupZipCommand}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="Dọn dẹp bộ nhớ (Oldest-first)" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                        <TextBlock Text="Xóa các tệp cũ ít truy cập trước để giải phóng ổ đĩa" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                                    </StackPanel>
+                                    <CheckBox HorizontalAlignment="Right"
+                                              VerticalAlignment="Center"
+                                              Style="{StaticResource ModernToggleSwitchStyle}"
+                                              IsChecked="{Binding AutoClean90Days}" />
+                                </Grid>
+
+                                <TextBlock Text="Xóa tệp không mở quá (ngày):" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,6" />
+                                <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                         MinHeight="38"
+                                         Text="{Binding CleanupDaysText, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Button Margin="0,14,0,0"
+                                        Style="{StaticResource SoftSlateButtonStyle}"
+                                        Command="{Binding CleanupOldFilesCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource IconTrash}" Stroke="{StaticResource TextBodyBrush}" StrokeThickness="1.9" Width="15" Height="15" Stretch="Uniform" VerticalAlignment="Center" />
+                                        <TextBlock Text="Dọn tệp cũ ngay" Margin="8,0,0,0" FontSize="12.5" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

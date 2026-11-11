@@ -12,6 +12,7 @@ public sealed class RoomDto
     public string? Description { get; set; }
     public RoomType RoomType { get; set; } = RoomType.StudyGroup;
     public string? ClassId { get; set; }
+    public string JoinCode { get; set; } = string.Empty;
     public string OwnerId { get; set; } = string.Empty;
     public List<string> MemberIds { get; set; } = new();
     public PinnedNoticeDto? PinnedNotice { get; set; }
