@@ -30,11 +30,20 @@ public class NetworkService : INetworkService, IAsyncDisposable
     private TcpListener? _listener;
     private CancellationTokenSource? _serverCts;
     private CancellationTokenSource? _serverBackgroundCts;
+
+    private string _listenIpAddress = "0.0.0.0";
+    private int _port = 9050;
     private DateTime _serverStartTime;
 
     private readonly ConcurrentDictionary<string, ClientSession> _sessions = new();
     private readonly ConcurrentDictionary<string, ConcurrentQueue<NetworkPacket>> _pendingQueue = new();
     private readonly ConcurrentQueue<ConnectionLogDto> _connectionLogs = new();
+
+    // Bộ đếm lưu lượng toàn Server (MOD_08_04)
+    private long _totalPacketsSent = 0;
+    private long _totalPacketsReceived = 0;
+    private long _totalBytesSent = 0;
+    private long _totalBytesReceived = 0;
 
     // === SỰ KIỆN ===
     public event EventHandler<NetworkPacket>? PacketReceived;
@@ -57,10 +66,8 @@ public class NetworkService : INetworkService, IAsyncDisposable
             IsConnected = true;
             ConnectionStateChanged?.Invoke(this, true);
 
-            // Bắt đầu đọc dữ liệu
             _ = Task.Run(() => ClientReceiveLoopAsync(_clientCts.Token), _clientCts.Token);
 
-            // Bắt đầu gửi Heartbeat định kỳ (MOD_02_04)
             _clientHeartbeatCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             _ = Task.Run(() => ClientHeartbeatLoopAsync(_clientHeartbeatCts.Token), _clientHeartbeatCts.Token);
 
@@ -92,14 +99,14 @@ public class NetworkService : INetworkService, IAsyncDisposable
         {
             try
             {
-                await Task.Delay(TimeSpan.FromSeconds(15), ct); // 15s gửi 1 lần
+                await Task.Delay(TimeSpan.FromSeconds(15), ct);
                 if (IsConnected && !string.IsNullOrEmpty(CurrentUserId))
                 {
                     await SendHeartbeatAsync(CurrentUserId, ct);
                 }
             }
             catch (OperationCanceledException) { break; }
-            catch (Exception) { /* Bỏ qua lỗi heartbeat */ }
+            catch (Exception) { }
         }
     }
 
@@ -110,7 +117,14 @@ public class NetworkService : INetworkService, IAsyncDisposable
 
         try
         {
-            await packet.WriteFramedAsync(_clientStream, cancellationToken);
+            byte[] bytes = packet.ToFramedBytes();
+            await _clientStream.WriteAsync(bytes, cancellationToken);
+            await _clientStream.FlushAsync(cancellationToken);
+
+            // Track traffic
+            Interlocked.Increment(ref _totalPacketsSent);
+            Interlocked.Add(ref _totalBytesSent, bytes.Length);
+
             return OperationResult.Ok();
         }
         catch (Exception ex)
@@ -165,6 +179,9 @@ public class NetworkService : INetworkService, IAsyncDisposable
                 var packet = await NetworkPacket.ReadFramedAsync(_clientStream, ct);
                 if (packet == null) break;
 
+                Interlocked.Increment(ref _totalPacketsReceived);
+                Interlocked.Add(ref _totalBytesReceived, packet.ToFramedBytes().Length);
+
                 if (!string.IsNullOrEmpty(packet.CorrelationId) && _pendingRequests.TryRemove(packet.CorrelationId, out var tcs))
                 {
                     tcs.SetResult(packet);
@@ -191,6 +208,8 @@ public class NetworkService : INetworkService, IAsyncDisposable
         {
             if (IsServerRunning) return Task.FromResult(OperationResult.Fail("Server đang chạy rồi."));
 
+            _listenIpAddress = listenIp;
+            _port = port;
             var ip = IPAddress.Parse(listenIp);
             _listener = new TcpListener(ip, port);
             _listener.Start();
@@ -201,10 +220,9 @@ public class NetworkService : INetworkService, IAsyncDisposable
             _serverBackgroundCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
             _ = Task.Run(() => ServerAcceptLoopAsync(_serverCts.Token), _serverCts.Token);
-
-            // Chạy ngầm: Tự động check Heartbeat chết & Dọn rác Queue (MOD_02_05, MOD_02_07)
             _ = Task.Run(() => ServerBackgroundTasksAsync(_serverBackgroundCts.Token), _serverBackgroundCts.Token);
 
+            AddLog("SERVER_START", "Server khởi động thành công.");
             return Task.FromResult(OperationResult.Ok());
         }
         catch (Exception ex)
@@ -226,6 +244,7 @@ public class NetworkService : INetworkService, IAsyncDisposable
             _sessions.Clear();
             _pendingQueue.Clear();
 
+            AddLog("SERVER_STOP", "Server đã dừng.");
             return Task.FromResult(OperationResult.Ok());
         }
         catch (Exception ex)
@@ -240,15 +259,15 @@ public class NetworkService : INetworkService, IAsyncDisposable
         {
             try
             {
-                await Task.Delay(TimeSpan.FromSeconds(10), ct); // Quét mỗi 10s
+                await Task.Delay(TimeSpan.FromSeconds(10), ct);
 
-                // 1. Quét Heartbeat (Ai quá 45s không gửi là đá)
+                // 1. Quét Heartbeat
                 var now = DateTime.UtcNow;
                 foreach (var session in _sessions.Values.ToList())
                 {
                     if (session.UserId != null && (now - session.LastHeartbeat).TotalSeconds > 45)
                     {
-                        AddLog($"User {session.UserId} timeout (mất kết nối).");
+                        AddLog("TIMEOUT", $"User {session.UserId} mất kết nối.", session.UserId, session.RemoteIp);
                         session.Close();
                         _sessions.TryRemove(session.SessionId, out _);
                         _sessions.TryRemove(session.UserId, out _);
@@ -256,11 +275,18 @@ public class NetworkService : INetworkService, IAsyncDisposable
                     }
                 }
 
-                // 2. Dọn dẹp Pending Queue hết hạn TTL
+                // 2. Dọn dẹp Pending Queue
                 await CleanupExpiredPendingPacketsAsync(ct);
+
+                // 3. Bắn sự kiện cập nhật thông số cho giao diện Admin mỗi 5 giây
+                if (IsServerRunning)
+                {
+                    var stats = await GetServerStatsAsync(ct);
+                    ServerStatsUpdated?.Invoke(this, stats);
+                }
             }
             catch (OperationCanceledException) { break; }
-            catch (Exception) { /* Log */ }
+            catch (Exception) { }
         }
     }
 
@@ -273,7 +299,7 @@ public class NetworkService : INetworkService, IAsyncDisposable
                 var tcpClient = await _listener!.AcceptTcpClientAsync(ct);
                 var session = new ClientSession(tcpClient);
                 _sessions[session.SessionId] = session;
-                AddLog($"Client mới kết nối từ IP: {session.RemoteIp}");
+                AddLog("CONNECT", $"Client mới kết nối từ IP: {session.RemoteIp}", null, session.RemoteIp);
 
                 _ = Task.Run(() => ServerHandleClientAsync(session, ct), ct);
             }
@@ -291,18 +317,20 @@ public class NetworkService : INetworkService, IAsyncDisposable
                 var packet = await NetworkPacket.ReadFramedAsync(session.Stream, ct);
                 if (packet == null) break;
 
-                session.LastHeartbeat = DateTime.UtcNow; // Cập nhật mỗi khi có gói tin gửi đến
+                session.LastHeartbeat = DateTime.UtcNow;
+                session.PacketsReceived++;
 
-                // Map UserId khi Login
+                Interlocked.Increment(ref _totalPacketsReceived);
+                Interlocked.Add(ref _totalBytesReceived, packet.ToFramedBytes().Length);
+
                 if (packet.Type == PacketType.LoginRequest && !string.IsNullOrEmpty(packet.SenderId))
                 {
                     session.UserId = packet.SenderId;
                     _sessions[session.UserId] = session;
                     UserPresenceChanged?.Invoke(this, (session.UserId, PresenceStatus.Online));
-                    AddLog($"User {session.UserId} đã Online.");
+                    AddLog("LOGIN", $"User {session.UserId} đã Online.", session.UserId, session.RemoteIp);
                 }
 
-                // Nếu là Heartbeat, tự động trả lời
                 if (packet.Type == PacketType.Heartbeat)
                 {
                     var pong = NetworkPacket.Create(PacketType.Heartbeat, "SERVER", "PONG", packet.SenderId);
@@ -323,7 +351,7 @@ public class NetworkService : INetworkService, IAsyncDisposable
             {
                 _sessions.TryRemove(session.UserId, out _);
                 UserPresenceChanged?.Invoke(this, (session.UserId, PresenceStatus.Offline));
-                AddLog($"User {session.UserId} đã ngắt kết nối.");
+                AddLog("DISCONNECT", $"User {session.UserId} đã ngắt kết nối.", session.UserId, session.RemoteIp);
             }
         }
     }
@@ -333,6 +361,10 @@ public class NetworkService : INetworkService, IAsyncDisposable
         if (_sessions.TryGetValue(targetUserId, out var session) && session.IsConnected)
         {
             await session.SendAsync(packet, cancellationToken);
+
+            Interlocked.Increment(ref _totalPacketsSent);
+            Interlocked.Add(ref _totalBytesSent, packet.ToFramedBytes().Length);
+
             return OperationResult.Ok();
         }
 
@@ -356,7 +388,7 @@ public class NetworkService : INetworkService, IAsyncDisposable
             session.Close();
             _sessions.TryRemove(userId, out _);
             UserPresenceChanged?.Invoke(this, (userId, PresenceStatus.Offline));
-            AddLog($"User {userId} bị đá. Lý do: {reason}");
+            AddLog("KICK", $"User {userId} bị đá. Lý do: {reason}", userId, session.RemoteIp);
             return Task.FromResult(OperationResult.Ok());
         }
         return Task.FromResult(OperationResult.Fail("User không online."));
@@ -383,21 +415,45 @@ public class NetworkService : INetworkService, IAsyncDisposable
             _pendingQueue[kvp.Key] = validPackets;
         }
 
-        if (count > 0) AddLog($"Đã dọn dẹp {count} gói tin hết hạn trong PendingQueue.");
+        if (count > 0) AddLog("QUEUE_CLEANUP", $"Đã dọn dẹp {count} gói tin hết hạn trong PendingQueue.");
 
         return Task.FromResult(count);
     }
 
-    // === ADMIN STATS ===
-    // BẠN HÃY MỞ CÁC FILE DTO TRONG DauChat.Shared/Models ĐỂ ĐIỀN ĐÚNG TÊN BIẾN
+    // === ADMIN STATS (Đã map đúng DTO của TV1) ===
     public Task<ServerStatsDto> GetServerStatsAsync(CancellationToken cancellationToken = default)
     {
+        var connectedClients = _sessions.Values
+            .Where(s => s.UserId != null)
+            .Select(s => new ClientConnectionDto
+            {
+                SessionId = s.SessionId,
+                UserId = s.UserId!,
+                Username = s.UserId!, // TV3 sẽ cập nhật Username sau
+                IpEndPoint = s.RemoteIp,
+                Status = PresenceStatus.Online,
+                ConnectedAtUtc = s.ConnectedAt,
+                LastHeartbeatUtc = s.LastHeartbeat,
+                PacketsSent = s.PacketsSent,
+                PacketsReceived = s.PacketsReceived
+            }).ToList();
+
         var stats = new ServerStatsDto
         {
-            // Ví dụ: 
-            // UptimeSeconds = (long)(DateTime.UtcNow - _serverStartTime).TotalSeconds,
-            // TotalOnlineClients = _sessions.Values.Count(s => s.UserId != null)
+            IsRunning = IsServerRunning,
+            ListenIpAddress = _listenIpAddress,
+            Port = _port,
+            StartedAtUtc = IsServerRunning ? _serverStartTime : null,
+            OnlineClientsCount = connectedClients.Count,
+            PendingQueueCount = _pendingQueue.Values.Sum(q => q.Count),
+            TotalPacketsSent = Interlocked.Read(ref _totalPacketsSent),
+            TotalPacketsReceived = Interlocked.Read(ref _totalPacketsReceived),
+            TotalBytesSent = Interlocked.Read(ref _totalBytesSent),
+            TotalBytesReceived = Interlocked.Read(ref _totalBytesReceived),
+            ConnectedClients = connectedClients,
+            RecentLogs = _connectionLogs.Take(100).ToList()
         };
+
         return Task.FromResult(stats);
     }
 
@@ -407,9 +463,15 @@ public class NetworkService : INetworkService, IAsyncDisposable
             .Where(s => s.UserId != null)
             .Select(s => new ClientConnectionDto
             {
-                // Ví dụ:
-                // UserId = s.UserId,
-                // IpAddress = s.RemoteIp
+                SessionId = s.SessionId,
+                UserId = s.UserId!,
+                Username = s.UserId!,
+                IpEndPoint = s.RemoteIp,
+                Status = PresenceStatus.Online,
+                ConnectedAtUtc = s.ConnectedAt,
+                LastHeartbeatUtc = s.LastHeartbeat,
+                PacketsSent = s.PacketsSent,
+                PacketsReceived = s.PacketsReceived
             })
             .ToList();
 
@@ -421,13 +483,15 @@ public class NetworkService : INetworkService, IAsyncDisposable
         return Task.FromResult<IReadOnlyList<ConnectionLogDto>>(_connectionLogs.Take(maxEntries).ToList());
     }
 
-    private void AddLog(string message)
+    private void AddLog(string eventType, string description, string? userId = null, string? ip = null)
     {
         var log = new ConnectionLogDto
         {
-            // Ví dụ:
-            // LogTime = DateTime.UtcNow, 
-            // Message = message 
+            TimestampUtc = DateTime.UtcNow,
+            EventType = eventType,
+            Description = description,
+            UserId = userId,
+            IpEndPoint = ip ?? "Unknown"
         };
         _connectionLogs.Enqueue(log);
         ConnectionLogAdded?.Invoke(this, log);
@@ -442,6 +506,9 @@ public class NetworkService : INetworkService, IAsyncDisposable
     #endregion
 }
 
+/// <summary>
+/// Lớp nội bộ đại diện cho một kết nối Client trên Server
+/// </summary>
 internal class ClientSession
 {
     public string SessionId { get; } = Guid.NewGuid().ToString("N");
@@ -449,7 +516,10 @@ internal class ClientSession
     public TcpClient TcpClient { get; }
     public NetworkStream Stream { get; }
     public string RemoteIp { get; }
-    public DateTime LastHeartbeat { get; set; } = DateTime.UtcNow; // THÊM DÒNG NÀY
+    public DateTime ConnectedAt { get; } = DateTime.UtcNow;
+    public DateTime LastHeartbeat { get; set; } = DateTime.UtcNow;
+    public long PacketsSent { get; set; } = 0;
+    public long PacketsReceived { get; set; } = 0;
     public bool IsConnected => TcpClient.Connected;
 
     public ClientSession(TcpClient tcpClient)
@@ -462,7 +532,10 @@ internal class ClientSession
     public async Task SendAsync(NetworkPacket packet, CancellationToken ct)
     {
         if (IsConnected)
+        {
             await packet.WriteFramedAsync(Stream, ct);
+            PacketsSent++;
+        }
     }
 
     public void Close()
