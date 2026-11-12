@@ -1,4 +1,5 @@
 ﻿using DauChat.FileService.Models;
+using DauChat.Shared.Models;
 
 namespace DauChat.FileService.Services;
 
@@ -8,5 +9,5 @@ public interface IFileTransferService
     Task SendFileAsync(string filePath, string receiverId, IProgress<TransferProgress> progress, CancellationToken ct = default);
 
     // Hàm nhận file: Cần thông tin file (tên, dung lượng, mã băm) và nơi lưu file trên máy
-    Task ReceiveFileAsync(FileMetadata metadata, string saveDirectory, IProgress<TransferProgress> progress, CancellationToken ct = default);
+    Task ReceiveFileAsync(FileChunkDto metadata, string saveDirectory, IProgress<TransferProgress> progress, CancellationToken ct = default);
 }

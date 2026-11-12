@@ -70,9 +70,53 @@ public class FileTransferService : IFileTransferService
         }
     }
 
-    public async Task ReceiveFileAsync(FileMetadata metadata, string saveDirectory, IProgress<TransferProgress> progress, CancellationToken ct = default)
+    // Biến lưu trữ tạm thời các file đang nhận (FileId -> FileStream)
+    private static readonly Dictionary<string, FileStream> _receivingFiles = new();
+
+    public async Task ReceiveFileAsync(FileChunkDto chunk, string saveDirectory, IProgress<TransferProgress> progress, CancellationToken ct = default)
     {
-        // Tạm thời mình để trống hàm này, xíu nữa mình viết tiếp phần nhận
-        await Task.CompletedTask;
+        // 1. Đảm bảo thư mục lưu tồn tại
+        if (!Directory.Exists(saveDirectory))
+            Directory.CreateDirectory(saveDirectory);
+
+        string tempFilePath = Path.Combine(saveDirectory, $"{chunk.FileId}.part");
+
+        // 2. Mở file tạm để ghi (nếu là khúc đầu tiên thì tạo mới, khúc sau thì ghi tiếp)
+        if (!_receivingFiles.TryGetValue(chunk.FileId, out var fs))
+        {
+            fs = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, useAsync: true);
+            _receivingFiles[chunk.FileId] = fs;
+        }
+
+        // 3. Ghi dữ liệu của khúc này vào file
+        await fs.WriteAsync(chunk.Data, ct);
+
+        // Báo cáo tiến trình
+        progress?.Report(new TransferProgress
+        {
+            FileId = chunk.FileId,
+            TransferredBytes = fs.Length,
+            TotalBytes = chunk.TotalFileSize
+        });
+
+        // 4. Nếu là khúc cuối cùng -> Đóng file, kiểm tra mã băm và đổi tên
+        if (chunk.IsLastChunk)
+        {
+            await fs.DisposeAsync();
+            _receivingFiles.Remove(chunk.FileId);
+
+            // Kiểm tra toàn vẹn (SHA-256)
+            string actualHash = await Sha256Helper.ComputeFileHashAsync(tempFilePath, ct);
+            if (actualHash != chunk.Sha256Checksum)
+            {
+                File.Delete(tempFilePath);
+                throw new Exception("File bị lỗi trong quá trình truyền (Sai mã SHA-256)!");
+            }
+
+            // Đổi tên thành file hoàn chỉnh
+            string finalFilePath = Path.Combine(saveDirectory, chunk.FileName);
+            if (File.Exists(finalFilePath)) File.Delete(finalFilePath); // Ghi đè nếu đã có
+            File.Move(tempFilePath, finalFilePath);
+        }
     }
 }
