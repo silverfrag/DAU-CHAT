@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\DauChat.Shared\DauChat.Shared.csproj" />
     <ProjectReference Include="..\DauChat.Core\DauChat.Core.csproj" />
+    <ProjectReference Include="..\DauChat.FileService\DauChat.FileService.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

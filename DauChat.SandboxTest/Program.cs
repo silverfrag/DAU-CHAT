@@ -2,6 +2,8 @@ using DauChat.Core.AuthAndRooms;
 using DauChat.Core.FileAndStorage;
 using DauChat.Core.Messaging;
 using DauChat.Core.Networking;
+using DauChat.FileService.Services;
+using DauChat.FileService.Utils;
 using DauChat.Shared.Enums;
 using DauChat.Shared.Interfaces;
 using DauChat.Shared.Models;
@@ -30,8 +32,16 @@ internal static class Program
             return;
         }
 
-        // Mặc định chạy cả TV4 tests và TV2 socket/pending queue test
+        if (args.Length > 0 && args[0].Equals("--tv5", StringComparison.OrdinalIgnoreCase))
+        {
+            await RunTv5FileStorageTestAsync();
+            return;
+        }
+
+        // Mặc định chạy toàn bộ kiểm thử các phân hệ TV4, TV5, TV2
         await RunTv4TestsAsync();
+        Console.WriteLine();
+        await RunTv5FileStorageTestAsync();
         Console.WriteLine();
         await RunTv2PendingQueueTestAsync();
 
@@ -232,6 +242,75 @@ internal static class Program
             Directory.Delete(testDataRoot, recursive: true);
 
         Console.WriteLine("\n=== TẤT CẢ KIỂM THỬ TV4 HOÀN THÀNH ✅ ===");
+    }
+
+    public static async Task RunTv5FileStorageTestAsync()
+    {
+        Console.WriteLine("=== [TV5] KIỂM THỬ FILE STORAGE, CHUNK 64KB & BACKUP ZIP ===");
+
+        var tempDir = Path.Combine(Path.GetTempPath(), $"dauchat_tv5_{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDir);
+        var sampleFilePath = Path.Combine(tempDir, "sample_dau_document.txt");
+
+        try
+        {
+            // 1. Tạo tệp giả lập ~150KB (> 2 chunks 64KB)
+            var sampleContent = string.Concat(Enumerable.Repeat("DAU-Chat-Team5-FileChunk-Test-Data-Payload-1234567890\n", 3000));
+            await File.WriteAllTextAsync(sampleFilePath, sampleContent);
+            var fileInfo = new FileInfo(sampleFilePath);
+            Console.WriteLine($"[OK] Đã tạo file mẫu: {fileInfo.Length} bytes ({fileInfo.Length / 1024.0:F1} KB)");
+
+            // 2. Kiểm thử Sha256Helper
+            var hash = await Sha256Helper.ComputeFileHashAsync(sampleFilePath);
+            Console.WriteLine($"[OK] Tính SHA-256 mã băm: {hash}");
+
+            // 3. Kiểm thử ChunkSplitter (64KB/chunk)
+            int chunkCount = 0;
+            long totalRead = 0;
+            bool lastChunkFlagged = false;
+            await foreach (var chunk in ChunkSplitter.ReadChunksAsync(sampleFilePath, ChunkSplitter.DefaultChunkSize))
+            {
+                chunkCount++;
+                totalRead += chunk.Data.Length;
+                if (chunk.IsLast) lastChunkFlagged = true;
+            }
+            Console.WriteLine($"[OK] Cắt chunk 64KB: {chunkCount} chunks, tổng bytes: {totalRead}, cờ IsLast cuối: {lastChunkFlagged}");
+
+            // 4. Kiểm thử LocalFileStorage (Lưu file & ghi manifest)
+            var localStorage = new LocalFileStorage();
+            var testUserId = $"tv5_user_{Guid.NewGuid():N}";
+            var testRoomId = "room_kien_truc_1";
+
+            var toSavePath = Path.Combine(tempDir, "archive_cad_test.dwg");
+            File.Copy(sampleFilePath, toSavePath);
+            await localStorage.SaveFileAsync(toSavePath, testUserId, testRoomId);
+
+            var downloaded = await localStorage.GetDownloadedFilesAsync(testUserId);
+            Console.WriteLine($"[OK] LocalFileStorage lưu & manifest: tìm thấy {downloaded.Count} tệp trong kho local.");
+
+            // 5. Kiểm thử BackupService (Nén ZIP & Giải nén ZIP)
+            var backupService = new BackupService();
+            var backupZipPath = Path.Combine(tempDir, "backup_user.zip");
+            await backupService.CreateBackupZipAsync(testUserId, backupZipPath);
+            var zipInfo = new FileInfo(backupZipPath);
+            Console.WriteLine($"[OK] BackupService tạo backup.zip: {zipInfo.Length} bytes");
+
+            var restoreDir = Path.Combine(tempDir, "restored_data");
+            await backupService.RestoreBackupZipAsync(backupZipPath, restoreDir);
+            bool restoredExists = Directory.Exists(Path.Combine(restoreDir, "Files", testRoomId));
+            Console.WriteLine($"[OK] BackupService khôi phục: {restoredExists} (kỳ vọng: True)");
+
+            // Dọn dẹp thư mục LocalData sinh ra trong test
+            var userLocalData = Path.Combine("LocalData", testUserId);
+            if (Directory.Exists(userLocalData)) Directory.Delete(userLocalData, recursive: true);
+
+            Console.WriteLine("\n=== TẤT CẢ KIỂM THỬ TV5 HOÀN THÀNH ✅ ===");
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+        }
     }
 
     public static async Task RunTv2PendingQueueTestAsync()
