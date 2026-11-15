@@ -83,6 +83,22 @@ public interface IFileStorageService
         string sourceZipPath,
         bool overwriteExisting = false,
         CancellationToken cancellationToken = default);
+
+    /// <summary>MOD_07_09: Kiểm tra bản sao lưu khả dụng trên Server LAN Vault qua Socket.</summary>
+    Task<SyncCheckResponseDto> CheckLanSyncAvailableAsync(
+        string currentUserId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>MOD_07_07: Đẩy Snapshot lên Server LAN Vault qua Socket stream.</summary>
+    Task<OperationResult<SyncPushResponseDto>> PushSnapshotToLanServerAsync(
+        string currentUserId,
+        bool includeFiles = false,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>MOD_07_08: Kéo Snapshot từ Server LAN Vault về khôi phục trên máy mới qua Socket stream.</summary>
+    Task<OperationResult> PullSnapshotFromLanServerAsync(
+        string currentUserId,
+        CancellationToken cancellationToken = default);
     #endregion
 
     #region Sự kiện tiến trình truyền tệp & nhận tệp hoàn chỉnh (MOD_05_02, MOD_05_03)

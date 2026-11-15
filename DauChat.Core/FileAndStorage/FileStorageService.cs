@@ -88,6 +88,22 @@ public class FileStorageService : IFileStorageService
         CancellationToken cancellationToken = default)
         => throw new NotImplementedException("TODO (TV5 - MOD_07_08): Giải nén .zip và khôi phục dữ liệu Local.");
 
+    public Task<SyncCheckResponseDto> CheckLanSyncAvailableAsync(
+        string currentUserId,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult(new SyncCheckResponseDto { HasSnapshot = false });
+
+    public Task<OperationResult<SyncPushResponseDto>> PushSnapshotToLanServerAsync(
+        string currentUserId,
+        bool includeFiles = false,
+        CancellationToken cancellationToken = default)
+        => throw new NotImplementedException("TODO (TV5 - MOD_07_07): Đẩy Snapshot lên Server LAN Vault.");
+
+    public Task<OperationResult> PullSnapshotFromLanServerAsync(
+        string currentUserId,
+        CancellationToken cancellationToken = default)
+        => throw new NotImplementedException("TODO (TV5 - MOD_07_08): Kéo Snapshot từ Server LAN Vault.");
+
     protected virtual void OnTransferProgressChanged(FileTransferProgressDto progress)
         => TransferProgressChanged?.Invoke(this, progress);
 

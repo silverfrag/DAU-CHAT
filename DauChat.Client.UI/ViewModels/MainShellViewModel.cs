@@ -240,6 +240,9 @@ public sealed class MainShellViewModel : ObservableObject
         FillSampleBatchAccountsCommand = new RelayCommand(FillSampleBatchAccounts);
         ImportBatchAccountsCsvCommand = new RelayCommand(ImportBatchAccountsCsv);
         SubmitBatchCreateAccountsCommand = new AsyncRelayCommand(SubmitBatchCreateAccountsAsync, () => ValidBatchAccountsCount > 0);
+
+        AcceptLanSyncPromptCommand = new AsyncRelayCommand(AcceptLanSyncPromptAsync);
+        DismissLanSyncPromptCommand = new RelayCommand(() => IsLanSyncPromptVisible = false);
     }
 
     public ChatWorkspaceViewModel Chat { get; }
@@ -297,6 +300,37 @@ public sealed class MainShellViewModel : ObservableObject
     public ICommand FillSampleBatchAccountsCommand { get; }
     public ICommand ImportBatchAccountsCsvCommand { get; }
     public ICommand SubmitBatchCreateAccountsCommand { get; }
+    public ICommand AcceptLanSyncPromptCommand { get; }
+    public ICommand DismissLanSyncPromptCommand { get; }
+
+    private bool _isLanSyncPromptVisible;
+    private string _lanSyncAvailableTime = string.Empty;
+    private string _lanSyncAvailableSummary = string.Empty;
+    private bool _isLabComputerMode;
+
+    public bool IsLanSyncPromptVisible
+    {
+        get => _isLanSyncPromptVisible;
+        set => SetProperty(ref _isLanSyncPromptVisible, value);
+    }
+
+    public string LanSyncAvailableTime
+    {
+        get => _lanSyncAvailableTime;
+        set => SetProperty(ref _lanSyncAvailableTime, value);
+    }
+
+    public string LanSyncAvailableSummary
+    {
+        get => _lanSyncAvailableSummary;
+        set => SetProperty(ref _lanSyncAvailableSummary, value);
+    }
+
+    public bool IsLabComputerMode
+    {
+        get => _isLabComputerMode;
+        set => SetProperty(ref _isLabComputerMode, value);
+    }
 
     public NavSection ActiveSection
     {
@@ -553,6 +587,36 @@ public sealed class MainShellViewModel : ObservableObject
                 await Classes.RefreshAsync();
             }
             await Storage.RunStartupAutoCleanIfEnabledAsync();
+
+            try
+            {
+                var syncCheck = await ClientServiceHost.Current.FileStorage.CheckLanSyncAvailableAsync(user.UserId);
+                if (syncCheck.HasSnapshot)
+                {
+                    LanSyncAvailableTime = syncCheck.LastSnapshotUtc?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "Gần đây";
+                    LanSyncAvailableSummary = syncCheck.SnapshotSummary;
+                    IsLanSyncPromptVisible = true;
+                }
+            }
+            catch
+            {
+                // Bỏ qua lỗi kiểm tra đồng bộ lúc đăng nhập
+            }
+        }
+    }
+
+    private async Task AcceptLanSyncPromptAsync()
+    {
+        IsLanSyncPromptVisible = false;
+        var user = ClientServiceHost.Current.AuthRoom.CurrentUser;
+        if (user is null) return;
+        ShowToast("Đang đồng bộ dữ liệu từ Server LAN...");
+        var res = await ClientServiceHost.Current.FileStorage.PullSnapshotFromLanServerAsync(user.UserId);
+        ShowToast(res.Message);
+        if (res.Success)
+        {
+            await OnStorageDataChangedAsync();
+            await Storage.RefreshAsync();
         }
     }
 
@@ -949,6 +1013,22 @@ public sealed class MainShellViewModel : ObservableObject
         CloseAllModals();
         if (user is not null)
         {
+            try
+            {
+                // Tự động đẩy snapshot lên Server LAN Vault trước khi đăng xuất
+                await ClientServiceHost.Current.FileStorage.PushSnapshotToLanServerAsync(user.UserId, includeFiles: false);
+            }
+            catch
+            {
+                // Bỏ qua lỗi sao lưu khi đăng xuất
+            }
+
+            if (IsLabComputerMode)
+            {
+                // Chế độ máy phòng Lab: dọn sạch dữ liệu cá nhân trên máy dùng chung
+                ClientServiceHost.Current.DemoStore.ClearUserLocalSessionData(user.UserId);
+            }
+
             await ClientServiceHost.Current.AuthRoom.LogoutAsync(user.UserId);
         }
         _onLoggedOut(null);

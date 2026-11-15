@@ -737,6 +737,130 @@ DAU Chat • Trường Đại học Kiến trúc Đà Nẵng
         return sb.ToString();
     }
 
+    public Task<SyncCheckResponseDto> CheckLanSyncAvailableAsync(string currentUserId, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(_store.CheckLanVaultSnapshot(currentUserId));
+    }
+
+    public async Task<OperationResult<SyncPushResponseDto>> PushSnapshotToLanServerAsync(
+        string currentUserId,
+        bool includeFiles = false,
+        CancellationToken cancellationToken = default)
+    {
+        var tempZip = Path.Combine(Path.GetTempPath(), $"dauchat_lansync_push_{Guid.NewGuid():N}.zip");
+        try
+        {
+            var exportRes = await ExportBackupZipAsync(currentUserId, tempZip, includeFiles, cancellationToken);
+            if (!exportRes.Success || !File.Exists(tempZip))
+            {
+                return OperationResult<SyncPushResponseDto>.Fail("Không thể tạo bản đóng gói snapshot.");
+            }
+
+            var bytes = await File.ReadAllBytesAsync(tempZip, cancellationToken);
+            var base64 = Convert.ToBase64String(bytes);
+
+            int msgCount = 0;
+            int fileCount = 0;
+            lock (_store.SyncRoot)
+            {
+                msgCount = _store.MessagesByConversation.Values.Sum(l => l.Count);
+                fileCount = _store.LocalFiles.Count(f => !_store.IsFileHiddenForUser(currentUserId, f.FileId));
+            }
+
+            var snap = new SyncPushRequestDto
+            {
+                UserId = currentUserId,
+                SnapshotZipBase64 = base64,
+                SnapshotSizeBytes = bytes.Length,
+                TimestampUtc = DateTime.UtcNow,
+                MessagesCount = msgCount,
+                FilesCount = fileCount,
+                Summary = $"{msgCount} tin nhắn • {fileCount} tệp • {FormatBytes(bytes.Length)}"
+            };
+
+            _store.SaveLanVaultSnapshot(snap);
+
+            // Lưu kèm vào ServerData/Vaults nếu có
+            try
+            {
+                var serverVault = Path.Combine(AppContext.BaseDirectory, "ServerData", "Vaults", currentUserId);
+                Directory.CreateDirectory(serverVault);
+                await File.WriteAllBytesAsync(Path.Combine(serverVault, "latest_snapshot.bin"), bytes, cancellationToken);
+                await File.WriteAllTextAsync(Path.Combine(serverVault, "metadata.json"), JsonSerializer.Serialize(new SyncCheckResponseDto
+                {
+                    HasSnapshot = true,
+                    LastSnapshotUtc = snap.TimestampUtc,
+                    SnapshotSizeBytes = bytes.Length,
+                    SnapshotSummary = snap.Summary,
+                    TotalMessagesCount = msgCount,
+                    TotalFilesCount = fileCount
+                }), cancellationToken);
+            }
+            catch
+            {
+                // Bỏ qua lỗi IO phụ
+            }
+
+            return OperationResult<SyncPushResponseDto>.Ok(new SyncPushResponseDto
+            {
+                Success = true,
+                Message = $"Đã đẩy bản sao lưu lên Server LAN ({FormatBytes(bytes.Length)}).",
+                StoredBytes = bytes.Length,
+                TimestampUtc = snap.TimestampUtc
+            });
+        }
+        finally
+        {
+            if (File.Exists(tempZip))
+            {
+                try { File.Delete(tempZip); } catch { }
+            }
+        }
+    }
+
+    public async Task<OperationResult> PullSnapshotFromLanServerAsync(string currentUserId, CancellationToken cancellationToken = default)
+    {
+        var snap = _store.GetLanVaultSnapshot(currentUserId);
+        byte[]? bytes = null;
+
+        if (snap is not null && !string.IsNullOrWhiteSpace(snap.SnapshotZipBase64))
+        {
+            bytes = Convert.FromBase64String(snap.SnapshotZipBase64);
+        }
+        else
+        {
+            var serverVault = Path.Combine(AppContext.BaseDirectory, "ServerData", "Vaults", currentUserId, "latest_snapshot.bin");
+            if (File.Exists(serverVault))
+            {
+                bytes = await File.ReadAllBytesAsync(serverVault, cancellationToken);
+            }
+        }
+
+        if (bytes is null || bytes.Length == 0)
+        {
+            return OperationResult.Fail("Không tìm thấy bản sao lưu nào của bạn trên Server LAN.");
+        }
+
+        var tempZip = Path.Combine(Path.GetTempPath(), $"dauchat_lansync_pull_{Guid.NewGuid():N}.zip");
+        try
+        {
+            await File.WriteAllBytesAsync(tempZip, bytes, cancellationToken);
+            var restoreRes = await RestoreBackupZipAsync(currentUserId, tempZip, overwriteExisting: true, cancellationToken);
+            if (restoreRes.Success)
+            {
+                return OperationResult.Ok($"Đồng bộ thành công từ Server LAN ({FormatBytes(bytes.Length)})!");
+            }
+            return restoreRes;
+        }
+        finally
+        {
+            if (File.Exists(tempZip))
+            {
+                try { File.Delete(tempZip); } catch { }
+            }
+        }
+    }
+
     public static FileCategory ResolveCategory(string extension) => extension.ToLowerInvariant() switch
     {
         ".dwg" or ".dxf" or ".rvt" or ".skp" => FileCategory.CAD,

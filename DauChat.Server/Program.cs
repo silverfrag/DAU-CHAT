@@ -1,6 +1,7 @@
 using DauChat.Core.AuthAndRooms;
 using DauChat.Core.Networking;
 using DauChat.Server.Metadata;
+using DauChat.Server.Vault;
 using DauChat.Shared.Constants;
 using DauChat.Shared.Interfaces;
 
@@ -18,6 +19,10 @@ metadataStore.SeedAdmin("admin", "Admin@123", "System Administrator", "admin@dau
 var networkService = new NetworkService();
 var metadataHandler = new MetadataRequestHandler(databasePath);
 networkService.PacketReceived += metadataHandler.HandlePacket;
+
+var vaultHandler = new ServerVaultHandler();
+networkService.PacketReceived += vaultHandler.HandlePacket;
+
 IAuthRoomService authRoomService = new AuthRoomService(networkService);
 
 Console.WriteLine("Metadata SQLite đã sẵn sàng.");

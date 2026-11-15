@@ -53,6 +53,7 @@ internal sealed class DemoDataStore
         public List<ClientConnectionDto> ConnectedClients { get; set; } = new();
         public List<ConnectionLogDto> ConnectionLogs { get; set; } = new();
         public Dictionary<string, string> KickReasonsByUserId { get; set; } = new();
+        public Dictionary<string, SyncPushRequestDto> LanServerVault { get; set; } = new();
     }
 
     public sealed class ExternalSyncDiff
@@ -125,6 +126,7 @@ internal sealed class DemoDataStore
     public List<ClientConnectionDto> ConnectedClients { get; } = new();
     public List<ConnectionLogDto> ConnectionLogs { get; } = new();
     public Dictionary<string, string> KickReasonsByUserId { get; } = new();
+    public Dictionary<string, SyncPushRequestDto> LanServerVault { get; } = new();
 
     public event Action<ExternalSyncDiff>? ExternalSyncApplied;
 
@@ -316,6 +318,52 @@ internal sealed class DemoDataStore
                 HiddenFileIdsByUser[userId] = ids;
             }
             if (!ids.Contains(fileId)) ids.Add(fileId);
+        });
+    }
+
+    public SyncCheckResponseDto CheckLanVaultSnapshot(string userId)
+    {
+        lock (SyncRoot)
+        {
+            if (LanServerVault.TryGetValue(userId, out var snap))
+            {
+                return new SyncCheckResponseDto
+                {
+                    HasSnapshot = true,
+                    LastSnapshotUtc = snap.TimestampUtc,
+                    SnapshotSizeBytes = snap.SnapshotSizeBytes,
+                    SnapshotSummary = snap.Summary,
+                    TotalMessagesCount = snap.MessagesCount,
+                    TotalFilesCount = snap.FilesCount
+                };
+            }
+            return new SyncCheckResponseDto { HasSnapshot = false };
+        }
+    }
+
+    public void SaveLanVaultSnapshot(SyncPushRequestDto snap)
+    {
+        MutateAndSave(() =>
+        {
+            LanServerVault[snap.UserId] = snap;
+        });
+    }
+
+    public SyncPushRequestDto? GetLanVaultSnapshot(string userId)
+    {
+        lock (SyncRoot)
+        {
+            return LanServerVault.TryGetValue(userId, out var snap) ? snap : null;
+        }
+    }
+
+    public void ClearUserLocalSessionData(string userId)
+    {
+        MutateAndSave(() =>
+        {
+            ClearedBeforeUtc[userId] = new Dictionary<string, DateTime>();
+            HiddenMessageIdsByUser[userId] = new List<string>();
+            HiddenFileIdsByUser[userId] = new List<string>();
         });
     }
 
@@ -555,7 +603,8 @@ internal sealed class DemoDataStore
         LocalFiles = LocalFiles,
         ConnectedClients = ConnectedClients,
         ConnectionLogs = ConnectionLogs,
-        KickReasonsByUserId = KickReasonsByUserId
+        KickReasonsByUserId = KickReasonsByUserId,
+        LanServerVault = LanServerVault
     };
 
     private ExternalSyncDiff ApplySnapshotAndComputeDiffLocked(DemoSyncSnapshot snap)
@@ -701,6 +750,12 @@ internal sealed class DemoDataStore
         foreach (var kvp in snap.KickReasonsByUserId)
         {
             KickReasonsByUserId[kvp.Key] = kvp.Value;
+        }
+
+        LanServerVault.Clear();
+        foreach (var kvp in snap.LanServerVault ?? new Dictionary<string, SyncPushRequestDto>())
+        {
+            LanServerVault[kvp.Key] = kvp.Value;
         }
     }
 
