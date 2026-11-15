@@ -10,74 +10,60 @@ internal class Program
     static async Task Main(string[] args)
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
-        Console.WriteLine("=== BẮT ĐẦU TEST MẠNG TV2 ===");
+        Console.WriteLine("=== BẮT ĐẦU TEST XẢ PENDING QUEUE (TV2) ===");
 
-        int port = 9050; // Cổng chuẩn trong ProtocolConstants của TV1
+        int port = 9050;
         string ip = "127.0.0.1";
 
         // 1. Khởi động Server
         var server = new NetworkService();
-        Console.WriteLine("[Server] Đang khởi động...");
-        var startResult = await server.StartServerAsync(ip, port);
-        if (!startResult.Success)
-        {
-            Console.WriteLine($"[Server] Lỗi: {startResult.Message}");
-            return;
-        }
-        Console.WriteLine($"[Server] Đã chạy tại {ip}:{port}");
+        await server.StartServerAsync(ip, port);
+        Console.WriteLine("[Server] Đã chạy.");
 
-        // Đăng ký sự kiện Server nhận tin
+        // ĐÂY LÀ ĐOẠN QUAN TRỌNG BỊ THIẾU: Server lắng nghe và chuyển tiếp tin nhắn
         server.PacketReceived += (s, packet) =>
         {
             Console.WriteLine($"[Server Nhận] Từ: {packet.SenderId} -> Đến: {packet.TargetId} | Loại: {packet.Type}");
 
-            // Nếu Client gửi tin, Server tự động Relay (chuyển tiếp) tới người nhận
-            if (packet.TargetId != null && packet.Type == PacketType.DirectMessage)
+            // Nếu là tin nhắn 1-1, Server đẩy vào hàm SendToUserAsync 
+            // (Hàm này sẽ tự biết B đang offline để ném vào Queue)
+            if (packet.Type == PacketType.DirectMessage && packet.TargetId != null)
             {
-                Console.WriteLine($"[Server] Đang Relay tin nhắn tới {packet.TargetId}...");
                 _ = server.SendToUserAsync(packet.TargetId, packet);
             }
         };
 
-        // 2. Tạo Client A và kết nối
+        // 2. Client A kết nối và Đăng nhập
         var clientA = new NetworkService();
         clientA.CurrentUserId = "user_A";
-        clientA.PacketReceived += (s, packet) => Console.WriteLine($"[Client A Nhận] Từ {packet.SenderId}: {packet.PayloadJson}");
-
-        Console.WriteLine("[Client A] Đang kết nối...");
         await clientA.ConnectAsync(ip, port);
+        await clientA.SendPacketAsync(NetworkPacket.Create(PacketType.LoginRequest, "user_A", "Login", "user_A"));
+        await Task.Delay(500); // Đợi Server map UserId
 
-        // Giả lập Login cho A (Dùng LoginRequest như file Enum của TV1)
-        var loginA = NetworkPacket.Create(PacketType.LoginRequest, "user_A", "Login", targetId: "user_A");
-        await clientA.SendPacketAsync(loginA);
-
-        // 3. Tạo Client B và kết nối
-        var clientB = new NetworkService();
-        clientB.CurrentUserId = "user_B";
-        clientB.PacketReceived += (s, packet) => Console.WriteLine($"[Client B Nhận] Từ {packet.SenderId}: {packet.PayloadJson}");
-
-        Console.WriteLine("[Client B] Đang kết nối...");
-        await clientB.ConnectAsync(ip, port);
-
-        // Giả lập Login cho B
-        var loginB = NetworkPacket.Create(PacketType.LoginRequest, "user_B", "Login", targetId: "user_B");
-        await clientB.SendPacketAsync(loginB);
-
-        // Đợi 1 chút để Server kịp xử lý login
-        await Task.Delay(1000);
-
-        // 4. Client A gửi tin nhắn cho Client B
-        Console.WriteLine("\n--- Client A gửi tin nhắn cho Client B ---");
+        // 3. Client A gửi tin nhắn cho B (Lúc này B CHƯA ĐĂNG NHẬP)
+        Console.WriteLine("\n--- Client A gửi tin cho B (B đang Offline) ---");
         var chatPacket = NetworkPacket.Create(
-            PacketType.DirectMessage, // Dùng DirectMessage như file Enum của TV1
+            PacketType.DirectMessage,
             "user_A",
-            payload: "Chào B, đây là tin nhắn test mạng Local-First!",
+            payload: "Tin nhắn này gửi lúc B offline. B sẽ nhận được khi đăng nhập!",
             targetId: "user_B"
         );
         await clientA.SendPacketAsync(chatPacket);
+        await Task.Delay(1000);
 
-        // Đợi 2 giây để xem kết quả
-        await Task.Delay(2000);
+        // 4. Client B bắt đầu kết nối và Đăng nhập
+        Console.WriteLine("\n--- Bây giờ Client B mới Đăng nhập ---");
+        var clientB = new NetworkService();
+        clientB.CurrentUserId = "user_B";
+        clientB.PacketReceived += (s, packet) =>
+            Console.WriteLine($"[Client B Nhận] Từ {packet.SenderId}: {packet.PayloadJson}");
+
+        await clientB.ConnectAsync(ip, port);
+
+        // Gửi Login, Server sẽ kích hoạt hàm FlushPendingQueueAsync xả tin nhắn
+        await clientB.SendPacketAsync(NetworkPacket.Create(PacketType.LoginRequest, "user_B", "Login", "user_B"));
+
+        await Task.Delay(2000); // Đợi xả queue
 
         Console.WriteLine("\n=== KẾT THÚC TEST ===");
         Console.ReadLine();
