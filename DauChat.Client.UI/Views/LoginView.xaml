@@ -309,30 +309,55 @@
                                                    FontWeight="Bold"
                                                    Foreground="{StaticResource TextMutedBrush}"
                                                    VerticalAlignment="Center" />
-                                        <Button HorizontalAlignment="Right"
-                                                Command="{Binding LaunchThreeRolesCommand}"
-                                                Cursor="Hand"
-                                                Background="{StaticResource DauRedSoftBrush}"
-                                                BorderBrush="{StaticResource DauRedBorderBrush}"
-                                                BorderThickness="1"
-                                                Padding="9,4"
-                                                ToolTip="Mở đồng thời 3 cửa sổ Sinh viên, Giảng viên và Admin để test phân quyền">
-                                            <Button.Template>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border Background="{TemplateBinding Background}"
-                                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                                            CornerRadius="8"
-                                                            Padding="{TemplateBinding Padding}">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                    </Border>
-                                                </ControlTemplate>
-                                            </Button.Template>
-                                            <TextBlock Text="Mở 3 cửa sổ test (SV / GV / Admin)"
-                                                       FontSize="10.5"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{StaticResource DauRedTextBrush}" />
-                                        </Button>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <Button Command="{Binding ResetTestDataCommand}"
+                                                    Cursor="Hand"
+                                                    Background="{StaticResource SurfaceInputBrush}"
+                                                    BorderBrush="{StaticResource BorderStrongBrush}"
+                                                    BorderThickness="1"
+                                                    Padding="8,4"
+                                                    Margin="0,0,8,0"
+                                                    ToolTip="Xóa sạch dữ liệu chat cũ và đưa dữ liệu mẫu về trạng thái tinh gọn ban đầu">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}"
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                                CornerRadius="8"
+                                                                Padding="{TemplateBinding Padding}">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                                <TextBlock Text="Đặt lại dữ liệu sạch"
+                                                           FontSize="10.5"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                                            </Button>
+                                            <Button Command="{Binding LaunchThreeRolesCommand}"
+                                                    Cursor="Hand"
+                                                    Background="{StaticResource DauRedSoftBrush}"
+                                                    BorderBrush="{StaticResource DauRedBorderBrush}"
+                                                    BorderThickness="1"
+                                                    Padding="9,4"
+                                                    ToolTip="Mở đồng thời 3 cửa sổ Sinh viên, Giảng viên và Admin để test phân quyền">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}"
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                                CornerRadius="8"
+                                                                Padding="{TemplateBinding Padding}">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                                <TextBlock Text="Mở 3 cửa sổ test (SV / GV / Admin)"
+                                                           FontSize="10.5"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource DauRedTextBrush}" />
+                                            </Button>
+                                        </StackPanel>
                                     </Grid>
                                     <ItemsControl ItemsSource="{Binding DemoAccounts}">
                                         <ItemsControl.ItemsPanel>

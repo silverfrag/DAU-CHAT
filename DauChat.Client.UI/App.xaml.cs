@@ -20,6 +20,11 @@ public partial class App : Application
             args.Handled = true;
         };
 
+        if (Array.Exists(e.Args, a => a.Equals("--reset-demo", StringComparison.OrdinalIgnoreCase)))
+        {
+            Services.ClientServiceHost.Current.DemoStore.ResetToCleanTestState();
+        }
+
         var mainWindow = new MainWindow();
 
         var posArg = Array.FindIndex(e.Args, a => a.Equals("--pos", StringComparison.OrdinalIgnoreCase));

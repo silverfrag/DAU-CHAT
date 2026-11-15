@@ -61,12 +61,12 @@ public sealed class LoginViewModel : ObservableObject
             },
             new()
             {
-                Label = "SV Bị khóa (Test)",
-                RoleTag = "Đã khóa",
-                Username = "sv230003",
+                Label = "Sinh viên (Chưa lớp)",
+                RoleTag = "Sinh viên",
+                Username = "sv230002",
                 Password = "123456",
-                Note = "Kiểm thử từ chối đăng nhập",
-                BadgeBgHex = "#FFFBEB",
+                Note = "Lê Thị Thu Hà • Test mời/thêm vào lớp",
+                BadgeBgHex = "#FEF3C7",
                 BadgeFgHex = "#B45309"
             }
         };
@@ -85,6 +85,7 @@ public sealed class LoginViewModel : ObservableObject
         });
         LoginCommand = new AsyncRelayCommand(ExecuteLoginAsync, () => !IsConnecting);
         LaunchThreeRolesCommand = new AsyncRelayCommand(LaunchThreeRoleWindowsAsync, () => !IsConnecting);
+        ResetTestDataCommand = new RelayCommand(ResetTestData);
     }
 
     public ObservableCollection<DemoQuickAccountModel> DemoAccounts { get; }
@@ -93,6 +94,7 @@ public sealed class LoginViewModel : ObservableObject
     public ICommand SelectDemoAccountCommand { get; }
     public ICommand LoginCommand { get; }
     public ICommand LaunchThreeRolesCommand { get; }
+    public ICommand ResetTestDataCommand { get; }
 
     public string Username
     {
@@ -205,8 +207,16 @@ public sealed class LoginViewModel : ObservableObject
         }
     }
 
+    private void ResetTestData()
+    {
+        ClientServiceHost.Current.DemoStore.ResetToCleanTestState();
+        ErrorMessage = "Đã đặt lại dữ liệu kiểm thử tinh gọn thành công!";
+    }
+
     private async Task LaunchThreeRoleWindowsAsync()
     {
+        ClientServiceHost.Current.DemoStore.ResetToCleanTestState();
+
         var exePath = Environment.ProcessPath;
         if (!string.IsNullOrEmpty(exePath))
         {

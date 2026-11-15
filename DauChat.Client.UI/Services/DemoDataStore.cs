@@ -66,7 +66,7 @@ internal sealed class DemoDataStore
         public bool HasChanges { get; init; }
     }
 
-    private const int CurrentSchemaVersion = 2;
+    private const int CurrentSchemaVersion = 3;
     private const string JoinCodeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -409,6 +409,47 @@ internal sealed class DemoDataStore
         });
     }
 
+    public void ResetToCleanTestState()
+    {
+        WithCrossProcessMutex(() =>
+        {
+            lock (SyncRoot)
+            {
+                Accounts.Clear();
+                Classes.Clear();
+                Rooms.Clear();
+                MessagesByConversation.Clear();
+                UnreadByConversation.Clear();
+                ClearedBeforeUtc.Clear();
+                HiddenFileIdsByUser.Clear();
+                HiddenMessageIdsByUser.Clear();
+                RecalledMessageIds.Clear();
+                MutedConversationsByUser.Clear();
+                AutoCleanEnabledByUser.Clear();
+                AutoCleanDaysByUser.Clear();
+                LocalFiles.Clear();
+                ConnectedClients.Clear();
+                ConnectionLogs.Clear();
+                KickReasonsByUserId.Clear();
+
+                TotalPacketsSent = 0;
+                TotalPacketsReceived = 0;
+                TotalBytesSent = 0;
+                TotalBytesReceived = 0;
+                PendingQueueCount = 0;
+
+                SeedAccountsAndClasses();
+                SeedRoomsAndConversations();
+                SeedFilesAndTelemetry();
+
+                var initial = BuildSnapshotLocked(1);
+                WriteSnapshotAtomicLocked(initial);
+                _appliedRevision = initial.Revision;
+                CaptureBaselineLocked();
+            }
+        });
+    }
+
     private static void WithCrossProcessMutex(Action action)
     {
         var acquired = false;
@@ -726,23 +767,6 @@ internal sealed class DemoDataStore
             new DemoAccountRecord
             {
                 Password = "123456",
-                AvatarBgHex = "#0F766E",
-                AvatarFgHex = "#FFFFFF",
-                User = new UserDto
-                {
-                    UserId = "u_gv_demo02",
-                    Username = "gv_demo02",
-                    FullName = "TS. Lê Hoàng Nam",
-                    Email = "nam.gv.demo@dau.edu.vn",
-                    Role = UserRole.GiangVien,
-                    Status = AccountStatus.Active,
-                    Presence = PresenceStatus.Online,
-                    LastSeenAtUtc = DateTime.UtcNow.AddMinutes(-8)
-                }
-            },
-            new DemoAccountRecord
-            {
-                Password = "123456",
                 AvatarBgHex = "#DBEAFE",
                 AvatarFgHex = "#1D4ED8",
                 User = new UserDto
@@ -755,7 +779,7 @@ internal sealed class DemoDataStore
                     Status = AccountStatus.Active,
                     Presence = PresenceStatus.Online,
                     ClassId = "cls_23ct1",
-                    ClassName = "23CT1 • Công nghệ thông tin",
+                    ClassName = "23CT1 • Lập trình mạng",
                     LastSeenAtUtc = DateTime.UtcNow
                 }
             },
@@ -768,91 +792,14 @@ internal sealed class DemoDataStore
                 {
                     UserId = "u_sv_230002",
                     Username = "sv230002",
-                    FullName = "Nguyễn Lan Anh",
-                    Email = "anh.sv.demo@dau.edu.vn",
+                    FullName = "Lê Thị Thu Hà",
+                    Email = "ha.sv.demo@dau.edu.vn",
                     Role = UserRole.SinhVien,
                     Status = AccountStatus.Active,
                     Presence = PresenceStatus.Online,
-                    ClassId = "cls_23kt1",
-                    ClassName = "23KT1 • Kiến trúc công trình",
+                    ClassId = null,
+                    ClassName = "Chưa gán lớp",
                     LastSeenAtUtc = DateTime.UtcNow
-                }
-            },
-            new DemoAccountRecord
-            {
-                Password = "123456",
-                AvatarBgHex = "#EDE9FE",
-                AvatarFgHex = "#6D28D9",
-                User = new UserDto
-                {
-                    UserId = "u_sv_230003",
-                    Username = "sv230003",
-                    FullName = "Trần Gia Huy",
-                    Email = "huy.sv.demo@dau.edu.vn",
-                    Role = UserRole.SinhVien,
-                    Status = AccountStatus.Locked,
-                    Presence = PresenceStatus.Offline,
-                    ClassId = "cls_23ct1",
-                    ClassName = "23CT1 • Công nghệ thông tin",
-                    LockReason = "Tài khoản mẫu minh họa trạng thái bị Quản trị viên tạm khóa.",
-                    LastSeenAtUtc = DateTime.UtcNow.AddHours(-6)
-                }
-            },
-            new DemoAccountRecord
-            {
-                Password = "123456",
-                AvatarBgHex = "#FCE7F3",
-                AvatarFgHex = "#BE185D",
-                User = new UserDto
-                {
-                    UserId = "u_sv_230004",
-                    Username = "sv230004",
-                    FullName = "Lê Khánh Linh",
-                    Email = "linh.sv.demo@dau.edu.vn",
-                    Role = UserRole.SinhVien,
-                    Status = AccountStatus.Active,
-                    Presence = PresenceStatus.Busy,
-                    ClassId = "cls_23xd1",
-                    ClassName = "23XD1 • Kỹ thuật xây dựng",
-                    LastSeenAtUtc = DateTime.UtcNow.AddMinutes(-12)
-                }
-            },
-            new DemoAccountRecord
-            {
-                Password = "123456",
-                AvatarBgHex = "#ECFDF5",
-                AvatarFgHex = "#047857",
-                User = new UserDto
-                {
-                    UserId = "u_sv_230005",
-                    Username = "sv230005",
-                    FullName = "Võ Minh Khôi",
-                    Email = "khoi.sv.demo@dau.edu.vn",
-                    Role = UserRole.SinhVien,
-                    Status = AccountStatus.Active,
-                    Presence = PresenceStatus.Online,
-                    ClassId = "cls_23ct1",
-                    ClassName = "23CT1 • Công nghệ thông tin",
-                    LastSeenAtUtc = DateTime.UtcNow.AddMinutes(-4)
-                }
-            },
-            new DemoAccountRecord
-            {
-                Password = "123456",
-                AvatarBgHex = "#EFF6FF",
-                AvatarFgHex = "#1E40AF",
-                User = new UserDto
-                {
-                    UserId = "u_sv_230006",
-                    Username = "sv230006",
-                    FullName = "Phạm Thảo Vy",
-                    Email = "vy.sv.demo@dau.edu.vn",
-                    Role = UserRole.SinhVien,
-                    Status = AccountStatus.Active,
-                    Presence = PresenceStatus.Online,
-                    ClassId = "cls_23kt1",
-                    ClassName = "23KT1 • Kiến trúc công trình",
-                    LastSeenAtUtc = DateTime.UtcNow.AddMinutes(-15)
                 }
             }
         });
@@ -871,38 +818,8 @@ internal sealed class DemoDataStore
                 LinkedRoomId = "room_ltm",
                 JoinCode = "23CT1-LTM5",
                 AllowStudentJoinByCode = true,
-                MemberCount = 5,
-                MemberIds = new List<string> { "u_gv_demo01", "u_sv_230001", "u_sv_230002", "u_sv_230003", "u_sv_230005" }
-            },
-            new ClassDto
-            {
-                ClassId = "cls_23kt1",
-                ClassCode = "23KT1",
-                ClassName = "Đồ án Kiến trúc 4",
-                Department = "Khoa Kiến trúc (DAU)",
-                AcademicYear = "2023 - 2028",
-                LecturerId = "u_gv_demo01",
-                LecturerName = "ThS. Nguyễn Văn Minh",
-                LinkedRoomId = "room_kt4",
-                JoinCode = "23KT1-KT4A",
-                AllowStudentJoinByCode = true,
-                MemberCount = 4,
-                MemberIds = new List<string> { "u_gv_demo01", "u_sv_230001", "u_sv_230002", "u_sv_230006" }
-            },
-            new ClassDto
-            {
-                ClassId = "cls_23xd1",
-                ClassCode = "23XD1",
-                ClassName = "Kết cấu công trình",
-                Department = "Khoa Xây dựng (DAU)",
-                AcademicYear = "2023 - 2027",
-                LecturerId = "u_gv_demo01",
-                LecturerName = "ThS. Nguyễn Văn Minh",
-                LinkedRoomId = "room_kcc",
-                JoinCode = "23XD1-KC8B",
-                AllowStudentJoinByCode = true,
-                MemberCount = 3,
-                MemberIds = new List<string> { "u_gv_demo01", "u_sv_230004", "u_sv_230006" }
+                MemberCount = 2,
+                MemberIds = new List<string> { "u_gv_demo01", "u_sv_230001" }
             }
         });
     }
@@ -915,334 +832,41 @@ internal sealed class DemoDataStore
             {
                 RoomId = "room_ltm",
                 RoomName = "Lập trình mạng • 23CT1",
-                Description = "Phòng trao đổi học phần Lập trình mạng, nộp báo cáo đồ án TCP Socket & Local-First.",
+                Description = "Phòng học phần Lập trình mạng - ĐH Kiến trúc Đà Nẵng.",
                 RoomType = RoomType.ClassRoom,
                 ClassId = "cls_23ct1",
                 JoinCode = "23CT1-LTM5",
                 OwnerId = "u_gv_demo01",
-                MemberIds = new List<string> { "u_gv_demo01", "u_sv_230001", "u_sv_230002", "u_sv_230005" },
-                LastActivityAtUtc = DateTime.UtcNow.AddMinutes(-5),
-                PinnedNotice = new PinnedNoticeDto
-                {
-                    MessageId = "pin_ltm_1",
-                    RoomId = "room_ltm",
-                    PinnedByUserId = "u_gv_demo01",
-                    PinnedByName = "ThS. Nguyễn Văn Minh",
-                    Content = "Hạn nộp báo cáo cuối kỳ: 17:00, thứ Sáu tuần này. Các nhóm kiểm tra SHA-256 trước khi gửi file .zip.",
-                    PinnedAtUtc = DateTime.UtcNow.AddHours(-3)
-                }
-            },
-            new RoomDto
-            {
-                RoomId = "room_kt4",
-                RoomName = "Đồ án Kiến trúc 4",
-                Description = "Kênh duyệt bản vẽ mặt bằng (.dwg/.pdf) và phối cảnh đồ án studio tầng 4.",
-                RoomType = RoomType.ClassRoom,
-                ClassId = "cls_23kt1",
-                JoinCode = "23KT1-KT4A",
-                OwnerId = "u_gv_demo01",
-                MemberIds = new List<string> { "u_gv_demo01", "u_sv_230001", "u_sv_230002", "u_sv_230006" },
-                LastActivityAtUtc = DateTime.UtcNow.AddMinutes(-42),
-                PinnedNotice = new PinnedNoticeDto
-                {
-                    MessageId = "pin_kt4_1",
-                    RoomId = "room_kt4",
-                    PinnedByUserId = "u_gv_demo01",
-                    PinnedByName = "ThS. Nguyễn Văn Minh",
-                    Content = "Thông báo sửa đồ án đợt 2: Nộp file Mặt bằng CAD và bản PDF thuyết minh tại studio A302.",
-                    PinnedAtUtc = DateTime.UtcNow.AddDays(-1)
-                }
-            },
-            new RoomDto
-            {
-                RoomId = "room_kcc",
-                RoomName = "Kết cấu công trình",
-                Description = "Chia sẻ tài liệu tính toán dầm sàn, hồ sơ kết cấu bê tông cốt thép.",
-                RoomType = RoomType.StudyGroup,
-                ClassId = "cls_23xd1",
-                JoinCode = "23XD1-KC8B",
-                OwnerId = "u_gv_demo01",
-                MemberIds = new List<string> { "u_gv_demo01", "u_sv_230004", "u_sv_230006" },
-                LastActivityAtUtc = DateTime.UtcNow.AddDays(-1)
+                MemberIds = new List<string> { "u_gv_demo01", "u_sv_230001" },
+                LastActivityAtUtc = DateTime.UtcNow,
+                PinnedNotice = null
             }
         });
 
-        UnreadByConversation["room_ltm"] = 2;
-        UnreadByConversation["room_kt4"] = 1;
+        UnreadByConversation["room_ltm"] = 0;
 
-        var todayBase = DateTime.Today.AddHours(9).AddMinutes(42).ToUniversalTime();
+        var initTs = DateTime.UtcNow.AddMinutes(-5);
         MessagesByConversation["room_ltm"] = new List<MessageDto>
         {
             new()
             {
-                MessageId = "m_ltm_1",
+                MessageId = "m_ltm_init",
                 ConversationId = "room_ltm",
                 RoomId = "room_ltm",
                 IsRoomMessage = true,
                 SenderId = "u_gv_demo01",
                 SenderName = "ThS. Nguyễn Văn Minh",
-                Content = "Chào cả lớp, thầy đã cập nhật biểu mẫu báo cáo cuối kỳ. Các nhóm tải về và hoàn thiện đúng cấu trúc kiến trúc Local-First nhé.",
+                Content = "Chào mừng các bạn sinh viên đến với phòng học Lập trình mạng. Các bạn có thể trao đổi, gửi tệp và kiểm thử tương tác tại đây.",
                 Type = MessageType.Text,
-                SentAtClientUtc = todayBase,
-                ServerTimestampUtc = todayBase
-            },
-            new()
-            {
-                MessageId = "m_ltm_2",
-                ConversationId = "room_ltm",
-                RoomId = "room_ltm",
-                IsRoomMessage = true,
-                SenderId = "u_gv_demo01",
-                SenderName = "ThS. Nguyễn Văn Minh",
-                Content = "Mau-bao-cao-do-an-cuoi-ky.pdf",
-                Type = MessageType.FileAttachment,
-                AttachmentFileId = "file_001",
-                AttachmentFileName = "Mau-bao-cao-do-an-cuoi-ky.pdf",
-                AttachmentFileSize = 2_516_582,
-                LocalFilePath = "LocalData\\Demo\\Files\\room_ltm\\Mau-bao-cao-do-an-cuoi-ky.pdf",
-                SentAtClientUtc = todayBase.AddMinutes(2),
-                ServerTimestampUtc = todayBase.AddMinutes(2)
-            },
-            new()
-            {
-                MessageId = "m_ltm_3",
-                ConversationId = "room_ltm",
-                RoomId = "room_ltm",
-                IsRoomMessage = true,
-                SenderId = "u_sv_230001",
-                SenderName = "Bùi Trần Nhật Hưng",
-                Content = "Dạ vâng thầy. Nhóm 5 đã chốt xong giao thức Length-prefix 4 byte và tách tầng LocalStorage xong rồi ạ.",
-                Type = MessageType.Text,
-                SentAtClientUtc = todayBase.AddMinutes(23),
-                ServerTimestampUtc = todayBase.AddMinutes(23)
-            },
-            new()
-            {
-                MessageId = "m_ltm_4",
-                ConversationId = "room_ltm",
-                RoomId = "room_ltm",
-                IsRoomMessage = true,
-                SenderId = "u_sv_230001",
-                SenderName = "Bùi Trần Nhật Hưng",
-                Content = "DAU-Chat-Team5-KienTruc.zip",
-                Type = MessageType.FileAttachment,
-                AttachmentFileId = "file_003",
-                AttachmentFileName = "DAU-Chat-Team5-KienTruc.zip",
-                AttachmentFileSize = 132_120_576,
-                LocalFilePath = "LocalData\\Demo\\Files\\room_ltm\\DAU-Chat-Team5-KienTruc.zip",
-                SentAtClientUtc = todayBase.AddMinutes(26),
-                ServerTimestampUtc = todayBase.AddMinutes(26)
-            },
-            new()
-            {
-                MessageId = "m_ltm_5",
-                ConversationId = "room_ltm",
-                RoomId = "room_ltm",
-                IsRoomMessage = true,
-                SenderId = "u_sv_230002",
-                SenderName = "Nguyễn Lan Anh",
-                Content = "Mọi người kiểm tra lại luồng PendingQueue + PacketAck khi tài khoản đang Offline nhé, mình đã đối chiếu mã nguồn xong.",
-                Type = MessageType.Text,
-                SentAtClientUtc = todayBase.AddMinutes(36),
-                ServerTimestampUtc = todayBase.AddMinutes(36)
-            }
-        };
-
-        MessagesByConversation["room_kt4"] = new List<MessageDto>
-        {
-            new()
-            {
-                MessageId = "m_kt4_1",
-                ConversationId = "room_kt4",
-                RoomId = "room_kt4",
-                IsRoomMessage = true,
-                SenderId = "u_sv_230002",
-                SenderName = "Nguyễn Lan Anh",
-                Content = "Mình vừa gửi bản vẽ mặt bằng tầng 1 dạng .dwg qua luồng chunk 64KB, mọi người kiểm tra khớp SHA-256 nhé.",
-                Type = MessageType.Text,
-                SentAtClientUtc = todayBase.AddHours(-2),
-                ServerTimestampUtc = todayBase.AddHours(-2)
-            },
-            new()
-            {
-                MessageId = "m_kt4_2",
-                ConversationId = "room_kt4",
-                RoomId = "room_kt4",
-                IsRoomMessage = true,
-                SenderId = "u_sv_230002",
-                SenderName = "Nguyễn Lan Anh",
-                Content = "So-do-mat-bang-tang-01.dwg",
-                Type = MessageType.FileAttachment,
-                AttachmentFileId = "file_002",
-                AttachmentFileName = "So-do-mat-bang-tang-01.dwg",
-                AttachmentFileSize = 19_608_371,
-                SentAtClientUtc = todayBase.AddHours(-2).AddMinutes(1),
-                ServerTimestampUtc = todayBase.AddHours(-2).AddMinutes(1)
-            }
-        };
-
-        MessagesByConversation["room_kcc"] = new List<MessageDto>
-        {
-            new()
-            {
-                MessageId = "m_kcc_1",
-                ConversationId = "room_kcc",
-                RoomId = "room_kcc",
-                IsRoomMessage = true,
-                SenderId = "u_sv_230004",
-                SenderName = "Lê Khánh Linh",
-                Content = "Đã đồng bộ file Excel khảo sát địa chất nền móng về kho tài liệu máy trạm.",
-                Type = MessageType.Text,
-                SentAtClientUtc = todayBase.AddDays(-1),
-                ServerTimestampUtc = todayBase.AddDays(-1)
-            }
-        };
-
-        var dmKey12 = GetDirectConversationKey("u_sv_230001", "u_sv_230002");
-        MessagesByConversation[dmKey12] = new List<MessageDto>
-        {
-            new()
-            {
-                MessageId = "m_dm_1",
-                ConversationId = dmKey12,
-                IsRoomMessage = false,
-                SenderId = "u_sv_230002",
-                SenderName = "Nguyễn Lan Anh",
-                ReceiverId = "u_sv_230001",
-                Content = "Mình đã gửi bản vẽ mặt bằng qua nhóm rồi nhé, có gì xem giúp mình phần chú thích trục.",
-                Type = MessageType.Text,
-                SentAtClientUtc = todayBase.AddMinutes(-20),
-                ServerTimestampUtc = todayBase.AddMinutes(-20)
-            }
-        };
-
-        var dmKey14 = GetDirectConversationKey("u_sv_230001", "u_sv_230004");
-        MessagesByConversation[dmKey14] = new List<MessageDto>
-        {
-            new()
-            {
-                MessageId = "m_dm_2",
-                ConversationId = dmKey14,
-                IsRoomMessage = false,
-                SenderId = "u_sv_230004",
-                SenderName = "Lê Khánh Linh",
-                ReceiverId = "u_sv_230001",
-                Content = "Chiều nay nhóm mình họp kiểm tra tiến độ UI lúc 14:30 ở thư viện DAU nhé!",
-                Type = MessageType.Text,
-                SentAtClientUtc = todayBase.AddDays(-1).AddHours(3),
-                ServerTimestampUtc = todayBase.AddDays(-1).AddHours(3)
-            }
-        };
-
-        var dmKeyGv1 = GetDirectConversationKey("u_gv_demo01", "u_sv_230001");
-        MessagesByConversation[dmKeyGv1] = new List<MessageDto>
-        {
-            new()
-            {
-                MessageId = "m_dm_3",
-                ConversationId = dmKeyGv1,
-                IsRoomMessage = false,
-                SenderId = "u_gv_demo01",
-                SenderName = "ThS. Nguyễn Văn Minh",
-                ReceiverId = "u_sv_230001",
-                Content = "Em chuẩn bị phần demo truyền file qua TCP và kiểm thử 2 tài khoản cùng lúc để buổi bảo vệ chạy mượt nhé.",
-                Type = MessageType.Text,
-                SentAtClientUtc = todayBase.AddHours(-3),
-                ServerTimestampUtc = todayBase.AddHours(-3)
+                SentAtClientUtc = initTs,
+                ServerTimestampUtc = initTs
             }
         };
     }
 
     private void SeedFilesAndTelemetry()
     {
-        LocalFiles.AddRange(new[]
-        {
-            new FileManifestDto
-            {
-                FileId = "file_001",
-                FileName = "Mau-bao-cao-do-an-cuoi-ky.pdf",
-                Extension = ".pdf",
-                Category = FileCategory.PDF,
-                RoomOrPartnerId = "room_ltm",
-                IsRoom = true,
-                SenderId = "u_gv_demo01",
-                SenderName = "ThS. Nguyễn Văn Minh",
-                FileSizeBytes = 2_516_582,
-                Sha256Checksum = "a9f4c821e7b09d43e1120c7f43a2104b9f7e38d16e54b2c1a0f8e12d44c9b201",
-                LocalRelativePath = "Files/room_ltm/Mau-bao-cao-do-an-cuoi-ky.pdf",
-                LocalFullPath = string.Empty,
-                DownloadedAtUtc = DateTime.UtcNow.AddHours(-3),
-                LastAccessedAtUtc = DateTime.UtcNow.AddMinutes(-20)
-            },
-            new FileManifestDto
-            {
-                FileId = "file_002",
-                FileName = "So-do-mat-bang-tang-01.dwg",
-                Extension = ".dwg",
-                Category = FileCategory.CAD,
-                RoomOrPartnerId = "room_kt4",
-                IsRoom = true,
-                SenderId = "u_sv_230002",
-                SenderName = "Nguyễn Lan Anh",
-                FileSizeBytes = 19_608_371,
-                Sha256Checksum = "7e21a094f56c3d8b10e4821a774f2d11c8a9e33b2d1f77001122aaccbbdd8844",
-                LocalRelativePath = "Files/room_kt4/So-do-mat-bang-tang-01.dwg",
-                LocalFullPath = string.Empty,
-                DownloadedAtUtc = DateTime.UtcNow.AddDays(-1),
-                LastAccessedAtUtc = DateTime.UtcNow.AddHours(-5)
-            },
-            new FileManifestDto
-            {
-                FileId = "file_003",
-                FileName = "DAU-Chat-Team5-KienTruc.zip",
-                Extension = ".zip",
-                Category = FileCategory.Archive,
-                RoomOrPartnerId = "room_ltm",
-                IsRoom = true,
-                SenderId = "u_sv_230001",
-                SenderName = "Bùi Trần Nhật Hưng",
-                FileSizeBytes = 132_120_576,
-                Sha256Checksum = "3c91d4587ab2190fe0981234abcd5678ef0123456789abcdef11223344556677",
-                LocalRelativePath = "Files/room_ltm/DAU-Chat-Team5-KienTruc.zip",
-                LocalFullPath = string.Empty,
-                DownloadedAtUtc = DateTime.UtcNow.AddDays(-4),
-                LastAccessedAtUtc = DateTime.UtcNow.AddDays(-2)
-            },
-            new FileManifestDto
-            {
-                FileId = "file_004",
-                FileName = "Phoi-canh-mat-dung-DAU.png",
-                Extension = ".png",
-                Category = FileCategory.Image,
-                RoomOrPartnerId = "room_kt4",
-                IsRoom = true,
-                SenderId = "u_sv_230002",
-                SenderName = "Nguyễn Lan Anh",
-                FileSizeBytes = 8_493_465,
-                Sha256Checksum = "5b12fe98a76d4431c90218736455acbd12340987fedcba654321001122334455",
-                LocalRelativePath = "Files/room_kt4/Phoi-canh-mat-dung-DAU.png",
-                LocalFullPath = string.Empty,
-                DownloadedAtUtc = DateTime.UtcNow.AddDays(-2),
-                LastAccessedAtUtc = DateTime.UtcNow.AddDays(-1)
-            },
-            new FileManifestDto
-            {
-                FileId = "file_005",
-                FileName = "Du-lieu-khao-sat-cong-trinh.xlsx",
-                Extension = ".xlsx",
-                Category = FileCategory.Document,
-                RoomOrPartnerId = "room_kcc",
-                IsRoom = true,
-                SenderId = "u_sv_230004",
-                SenderName = "Lê Khánh Linh",
-                FileSizeBytes = 5_033_164,
-                Sha256Checksum = "88a1c3f91e04b77d21349087bcde6543a1209876bcdf54321098abcdef123456",
-                LocalRelativePath = "Files/room_kcc/Du-lieu-khao-sat-cong-trinh.xlsx",
-                LocalFullPath = string.Empty,
-                DownloadedAtUtc = DateTime.UtcNow.AddDays(-110),
-                LastAccessedAtUtc = DateTime.UtcNow.AddDays(-98)
-            }
-        });
+        LocalFiles.Clear();
 
         ConnectedClients.AddRange(new[]
         {
@@ -1251,12 +875,12 @@ internal sealed class DemoDataStore
                 SessionId = "sess_01",
                 UserId = "u_gv_demo01",
                 Username = "gv_demo01",
-                IpEndPoint = "192.168.10.24:54112",
+                IpEndPoint = "127.0.0.1:54112",
                 Status = PresenceStatus.Online,
-                ConnectedAtUtc = DateTime.UtcNow.AddHours(-2),
-                LastHeartbeatUtc = DateTime.UtcNow.AddSeconds(-4),
-                PacketsSent = 412,
-                PacketsReceived = 388
+                ConnectedAtUtc = DateTime.UtcNow.AddHours(-1),
+                LastHeartbeatUtc = DateTime.UtcNow.AddSeconds(-2),
+                PacketsSent = 0,
+                PacketsReceived = 0
             },
             new ClientConnectionDto
             {
@@ -1265,34 +889,10 @@ internal sealed class DemoDataStore
                 Username = "sv230001",
                 IpEndPoint = "127.0.0.1:54880",
                 Status = PresenceStatus.Online,
-                ConnectedAtUtc = DateTime.UtcNow.AddMinutes(-45),
-                LastHeartbeatUtc = DateTime.UtcNow.AddSeconds(-2),
-                PacketsSent = 185,
-                PacketsReceived = 219
-            },
-            new ClientConnectionDto
-            {
-                SessionId = "sess_03",
-                UserId = "u_sv_230002",
-                Username = "sv230002",
-                IpEndPoint = "192.168.10.41:55019",
-                Status = PresenceStatus.Online,
-                ConnectedAtUtc = DateTime.UtcNow.AddMinutes(-28),
-                LastHeartbeatUtc = DateTime.UtcNow.AddSeconds(-7),
-                PacketsSent = 96,
-                PacketsReceived = 110
-            },
-            new ClientConnectionDto
-            {
-                SessionId = "sess_04",
-                UserId = "u_sv_230004",
-                Username = "sv230004",
-                IpEndPoint = "192.168.10.58:55104",
-                Status = PresenceStatus.Busy,
-                ConnectedAtUtc = DateTime.UtcNow.AddMinutes(-18),
-                LastHeartbeatUtc = DateTime.UtcNow.AddSeconds(-11),
-                PacketsSent = 64,
-                PacketsReceived = 72
+                ConnectedAtUtc = DateTime.UtcNow.AddHours(-1),
+                LastHeartbeatUtc = DateTime.UtcNow.AddSeconds(-1),
+                PacketsSent = 0,
+                PacketsReceived = 0
             }
         });
 
@@ -1300,34 +900,10 @@ internal sealed class DemoDataStore
         {
             new ConnectionLogDto
             {
-                TimestampUtc = DateTime.UtcNow.AddMinutes(-35),
+                TimestampUtc = DateTime.UtcNow,
                 EventType = "SERVER_START",
                 IpEndPoint = "127.0.0.1:9050",
-                Description = "TCP Socket Listener khởi động theo chuẩn Length-prefix 4 byte."
-            },
-            new ConnectionLogDto
-            {
-                TimestampUtc = DateTime.UtcNow.AddMinutes(-28),
-                EventType = "AUTH_LOGIN",
-                UserId = "u_sv_230002",
-                IpEndPoint = "192.168.10.41:55019",
-                Description = "sv230002 đăng nhập thành công; đồng bộ 2 gói tin từ PendingQueue."
-            },
-            new ConnectionLogDto
-            {
-                TimestampUtc = DateTime.UtcNow.AddMinutes(-18),
-                EventType = "PACKET_ACK",
-                UserId = "u_gv_demo01",
-                IpEndPoint = "192.168.10.24:54112",
-                Description = "Đã nhận PacketAck xác thực SHA-256 tệp Mau-bao-cao-do-an-cuoi-ky.pdf."
-            },
-            new ConnectionLogDto
-            {
-                TimestampUtc = DateTime.UtcNow.AddMinutes(-6),
-                EventType = "AUTH_DENIED",
-                UserId = "u_sv_230003",
-                IpEndPoint = "192.168.10.77:55203",
-                Description = "Từ chối kết nối sv230003: Tài khoản đang ở trạng thái Locked."
+                Description = "TCP Socket Server DAU Chat khởi động thành công (Bộ kiểm thử liên kết 3 vai trò)."
             }
         });
     }
