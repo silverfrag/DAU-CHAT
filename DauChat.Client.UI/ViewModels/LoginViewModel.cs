@@ -12,7 +12,7 @@ namespace DauChat.Client.UI.ViewModels;
 
 public sealed class LoginViewModel : ObservableObject
 {
-    private string _username = "sv230001";
+    private string _username = "2351220198";
     private string _password = "123456";
     private string _serverHost = ProtocolConstants.DefaultServerHost;
     private string _serverPortText = ProtocolConstants.DefaultServerPort.ToString();
@@ -20,7 +20,7 @@ public sealed class LoginViewModel : ObservableObject
     private bool _rememberUsername = true;
     private bool _isConnecting;
     private string _errorMessage = string.Empty;
-    private string _selectedDemoUsername = "sv230001";
+    private string _selectedDemoUsername = "2351220198";
 
     public event Action<UserDto>? LoginSucceeded;
     public event Action<string, string>? QuickFillPasswordRequested;
@@ -31,11 +31,11 @@ public sealed class LoginViewModel : ObservableObject
         {
             new()
             {
-                Label = "Sinh viên (Chuẩn)",
+                Label = "Sinh viên (Lớp 23CT1)",
                 RoleTag = "Sinh viên",
-                Username = "sv230001",
+                Username = "2351220198",
                 Password = "123456",
-                Note = "Bùi Trần Nhật Hưng • Ẩn tab Quản trị",
+                Note = "Bùi Trần Nhật Hưng • Sinh viên K23",
                 BadgeBgHex = "#EFF6FF",
                 BadgeFgHex = "#1D4ED8"
             },
@@ -45,7 +45,7 @@ public sealed class LoginViewModel : ObservableObject
                 RoleTag = "Giảng viên",
                 Username = "gv_demo01",
                 Password = "123456",
-                Note = "ThS. Nguyễn Văn Minh • Tạo phòng & Ghim",
+                Note = "ThS. Nguyễn Văn Minh • Khoa CNTT",
                 BadgeBgHex = "#F1F5F9",
                 BadgeFgHex = "#1E293B"
             },
@@ -55,7 +55,7 @@ public sealed class LoginViewModel : ObservableObject
                 RoleTag = "Admin",
                 Username = "admin",
                 Password = "123456",
-                Note = "Trần Quang Dũng • Toàn quyền hệ thống",
+                Note = "Trần Quang Dũng • Ban Quản trị",
                 BadgeBgHex = "#FEF2F2",
                 BadgeFgHex = "#CB0914"
             },
@@ -63,9 +63,9 @@ public sealed class LoginViewModel : ObservableObject
             {
                 Label = "Sinh viên (Chưa lớp)",
                 RoleTag = "Sinh viên",
-                Username = "sv230002",
+                Username = "2351220205",
                 Password = "123456",
-                Note = "Lê Thị Thu Hà • Test mời/thêm vào lớp",
+                Note = "Lê Thị Thu Hà • Sinh viên K23",
                 BadgeBgHex = "#FEF3C7",
                 BadgeFgHex = "#B45309"
             }
@@ -231,12 +231,12 @@ public sealed class LoginViewModel : ObservableObject
             win.Top = 18;
             win.Width = 1220;
             win.Height = 740;
-            win.Title = "DAU Chat • Sinh viên (sv230001)";
+            win.Title = "DAU Chat • Sinh viên (2351220198)";
         }
 
-        Username = "sv230001";
+        Username = "2351220198";
         Password = "123456";
-        QuickFillPasswordRequested?.Invoke("sv230001", "123456");
+        QuickFillPasswordRequested?.Invoke("2351220198", "123456");
         await ExecuteLoginAsync();
     }
 }

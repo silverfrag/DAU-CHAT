@@ -305,6 +305,20 @@ internal sealed class DemoDataStore
         });
     }
 
+    public void HideFileForUser(string userId, string fileId)
+    {
+        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(fileId)) return;
+        MutateAndSave(() =>
+        {
+            if (!HiddenFileIdsByUser.TryGetValue(userId, out var ids))
+            {
+                ids = new List<string>();
+                HiddenFileIdsByUser[userId] = ids;
+            }
+            if (!ids.Contains(fileId)) ids.Add(fileId);
+        });
+    }
+
     public bool IsConversationMuted(string userId, string conversationId)
         => MutedConversationsByUser.TryGetValue(userId, out var ids) && ids.Contains(conversationId);
 
@@ -772,9 +786,9 @@ internal sealed class DemoDataStore
                 User = new UserDto
                 {
                     UserId = "u_sv_230001",
-                    Username = "sv230001",
+                    Username = "2351220198",
                     FullName = "Bùi Trần Nhật Hưng",
-                    Email = "hung.sv.demo@dau.edu.vn",
+                    Email = "2351220198@dau.edu.vn",
                     Role = UserRole.SinhVien,
                     Status = AccountStatus.Active,
                     Presence = PresenceStatus.Online,
@@ -791,9 +805,9 @@ internal sealed class DemoDataStore
                 User = new UserDto
                 {
                     UserId = "u_sv_230002",
-                    Username = "sv230002",
+                    Username = "2351220205",
                     FullName = "Lê Thị Thu Hà",
-                    Email = "ha.sv.demo@dau.edu.vn",
+                    Email = "2351220205@dau.edu.vn",
                     Role = UserRole.SinhVien,
                     Status = AccountStatus.Active,
                     Presence = PresenceStatus.Online,
@@ -886,7 +900,7 @@ internal sealed class DemoDataStore
             {
                 SessionId = "sess_02",
                 UserId = "u_sv_230001",
-                Username = "sv230001",
+                Username = "2351220198",
                 IpEndPoint = "127.0.0.1:54880",
                 Status = PresenceStatus.Online,
                 ConnectedAtUtc = DateTime.UtcNow.AddHours(-1),

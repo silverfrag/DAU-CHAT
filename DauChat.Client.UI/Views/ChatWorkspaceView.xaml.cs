@@ -100,18 +100,26 @@ public partial class ChatWorkspaceView : UserControl
 
     private void MessageRow_ContextMenuOpening(object sender, ContextMenuEventArgs e)
     {
-        if (sender is FrameworkElement { DataContext: MessageItemModel msg }
-            && !msg.CanReplyThisMessage
-            && !msg.CanCopyThisMessage
-            && !msg.CanPinThisMessage
-            && !msg.CanRecallThisMessage
-            && !msg.CanDeleteForMe)
+        if (sender is FrameworkElement fe)
         {
-            e.Handled = true;
+            if (fe.ContextMenu is { } menu)
+            {
+                menu.PlacementTarget = fe;
+            }
+
+            if (fe.DataContext is MessageItemModel msg
+                && !msg.CanReplyThisMessage
+                && !msg.CanCopyThisMessage
+                && !msg.CanPinThisMessage
+                && !msg.CanRecallThisMessage
+                && !msg.CanDeleteForMe)
+            {
+                e.Handled = true;
+            }
         }
     }
 
-    private async void ChatArea_PreviewDrop(object sender, DragEventArgs e)
+    private void ChatArea_PreviewDrop(object sender, DragEventArgs e)
     {
         DropFilesOverlay.Visibility = Visibility.Collapsed;
         if (DataContext is not ChatWorkspaceViewModel vm || !vm.CanSendMessages || vm.SelectedConversation is null)
@@ -124,7 +132,7 @@ public partial class ChatWorkspaceView : UserControl
             && files.Length > 0)
         {
             e.Handled = true;
-            await vm.SendFilesFromPathsAsync(files);
+            vm.StageFiles(files);
         }
     }
 
@@ -159,7 +167,7 @@ public partial class ChatWorkspaceView : UserControl
                         var paths = new string[fileList.Count];
                         fileList.CopyTo(paths, 0);
                         e.Handled = true;
-                        await pasteVm.SendFilesFromPathsAsync(paths);
+                        pasteVm.StageFiles(paths);
                         return;
                     }
                 }

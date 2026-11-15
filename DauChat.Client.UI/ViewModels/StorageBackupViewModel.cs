@@ -27,6 +27,7 @@ public sealed class StorageBackupViewModel : ObservableObject
     private string _cleanupDaysText = "90";
     private string _lastBackupLabel = "Chưa sao lưu trong phiên này";
     private string _localFolderPathLabel = "LocalData/{UserId}/";
+    private bool _includeFilesWithBackup;
 
     public StorageBackupViewModel(Action<string> notify, Func<Task>? onStorageDataChangedAsync = null)
     {
@@ -88,6 +89,12 @@ public sealed class StorageBackupViewModel : ObservableObject
     {
         get => _localFolderPathLabel;
         set => SetProperty(ref _localFolderPathLabel, value);
+    }
+
+    public bool IncludeFilesWithBackup
+    {
+        get => _includeFilesWithBackup;
+        set => SetProperty(ref _includeFilesWithBackup, value);
     }
 
     public async Task RefreshAsync()
@@ -165,7 +172,7 @@ public sealed class StorageBackupViewModel : ObservableObject
 
         if (dlg.ShowDialog() != true) return;
 
-        var res = await ClientServiceHost.Current.FileStorage.ExportBackupZipAsync(user.UserId, dlg.FileName);
+        var res = await ClientServiceHost.Current.FileStorage.ExportBackupZipAsync(user.UserId, dlg.FileName, IncludeFilesWithBackup);
         if (res.Success)
         {
             LastBackupLabel = $"Lần cuối: {DateTime.Now:dd/MM/yyyy HH:mm}";

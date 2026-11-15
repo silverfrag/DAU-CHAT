@@ -45,12 +45,12 @@
                       Command="{Binding PlacementTarget.Tag.CopyMessageCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       Visibility="{Binding PlacementTarget.DataContext.CanCopyThisMessage, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource BoolToVis}}" />
-            <MenuItem Header="Ghim lên đầu phòng"
+            <MenuItem Header="Ghim tin nhắn"
                       Command="{Binding PlacementTarget.Tag.PinMessageCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       Visibility="{Binding PlacementTarget.DataContext.CanPinThisMessage, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource BoolToVis}}" />
             <Separator Visibility="{Binding PlacementTarget.DataContext.ShowContextActionSeparator, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource BoolToVis}}" />
-            <MenuItem Header="Thu hồi với mọi người"
+            <MenuItem Header="Thu hồi tin nhắn"
                       Foreground="#B45309"
                       FontWeight="SemiBold"
                       Command="{Binding PlacementTarget.Tag.RecallMessageCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
@@ -609,22 +609,7 @@
                               Padding="22,16"
                               ScrollChanged="MessagesScrollViewer_ScrollChanged">
                     <StackPanel MaxWidth="780">
-                        <Border HorizontalAlignment="Center"
-                                Background="{StaticResource SurfaceWhiteBrush}"
-                                BorderBrush="{StaticResource BorderSubtleBrush}"
-                                BorderThickness="1"
-                                CornerRadius="10"
-                                Padding="10,4"
-                                Margin="12,0,12,10">
-                            <StackPanel Orientation="Horizontal">
-                                <Ellipse Width="6" Height="6" Fill="{StaticResource EmeraldBrush}" VerticalAlignment="Center" />
-                                <TextBlock Text="Lưu trữ Local-first (.jsonl + SHA-256) • Kéo thả hoặc Ctrl+V ảnh"
-                                           FontSize="10"
-                                           FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextMutedBrush}"
-                                           Margin="6,0,0,0" />
-                            </StackPanel>
-                        </Border>
+
 
                         <ItemsControl ItemsSource="{Binding VisibleMessages}">
                             <ItemsControl.ItemTemplate>
@@ -766,14 +751,14 @@
                                                     </Button>
                                                     <Button Style="{StaticResource MsgMiniActionBtnStyle}"
                                                             Margin="0,0,4,0"
-                                                            ToolTip="Ghim lên đầu phòng"
+                                                            ToolTip="Ghim tin nhắn"
                                                             Visibility="{Binding CanPinThisMessage, Converter={StaticResource BoolToVis}}"
                                                             Command="{Binding DataContext.PinMessageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                             CommandParameter="{Binding}">
                                                         <Path Data="{StaticResource IconPin}" Stroke="{StaticResource DauRedTextBrush}" StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform" />
                                                     </Button>
                                                     <Button Style="{StaticResource MsgMiniActionBtnStyle}"
-                                                            ToolTip="Xóa ở phía tôi (chỉ ẩn trên máy này)"
+                                                            ToolTip="Xóa ở phía tôi"
                                                             Visibility="{Binding CanDeleteForMe, Converter={StaticResource BoolToVis}}"
                                                             Command="{Binding DataContext.DeleteSingleMessageLocalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                             CommandParameter="{Binding}">
@@ -815,7 +800,7 @@
                                                         </Button>
                                                         <Button Style="{StaticResource MsgMiniActionBtnStyle}"
                                                                 Margin="0,0,4,0"
-                                                                ToolTip="Ghim lên đầu phòng"
+                                                                ToolTip="Ghim tin nhắn"
                                                                 Visibility="{Binding CanPinThisMessage, Converter={StaticResource BoolToVis}}"
                                                                 Command="{Binding DataContext.PinMessageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}">
@@ -823,14 +808,14 @@
                                                         </Button>
                                                         <Button Style="{StaticResource MsgMiniActionBtnStyle}"
                                                                 Margin="0,0,4,0"
-                                                                ToolTip="Thu hồi với mọi người"
+                                                                ToolTip="Thu hồi"
                                                                 Visibility="{Binding CanRecallThisMessage, Converter={StaticResource BoolToVis}}"
                                                                 Command="{Binding DataContext.RecallMessageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}">
                                                             <Path Data="{StaticResource IconRecall}" Stroke="#D97706" StrokeThickness="1.9" Width="12" Height="12" Stretch="Uniform" />
                                                         </Button>
                                                         <Button Style="{StaticResource MsgMiniActionBtnStyle}"
-                                                                ToolTip="Xóa ở phía tôi (chỉ ẩn trên máy này)"
+                                                                ToolTip="Xóa ở phía tôi"
                                                                 Visibility="{Binding CanDeleteForMe, Converter={StaticResource BoolToVis}}"
                                                                 Command="{Binding DataContext.DeleteSingleMessageLocalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}">
@@ -935,8 +920,17 @@
                                                                 </Border>
                                                             </Button>
                                                             <Grid Margin="4,7,4,2">
-                                                                <TextBlock Text="{Binding AttachmentFileName}" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" Margin="0,0,70,0" />
-                                                                <TextBlock HorizontalAlignment="Right" Text="{Binding AttachmentSizeText}" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                                                <TextBlock Text="{Binding AttachmentFileName}" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" Margin="0,0,105,0" />
+                                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding AttachmentSizeText}" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                                    <Button Style="{StaticResource IconButtonStyle}"
+                                                                            Width="24" Height="24"
+                                                                            Command="{Binding DataContext.SaveFileAsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                            CommandParameter="{Binding}"
+                                                                            ToolTip="Lưu ảnh về máy tính">
+                                                                        <Path Data="{StaticResource IconDownload}" Stroke="{StaticResource DauRedTextBrush}" StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform" />
+                                                                    </Button>
+                                                                </StackPanel>
                                                             </Grid>
                                                         </StackPanel>
                                                     </Border>
@@ -977,16 +971,28 @@
                                                                            Foreground="{StaticResource TextMutedBrush}"
                                                                            Margin="0,3,0,0" />
                                                             </StackPanel>
-                                                            <Button Grid.Column="2"
-                                                                    Style="{StaticResource IconButtonStyle}"
-                                                                    Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                    CommandParameter="{Binding}"
-                                                                    ToolTip="Mở / Kiểm tra tệp">
-                                                                <Path Data="{StaticResource IconDownload}"
-                                                                      Stroke="{StaticResource DauRedTextBrush}"
-                                                                      StrokeThickness="2"
-                                                                      Width="16" Height="16" Stretch="Uniform" />
-                                                            </Button>
+                                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                                <Button Style="{StaticResource IconButtonStyle}"
+                                                                        Width="30" Height="30" Margin="0,0,4,0"
+                                                                        Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                        CommandParameter="{Binding}"
+                                                                        ToolTip="Mở tệp ngay">
+                                                                    <Path Data="{StaticResource IconEye}"
+                                                                          Stroke="{StaticResource TextSecondaryBrush}"
+                                                                          StrokeThickness="1.8"
+                                                                          Width="15" Height="15" Stretch="Uniform" />
+                                                                </Button>
+                                                                <Button Style="{StaticResource IconButtonStyle}"
+                                                                        Width="30" Height="30"
+                                                                        Command="{Binding DataContext.SaveFileAsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                        CommandParameter="{Binding}"
+                                                                        ToolTip="Lưu về máy tính (Save As)">
+                                                                    <Path Data="{StaticResource IconDownload}"
+                                                                          Stroke="{StaticResource DauRedTextBrush}"
+                                                                          StrokeThickness="1.8"
+                                                                          Width="15" Height="15" Stretch="Uniform" />
+                                                                </Button>
+                                                            </StackPanel>
                                                         </Grid>
                                                     </Border>
                                                 </StackPanel>
@@ -1014,14 +1020,14 @@
                                                     </Button>
                                                     <Button Style="{StaticResource MsgMiniActionBtnStyle}"
                                                             Margin="0,0,4,0"
-                                                            ToolTip="Ghim lên đầu phòng"
+                                                            ToolTip="Ghim tin nhắn"
                                                             Visibility="{Binding CanPinThisMessage, Converter={StaticResource BoolToVis}}"
                                                             Command="{Binding DataContext.PinMessageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                             CommandParameter="{Binding}">
                                                         <Path Data="{StaticResource IconPin}" Stroke="{StaticResource DauRedTextBrush}" StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform" />
                                                     </Button>
                                                     <Button Style="{StaticResource MsgMiniActionBtnStyle}"
-                                                            ToolTip="Xóa ở phía tôi (chỉ ẩn trên máy này)"
+                                                            ToolTip="Xóa ở phía tôi"
                                                             Visibility="{Binding CanDeleteForMe, Converter={StaticResource BoolToVis}}"
                                                             Command="{Binding DataContext.DeleteSingleMessageLocalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                             CommandParameter="{Binding}">
@@ -1063,7 +1069,7 @@
                                                         </Button>
                                                         <Button Style="{StaticResource MsgMiniActionBtnStyle}"
                                                                 Margin="0,0,4,0"
-                                                                ToolTip="Ghim lên đầu phòng"
+                                                                ToolTip="Ghim tin nhắn"
                                                                 Visibility="{Binding CanPinThisMessage, Converter={StaticResource BoolToVis}}"
                                                                 Command="{Binding DataContext.PinMessageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}">
@@ -1071,14 +1077,14 @@
                                                         </Button>
                                                         <Button Style="{StaticResource MsgMiniActionBtnStyle}"
                                                                 Margin="0,0,4,0"
-                                                                ToolTip="Thu hồi với mọi người"
+                                                                ToolTip="Thu hồi"
                                                                 Visibility="{Binding CanRecallThisMessage, Converter={StaticResource BoolToVis}}"
                                                                 Command="{Binding DataContext.RecallMessageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}">
                                                             <Path Data="{StaticResource IconRecall}" Stroke="#D97706" StrokeThickness="1.9" Width="12" Height="12" Stretch="Uniform" />
                                                         </Button>
                                                         <Button Style="{StaticResource MsgMiniActionBtnStyle}"
-                                                                ToolTip="Xóa ở phía tôi (chỉ ẩn trên máy này)"
+                                                                ToolTip="Xóa ở phía tôi"
                                                                 Visibility="{Binding CanDeleteForMe, Converter={StaticResource BoolToVis}}"
                                                                 Command="{Binding DataContext.DeleteSingleMessageLocalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}">
@@ -1110,8 +1116,17 @@
                                                                 </Border>
                                                             </Button>
                                                             <Grid Margin="4,7,4,2">
-                                                                <TextBlock Text="{Binding AttachmentFileName}" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" Margin="0,0,70,0" />
-                                                                <TextBlock HorizontalAlignment="Right" Text="{Binding AttachmentSizeText}" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                                                <TextBlock Text="{Binding AttachmentFileName}" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" Margin="0,0,105,0" />
+                                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding AttachmentSizeText}" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                                    <Button Style="{StaticResource IconButtonStyle}"
+                                                                            Width="24" Height="24"
+                                                                            Command="{Binding DataContext.SaveFileAsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                            CommandParameter="{Binding}"
+                                                                            ToolTip="Lưu ảnh về máy tính">
+                                                                        <Path Data="{StaticResource IconDownload}" Stroke="{StaticResource DauRedTextBrush}" StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform" />
+                                                                    </Button>
+                                                                </StackPanel>
                                                             </Grid>
                                                         </StackPanel>
                                                     </Border>
@@ -1152,16 +1167,28 @@
                                                                            Foreground="{StaticResource TextMutedBrush}"
                                                                            Margin="0,3,0,0" />
                                                             </StackPanel>
-                                                            <Button Grid.Column="2"
-                                                                    Style="{StaticResource IconButtonStyle}"
-                                                                    Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                    CommandParameter="{Binding}"
-                                                                    ToolTip="Mở tệp Local">
-                                                                <Path Data="{StaticResource IconDownload}"
-                                                                      Stroke="{StaticResource TextSecondaryBrush}"
-                                                                      StrokeThickness="2"
-                                                                      Width="16" Height="16" Stretch="Uniform" />
-                                                            </Button>
+                                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                                <Button Style="{StaticResource IconButtonStyle}"
+                                                                        Width="30" Height="30" Margin="0,0,4,0"
+                                                                        Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                        CommandParameter="{Binding}"
+                                                                        ToolTip="Mở tệp ngay">
+                                                                    <Path Data="{StaticResource IconEye}"
+                                                                          Stroke="{StaticResource TextSecondaryBrush}"
+                                                                          StrokeThickness="1.8"
+                                                                          Width="15" Height="15" Stretch="Uniform" />
+                                                                </Button>
+                                                                <Button Style="{StaticResource IconButtonStyle}"
+                                                                        Width="30" Height="30"
+                                                                        Command="{Binding DataContext.SaveFileAsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                        CommandParameter="{Binding}"
+                                                                        ToolTip="Lưu về máy tính (Save As)">
+                                                                    <Path Data="{StaticResource IconDownload}"
+                                                                          Stroke="{StaticResource DauRedTextBrush}"
+                                                                          StrokeThickness="1.8"
+                                                                          Width="15" Height="15" Stretch="Uniform" />
+                                                                </Button>
+                                                            </StackPanel>
                                                         </Grid>
                                                     </Border>
                                                 </StackPanel>
@@ -1253,7 +1280,7 @@
                                                             Margin="8,18,0,0"
                                                             Visibility="Hidden">
                                                     <Button Style="{StaticResource MsgMiniActionBtnStyle}"
-                                                            ToolTip="Xóa ở phía tôi (chỉ ẩn trên máy này)"
+                                                            ToolTip="Xóa ở phía tôi"
                                                             Visibility="{Binding CanDeleteForMe, Converter={StaticResource BoolToVis}}"
                                                             Command="{Binding DataContext.DeleteSingleMessageLocalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                             CommandParameter="{Binding}">
@@ -1278,7 +1305,7 @@
                                                                 Margin="0,0,8,0"
                                                                 Visibility="Hidden">
                                                         <Button Style="{StaticResource MsgMiniActionBtnStyle}"
-                                                                ToolTip="Xóa ở phía tôi (chỉ ẩn trên máy này)"
+                                                                ToolTip="Xóa ở phía tôi"
                                                                 Visibility="{Binding CanDeleteForMe, Converter={StaticResource BoolToVis}}"
                                                                 Command="{Binding DataContext.DeleteSingleMessageLocalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}">
@@ -1454,6 +1481,103 @@
                                 <Path Data="{StaticResource IconClose}" Stroke="{StaticResource TextMutedBrush}" StrokeThickness="2" Width="12" Height="12" Stretch="Uniform" />
                             </Button>
                         </Grid>
+                    </Border>
+
+                    <!-- KHAY TÀI LIỆU CHỜ GỬI (STAGED FILES TRAY - CHUẨN ZALO) -->
+                    <Border Visibility="{Binding HasStagedFiles, Converter={StaticResource BoolToVis}}"
+                            Background="{StaticResource SurfaceSubtleBrush}"
+                            BorderBrush="{StaticResource BorderSubtleBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="12,10"
+                            Margin="0,0,0,10">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Path Data="{StaticResource IconPaperclip}" Stroke="{StaticResource DauRedTextBrush}" StrokeThickness="2" Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding StagedFilesSummary, StringFormat='Tệp đính kèm chờ gửi ({0}):'}"
+                                               FontSize="11.5"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                               Margin="6,0,0,0" />
+                                    <TextBlock Text="— nhập thêm lời nhắn rồi bấm Gửi"
+                                               FontSize="11"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Margin="6,0,0,0" />
+                                </StackPanel>
+                                <Button HorizontalAlignment="Right"
+                                        Content="Hủy tất cả"
+                                        FontSize="11"
+                                        FontWeight="SemiBold"
+                                        Foreground="{StaticResource DauRedTextBrush}"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Cursor="Hand"
+                                        Command="{Binding ClearStagedFilesCommand}" />
+                            </Grid>
+
+                            <!-- Danh sách chips tệp chờ gửi -->
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding StagedFiles}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="White"
+                                                    BorderBrush="{StaticResource BorderSubtleBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="10"
+                                                    Padding="8,5"
+                                                    Margin="0,0,8,0"
+                                                    MaxWidth="240">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Grid.Column="0"
+                                                            CornerRadius="6"
+                                                            Padding="6,2"
+                                                            Background="{Binding BadgeBgHex, Converter={StaticResource HexToBrush}}"
+                                                            Margin="0,0,8,0">
+                                                        <TextBlock Text="{Binding BadgeText}"
+                                                                   FontSize="9"
+                                                                   FontWeight="Bold"
+                                                                   Foreground="{Binding BadgeFgHex, Converter={StaticResource HexToBrush}}" />
+                                                    </Border>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding FileName}"
+                                                                   FontSize="11.5"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding FileSizeText}"
+                                                                   FontSize="10"
+                                                                   Foreground="{StaticResource TextMutedBrush}" />
+                                                    </StackPanel>
+                                                    <Button Grid.Column="2"
+                                                            Width="20" Height="20"
+                                                            Margin="6,0,0,0"
+                                                            Style="{StaticResource IconButtonStyle}"
+                                                            Command="{Binding DataContext.RemoveStagedFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="Bỏ tệp này">
+                                                        <Path Data="{StaticResource IconClose}"
+                                                              Stroke="{StaticResource TextMutedBrush}"
+                                                              StrokeThickness="2"
+                                                              Width="10" Height="10" Stretch="Uniform" />
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </StackPanel>
                     </Border>
 
                     <Grid>
@@ -1857,28 +1981,37 @@
                                 <ItemsControl ItemsSource="{Binding RoomSharedFiles}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Button Margin="0,0,0,8"
-                                                    Background="Transparent"
-                                                    BorderThickness="0"
-                                                    HorizontalContentAlignment="Stretch"
-                                                    Cursor="Hand"
-                                                    Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding}">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="*" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <Border Grid.Column="0" Width="36" Height="36" CornerRadius="10" Margin="0,0,10,0"
-                                                            Background="{Binding IconBgHex, Converter={StaticResource HexToBrush}}">
-                                                        <Path Data="{StaticResource IconFileText}" Stroke="{Binding IconFgHex, Converter={StaticResource HexToBrush}}" StrokeThickness="1.8" Width="16" Height="16" Stretch="Uniform" />
-                                                    </Border>
-                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding FileName}" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextBodyBrush}" TextTrimming="CharacterEllipsis" />
-                                                        <TextBlock Text="{Binding SizeAndTimeText}" FontSize="10" Foreground="{StaticResource TextFaintBrush}" TextTrimming="CharacterEllipsis" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Button>
+                                            <Grid Margin="0,0,0,8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="10" Margin="0,0,10,0"
+                                                        Background="{Binding IconBgHex, Converter={StaticResource HexToBrush}}">
+                                                    <Path Data="{StaticResource IconFileText}" Stroke="{Binding IconFgHex, Converter={StaticResource HexToBrush}}" StrokeThickness="1.8" Width="16" Height="16" Stretch="Uniform" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding FileName}" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextBodyBrush}" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="{Binding SizeAndTimeText}" FontSize="10" Foreground="{StaticResource TextFaintBrush}" TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Button Style="{StaticResource IconButtonStyle}"
+                                                            Width="26" Height="26" Margin="0,0,3,0"
+                                                            Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="Mở tệp ngay">
+                                                        <Path Data="{StaticResource IconEye}" Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.8" Width="13" Height="13" Stretch="Uniform" />
+                                                    </Button>
+                                                    <Button Style="{StaticResource IconButtonStyle}"
+                                                            Width="26" Height="26"
+                                                            Command="{Binding DataContext.SaveFileAsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="Lưu về máy tính (Save As)">
+                                                        <Path Data="{StaticResource IconDownload}" Stroke="{StaticResource DauRedTextBrush}" StrokeThickness="1.8" Width="13" Height="13" Stretch="Uniform" />
+                                                    </Button>
+                                                </StackPanel>
+                                            </Grid>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>

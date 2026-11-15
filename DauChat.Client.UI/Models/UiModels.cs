@@ -366,3 +366,16 @@ public sealed class BatchAccountPreviewItem
     public string StatusBgHex => IsValid ? "#ECFDF5" : "#FEF2F2";
     public string StatusFgHex => IsValid ? "#047857" : "#DC2626";
 }
+
+public sealed class StagedFileItemModel : ObservableObject
+{
+    public string FilePath { get; init; } = string.Empty;
+    public string FileName { get; init; } = string.Empty;
+    public long FileSizeBytes { get; init; }
+    public string FileSizeText { get; init; } = string.Empty;
+    public string BadgeText { get; init; } = "TỆP";
+    public string BadgeBgHex { get; init; } = "#F1F5F9";
+    public string BadgeFgHex { get; init; } = "#475569";
+    public bool IsImage { get; init; }
+}
+

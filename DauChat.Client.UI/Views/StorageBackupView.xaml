@@ -190,11 +190,22 @@
                                     </StackPanel>
                                 </StackPanel>
 
-                                <TextBlock Text="Đóng gói toàn bộ tin nhắn .jsonl, file_manifest và tài liệu để mang sang máy khác."
+                                <TextBlock Text="Đóng gói tin nhắn .jsonl, file_manifest và trang HTML trực quan để lưu trữ hoặc mang sang máy khác."
                                            FontSize="12"
                                            Foreground="{StaticResource TextMutedBrush}"
                                            TextWrapping="Wrap"
-                                           Margin="0,0,0,16" />
+                                           Margin="0,0,0,14" />
+
+                                <!-- Tùy chọn đính kèm toàn bộ tệp cục bộ -->
+                                <Border Background="{StaticResource SurfaceInputBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <CheckBox IsChecked="{Binding IncludeFilesWithBackup}"
+                                                  Content="Đính kèm toàn bộ tệp cục bộ (Gói ZIP đầy đủ)"
+                                                  FontWeight="SemiBold" FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" />
+                                        <TextBlock Text="Nén kèm toàn bộ tệp đính kèm đã tải vào gói .ZIP (dung lượng lớn hơn, khuyên dùng khi chuyển máy). Mặc định chỉ sao lưu lịch sử chat và file HTML xem trực tiếp (dung lượng nhẹ &amp; tốc độ nhanh)."
+                                                   FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="22,4,0,0" LineHeight="16" />
+                                    </StackPanel>
+                                </Border>
 
                                 <Button Style="{StaticResource PrimaryButtonStyle}"
                                         Content="Tạo bản sao lưu .ZIP"

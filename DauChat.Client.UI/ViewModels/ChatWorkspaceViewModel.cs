@@ -51,8 +51,11 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
         _onOpenPinNotice = onOpenPinNotice;
         _onOpenJoinByCode = onOpenJoinByCode;
 
-        SendMessageCommand = new AsyncRelayCommand(SendTextMessageAsync, () => CanSendMessages && !string.IsNullOrWhiteSpace(DraftMessage) && SelectedConversation is not null);
+        SendMessageCommand = new AsyncRelayCommand(SendTextMessageAsync, () => CanSendMessages && (!string.IsNullOrWhiteSpace(DraftMessage) || HasStagedFiles) && SelectedConversation is not null);
         AttachFileCommand = new AsyncRelayCommand(AttachAndSendFileAsync, () => CanSendMessages && SelectedConversation is not null);
+        RemoveStagedFileCommand = new RelayCommand(RemoveStagedFile);
+        ClearStagedFilesCommand = new RelayCommand(ClearStagedFiles);
+        SaveFileAsCommand = new AsyncRelayCommand(SaveFileAsAsync);
         ToggleInfoDrawerCommand = new RelayCommand(() => IsInfoDrawerOpen = !IsInfoDrawerOpen);
         ToggleMessageSearchCommand = new RelayCommand(() =>
         {
@@ -183,9 +186,15 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
     public ObservableCollection<FileTransferItemModel> ActiveTransfers { get; } = new();
     public ObservableCollection<RoomMemberItemModel> RoomMembers { get; } = new();
     public ObservableCollection<FileItemModel> RoomSharedFiles { get; } = new();
+    public ObservableCollection<StagedFileItemModel> StagedFiles { get; } = new();
+
+    public bool HasStagedFiles => StagedFiles.Count > 0;
+    public string StagedFilesSummary => $"{StagedFiles.Count} tệp ({DemoFileStorageService.FormatBytes(StagedFiles.Sum(f => f.FileSizeBytes))})";
 
     public ICommand SendMessageCommand { get; }
     public ICommand AttachFileCommand { get; }
+    public ICommand RemoveStagedFileCommand { get; }
+    public ICommand ClearStagedFilesCommand { get; }
     public ICommand ToggleInfoDrawerCommand { get; }
     public ICommand ToggleMessageSearchCommand { get; }
     public ICommand ToggleFilterUnreadCommand { get; }
@@ -200,6 +209,7 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
     public ICommand EditPinNoticeCommand { get; }
     public ICommand UnpinNoticeCommand { get; }
     public ICommand OpenFileCommand { get; }
+    public ICommand SaveFileAsCommand { get; }
     public ICommand ToggleMuteCommand { get; }
     public ICommand DeleteLocalHistoryCommand { get; }
     public ICommand LeaveRoomCommand { get; }
@@ -374,7 +384,13 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
     public string DraftMessage
     {
         get => _draftMessage;
-        set => SetProperty(ref _draftMessage, value);
+        set
+        {
+            if (SetProperty(ref _draftMessage, value))
+            {
+                (SendMessageCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
     }
 
     public bool IsInfoDrawerOpen
@@ -458,7 +474,7 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
                     TimeLabel = FormatShortTime(last?.ServerTimestampUtc ?? room.LastActivityAtUtc),
                     UnreadCount = unread,
                     IsMuted = host.DemoStore.IsConversationMuted(currentUser.UserId, room.RoomId),
-                    MetaCaption = $"{room.MemberIds.Count} thành viên • {codeTag}",
+                    MetaCaption = $"{room.MemberIds.Count} thành viên",
                     RoomData = room
                 });
             }
@@ -527,6 +543,7 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
         if (!isSameConv)
         {
             ReplyingToMessage = null;
+            ClearStagedFiles();
             ClearUnseenScrollIndicator();
         }
         target.UnreadCount = 0;
@@ -628,6 +645,11 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
 
             if (SelectedConversation?.Id == convId)
             {
+                if (ClientServiceHost.Current.DemoStore.IsMessageHiddenForUser(currentUser.UserId, msg.MessageId))
+                {
+                    return;
+                }
+
                 if (_currentThreadMessages.All(m => m.MessageId != msg.MessageId))
                 {
                     var users = (await ClientServiceHost.Current.AuthRoom.GetAllUsersAsync()).Data?.ToDictionary(u => u.UserId, u => u) ?? new();
@@ -681,36 +703,52 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
         if (currentUser is null || SelectedConversation is null || !CanSendMessages) return;
 
         var text = DraftMessage.Trim();
-        if (string.IsNullOrEmpty(text)) return;
+        var filesToSend = StagedFiles.Select(f => f.FilePath).ToList();
 
-        var payload = ReplyingToMessage is not null
-            ? MessageQuoteCodec.Encode(
-                ReplyingToMessage.SenderName,
-                ReplyingToMessage.IsAttachment ? $"[Tệp] {ReplyingToMessage.AttachmentFileName}" : ReplyingToMessage.BodyContent,
-                text)
-            : text;
+        if (string.IsNullOrEmpty(text) && filesToSend.Count == 0) return;
 
         DraftMessage = string.Empty;
-        ReplyingToMessage = null;
+        ClearStagedFiles();
 
-        var host = ClientServiceHost.Current;
-        var res = SelectedConversation.IsRoom
-            ? await host.Messaging.SendRoomMessageAsync(currentUser.UserId, SelectedConversation.Id, payload)
-            : await host.Messaging.SendDirectMessageAsync(currentUser.UserId, SelectedConversation.Id, payload);
-
-        if (res.Success && res.Data is not null)
+        if (filesToSend.Count > 0)
         {
-            if (_currentThreadMessages.All(m => m.MessageId != res.Data.MessageId))
+            await SendFilesFromPathsAsync(filesToSend);
+        }
+
+        if (!string.IsNullOrEmpty(text))
+        {
+            var payload = ReplyingToMessage is not null
+                ? MessageQuoteCodec.Encode(
+                    ReplyingToMessage.SenderName,
+                    ReplyingToMessage.IsAttachment ? $"[Tệp] {ReplyingToMessage.AttachmentFileName}" : ReplyingToMessage.BodyContent,
+                    text)
+                : text;
+
+            ReplyingToMessage = null;
+
+            var host = ClientServiceHost.Current;
+            var res = SelectedConversation.IsRoom
+                ? await host.Messaging.SendRoomMessageAsync(currentUser.UserId, SelectedConversation.Id, payload)
+                : await host.Messaging.SendDirectMessageAsync(currentUser.UserId, SelectedConversation.Id, payload);
+
+            if (res.Success && res.Data is not null)
             {
-                var users = (await host.AuthRoom.GetAllUsersAsync()).Data?.ToDictionary(u => u.UserId, u => u) ?? new();
-                var item = ToMessageItem(res.Data, currentUser.UserId, users);
-                _currentThreadMessages.Add(item);
-                AppendVisibleMessageIfMatchesFilter(item);
+                if (_currentThreadMessages.All(m => m.MessageId != res.Data.MessageId))
+                {
+                    var users = (await host.AuthRoom.GetAllUsersAsync()).Data?.ToDictionary(u => u.UserId, u => u) ?? new();
+                    var item = ToMessageItem(res.Data, currentUser.UserId, users);
+                    _currentThreadMessages.Add(item);
+                    AppendVisibleMessageIfMatchesFilter(item);
+                }
+                var preview = MessageQuoteCodec.FormatSidebarPreview(payload);
+                SelectedConversation.Subtitle = SelectedConversation.IsRoom ? $"Bạn: {preview}" : preview;
+                SelectedConversation.TimeLabel = "Vừa xong";
+                ScrollToEndRequested?.Invoke();
             }
-            var preview = MessageQuoteCodec.FormatSidebarPreview(payload);
-            SelectedConversation.Subtitle = SelectedConversation.IsRoom ? $"Bạn: {preview}" : preview;
-            SelectedConversation.TimeLabel = "Vừa xong";
-            ScrollToEndRequested?.Invoke();
+        }
+        else
+        {
+            ReplyingToMessage = null;
         }
     }
 
@@ -721,13 +759,13 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
 
         var dlg = new OpenFileDialog
         {
-            Title = "Chọn tài liệu hoặc bản vẽ gửi qua DAU Chat (Chunked 64KB + SHA-256)",
+            Title = "Chọn tài liệu hoặc bản vẽ gửi qua DAU Chat (Chuẩn Zalo • Tối đa 1GB)",
             Multiselect = true,
             Filter = "Tất cả tệp (*.*)|*.*|Hình ảnh (*.png;*.jpg;*.jpeg;*.bmp;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.webp|Bản vẽ CAD (*.dwg;*.dxf;*.rvt;*.skp)|*.dwg;*.dxf;*.rvt;*.skp|PDF & Văn phòng (*.pdf;*.docx;*.xlsx)|*.pdf;*.docx;*.xlsx|Tệp nén (*.zip;*.rar)|*.zip;*.rar"
         };
 
         if (dlg.ShowDialog() != true) return;
-        await SendFilesFromPathsAsync(dlg.FileNames);
+        StageFiles(dlg.FileNames);
     }
 
     public async Task SendClipboardImageAsync(BitmapSource image)
@@ -754,11 +792,128 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
                 encoder.Save(fs);
             }
 
-            await SendFilesFromPathsAsync(new[] { pngPath });
+            StageFiles(new[] { pngPath });
         }
         catch (Exception ex)
         {
             _notify($"Không thể dán ảnh từ Clipboard: {ex.Message}");
+        }
+    }
+
+    public void StageFiles(IEnumerable<string> filePaths)
+    {
+        var added = 0;
+        foreach (var p in filePaths.Where(f => !string.IsNullOrWhiteSpace(f) && File.Exists(f)))
+        {
+            if (StagedFiles.Any(f => string.Equals(f.FilePath, p, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            var fi = new FileInfo(p);
+            const long maxZaloFileSizeBytes = 1024L * 1024 * 1024;
+            if (fi.Length > maxZaloFileSizeBytes)
+            {
+                _notify($"Tệp '{fi.Name}' vượt quá giới hạn tối đa 1GB theo chuẩn Zalo.");
+                continue;
+            }
+
+            var ext = fi.Extension.ToLowerInvariant();
+            var (badge, bBg, bFg) = ext switch
+            {
+                ".pdf" => ("PDF", "#FEF2F2", "#DC2626"),
+                ".dwg" or ".dxf" or ".rvt" or ".skp" => ("CAD", "#EFF6FF", "#2563EB"),
+                ".zip" or ".rar" or ".7z" => ("ZIP", "#FFFBEB", "#D97706"),
+                ".png" or ".jpg" or ".jpeg" or ".bmp" or ".webp" => ("ẢNH", "#F5F3FF", "#7C3AED"),
+                ".docx" or ".doc" => ("DOC", "#EFF6FF", "#2563EB"),
+                ".xlsx" or ".xls" => ("XLS", "#ECFDF5", "#047857"),
+                _ => ("TỆP", "#F1F5F9", "#475569")
+            };
+
+            var isImg = ext is ".png" or ".jpg" or ".jpeg" or ".bmp" or ".webp";
+            StagedFiles.Add(new StagedFileItemModel
+            {
+                FilePath = p,
+                FileName = fi.Name,
+                FileSizeBytes = fi.Length,
+                FileSizeText = DemoFileStorageService.FormatBytes(fi.Length),
+                BadgeText = badge,
+                BadgeBgHex = bBg,
+                BadgeFgHex = bFg,
+                IsImage = isImg
+            });
+            added++;
+        }
+
+        if (added > 0)
+        {
+            OnPropertyChanged(nameof(HasStagedFiles));
+            OnPropertyChanged(nameof(StagedFilesSummary));
+            (SendMessageCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+        }
+    }
+
+    private void RemoveStagedFile(object? param)
+    {
+        if (param is StagedFileItemModel item)
+        {
+            StagedFiles.Remove(item);
+            OnPropertyChanged(nameof(HasStagedFiles));
+            OnPropertyChanged(nameof(StagedFilesSummary));
+            (SendMessageCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+        }
+    }
+
+    private void ClearStagedFiles()
+    {
+        if (StagedFiles.Count == 0) return;
+        StagedFiles.Clear();
+        OnPropertyChanged(nameof(HasStagedFiles));
+        OnPropertyChanged(nameof(StagedFilesSummary));
+        (SendMessageCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+    }
+
+    private async Task SaveFileAsAsync(object? param)
+    {
+        var path = string.Empty;
+        var fileName = string.Empty;
+
+        if (param is MessageItemModel msg)
+        {
+            path = ResolveAttachmentLocalPath(msg.LocalFilePath, msg.AttachmentFileId) ?? string.Empty;
+            fileName = msg.AttachmentFileName ?? Path.GetFileName(path);
+        }
+        else if (param is FileItemModel f)
+        {
+            path = f.LocalFullPath;
+            fileName = f.FileName;
+        }
+
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        {
+            _notify("Tệp chưa sẵn sàng hoặc đã bị dọn khỏi bộ nhớ đệm.");
+            return;
+        }
+
+        var ext = Path.GetExtension(fileName).ToLowerInvariant();
+        var saveDlg = new SaveFileDialog
+        {
+            Title = $"Lưu tệp '{fileName}' về máy tính",
+            FileName = fileName,
+            Filter = string.IsNullOrEmpty(ext) ? "Tất cả tệp (*.*)|*.*" : $"{ext.ToUpperInvariant().TrimStart('.')} (*{ext})|*{ext}|Tất cả tệp (*.*)|*.*",
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads"
+        };
+
+        if (saveDlg.ShowDialog() != true) return;
+
+        try
+        {
+            File.Copy(path, saveDlg.FileName, overwrite: true);
+            _notify($"Đã lưu tệp về máy thành công: {Path.GetFileName(saveDlg.FileName)}");
+        }
+        catch (Exception ex)
+        {
+            _notify($"Không thể lưu tệp: {ex.Message}");
         }
     }
 
@@ -958,6 +1113,12 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
 
         ClientServiceHost.Current.DemoStore.HideMessageForUser(currentUser.UserId, msg.MessageId);
         _currentThreadMessages.RemoveAll(m => m.MessageId == msg.MessageId);
+        if (msg.IsAttachment && !string.IsNullOrEmpty(msg.AttachmentFileId))
+        {
+            ClientServiceHost.Current.DemoStore.HideFileForUser(currentUser.UserId, msg.AttachmentFileId);
+            var fMatch = RoomSharedFiles.FirstOrDefault(f => f.FileId == msg.AttachmentFileId);
+            if (fMatch is not null) RoomSharedFiles.Remove(fMatch);
+        }
         ApplyMessageSearchFilter();
 
         var last = _currentThreadMessages.LastOrDefault();
@@ -977,7 +1138,7 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
                 : preview;
         }
 
-        _notify("Đã xóa tin nhắn ở phía bạn (người khác vẫn nhìn thấy).");
+        _notify("Đã xóa tin nhắn ở phía bạn.");
     }
 
     private async Task RemoveMemberFromRoomAsync(object? param)
