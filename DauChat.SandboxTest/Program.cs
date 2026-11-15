@@ -55,13 +55,9 @@ Console.WriteLine($"[OK] Decoded PacketType: {decodedPacket?.Type}, Content: \"{
 // ════════════════════════════════════════════════════════════════════════
 Console.WriteLine("\n--- [TV4] Test AppendMessageToLocalLogAsync (MOD_07_01) ---");
 
-const string testUserId = "sv_test_001";
-const string testPartnerId = "gv_test_001";
-
-// Dọn dẹp dữ liệu test cũ
+var testUserId = $"sv_test_{Guid.NewGuid():N}";
+var testPartnerId = $"gv_test_{Guid.NewGuid():N}";
 var testDataRoot = Path.Combine("LocalData", testUserId);
-if (Directory.Exists(testDataRoot))
-    Directory.Delete(testDataRoot, recursive: true);
 
 // Tạo một tin nhắn test
 var msg1 = new MessageDto
@@ -136,6 +132,12 @@ foreach (var m in page1)
 var pageEmpty = await messagingService.GetDirectHistoryAsync(testUserId, testPartnerId, pageIndex: 2, pageSize: 3);
 Console.WriteLine($"[OK] Trang 2 (hết dữ liệu): {pageEmpty.Count} tin (kỳ vọng: 0)");
 
+// Xóa chỉ mục để kiểm tra cơ chế tự phục hồi từ JSONL.
+File.Delete(idxPath);
+var recoveredPage = await messagingService.GetDirectHistoryAsync(testUserId, testPartnerId, pageIndex: 0, pageSize: 3);
+int recoveredIndexCount = File.ReadAllLines(idxPath).Length;
+Console.WriteLine($"[OK] Phục hồi .idx: {recoveredIndexCount} record, trang đọc được {recoveredPage.Count} tin (kỳ vọng: 5, 3)");
+
 // ════════════════════════════════════════════════════════════════════════
 // 5. TEST TV4 — ProcessIncomingPacketAsync (MOD_03_04)
 //    Xử lý gói tin đến, lưu local và bắn Event
@@ -194,9 +196,21 @@ messagingService.PinnedAnnouncementChanged += (_, e) =>
                       $"Content=\"{e.PinnedNotice?.Content}\"");
 };
 
-var pinNotice = new PinnedNoticeDto
+var existingRoomMessage = new MessageDto
 {
     MessageId = Guid.NewGuid().ToString("N"),
+    ConversationId = "room_23CT1",
+    SenderId = testUserId,
+    RoomId = "room_23CT1",
+    Content = "Tin nhắn đã có trong lịch sử phòng",
+    IsRoomMessage = true,
+    SentAtClientUtc = DateTime.UtcNow
+};
+await messagingService.AppendMessageToLocalLogAsync(testUserId, existingRoomMessage);
+
+var pinNotice = new PinnedNoticeDto
+{
+    MessageId = existingRoomMessage.MessageId,
     RoomId = "room_23CT1",
     PinnedByUserId = "gv_001",
     PinnedByName = "Giảng viên Kiến trúc",
@@ -231,9 +245,9 @@ var afterDelete = await messagingService.GetDirectHistoryAsync(testUserId, testP
 Console.WriteLine($"[OK] Lịch sử sau xóa: {afterDelete.Count} tin (kỳ vọng: 0)");
 
 // ════════════════════════════════════════════════════════════════════════
-// Dọn dẹp dữ liệu test
+// Dọn dẹp đúng thư mục user ngẫu nhiên do lần chạy này tạo ra
 // ════════════════════════════════════════════════════════════════════════
-if (Directory.Exists("LocalData"))
-    Directory.Delete("LocalData", recursive: true);
+if (Directory.Exists(testDataRoot))
+    Directory.Delete(testDataRoot, recursive: true);
 
 Console.WriteLine("\n=== TẤT CẢ KIỂM THỬ TV4 HOÀN THÀNH ✅ ===");

@@ -137,59 +137,49 @@ public class MessagingService : IMessagingService
         string currentUserId,
         CancellationToken cancellationToken = default)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(currentUserId);
         var result = new List<ConversationSummaryDto>();
-        try
+        var messagesRoot = GetMessagesFolder(currentUserId);
+        if (!Directory.Exists(messagesRoot))
+            return result;
+
+        foreach (var dir in Directory.GetDirectories(messagesRoot))
         {
-            var messagesRoot = GetMessagesFolder(currentUserId);
-            if (!Directory.Exists(messagesRoot))
-                return result;
+            cancellationToken.ThrowIfCancellationRequested();
+            var convId = Path.GetFileName(dir);
+            var history = await ReadLocalHistoryAsync(currentUserId, convId, 0, 1, cancellationToken)
+                .ConfigureAwait(false);
+            var lastMsg = history.Count > 0 ? history[^1] : null;
 
-            // Mỗi thư mục con là một ConvId (partnerId hoặc roomId)
-            var convDirs = Directory.GetDirectories(messagesRoot);
+            if (convId.StartsWith("room_", StringComparison.OrdinalIgnoreCase) ||
+                lastMsg?.IsRoomMessage == true || !string.IsNullOrWhiteSpace(lastMsg?.RoomId))
+                continue;
 
-            foreach (var dir in convDirs)
+            var partnerId = GetDirectPartnerId(currentUserId, convId, lastMsg);
+            if (string.IsNullOrWhiteSpace(partnerId))
+                continue;
+
+            var partnerResult = await _authRoomService.GetUserProfileAsync(partnerId, cancellationToken)
+                .ConfigureAwait(false);
+
+            result.Add(new ConversationSummaryDto
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                var convId = Path.GetFileName(dir);
-
-                // Chỉ lấy 1-1 (partnerId): không phải RoomId (không bắt đầu bằng "room_")
-                // Quy ước: RoomId bắt đầu "room_", direct convId là UserId đối tác
-                if (convId.StartsWith("room_", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                // Đọc tin nhắn cuối từ log
-                var history = await ReadLocalHistoryAsync(currentUserId, convId, 0, 1, cancellationToken)
-                    .ConfigureAwait(false);
-                var lastMsg = history.Count > 0 ? history[^1] : null;
-
-                var partnerResult = await _authRoomService.GetUserProfileAsync(convId, cancellationToken)
-                    .ConfigureAwait(false);
-
-                result.Add(new ConversationSummaryDto
-                {
-                    PartnerId = convId,
-                    PartnerName = partnerResult.Data?.FullName ?? convId,
-                    PartnerAvatarPath = partnerResult.Data?.AvatarPath,
-                    PartnerPresence = partnerResult.Data?.Presence ?? PresenceStatus.Offline,
-                    LastMessagePreview = lastMsg != null
-                        ? (lastMsg.Type == MessageType.FileAttachment
-                            ? $"[Tệp] {lastMsg.AttachmentFileName}"
-                            : TruncatePreview(lastMsg.Content))
-                        : string.Empty,
-                    LastMessageAtUtc = lastMsg?.SentAtClientUtc,
-                    UnreadCount = 0
-                });
-            }
-
-            // Sắp xếp theo tin nhắn cuối mới nhất
-            result.Sort((a, b) =>
-                (b.LastMessageAtUtc ?? DateTime.MinValue).CompareTo(a.LastMessageAtUtc ?? DateTime.MinValue));
+                PartnerId = partnerId,
+                PartnerName = partnerResult.Data?.FullName ?? partnerId,
+                PartnerAvatarPath = partnerResult.Data?.AvatarPath,
+                PartnerPresence = partnerResult.Data?.Presence ?? PresenceStatus.Offline,
+                LastMessagePreview = lastMsg != null
+                    ? (lastMsg.Type == MessageType.FileAttachment
+                        ? $"[Tệp] {lastMsg.AttachmentFileName}"
+                        : TruncatePreview(lastMsg.Content))
+                    : string.Empty,
+                LastMessageAtUtc = lastMsg?.SentAtClientUtc,
+                UnreadCount = 0
+            });
         }
-        catch (OperationCanceledException) { /* trả về những gì đã có */ }
-        catch (Exception)
-        {
-            // Log lỗi (không ném exception lên UI)
-        }
+
+        result.Sort((a, b) =>
+            (b.LastMessageAtUtc ?? DateTime.MinValue).CompareTo(a.LastMessageAtUtc ?? DateTime.MinValue));
         return result;
     }
 
@@ -291,9 +281,13 @@ public class MessagingService : IMessagingService
         try
         {
             var convId = GetDirectConvId(currentUserId, partnerId);
-            var folder = Path.Combine(GetMessagesFolder(currentUserId), convId);
-            await DeleteLocalHistoryFolderAsync(folder, cancellationToken).ConfigureAwait(false);
+            var folder = GetConversationFolder(currentUserId, convId);
+            await DeleteLocalHistoryFolderAsync(currentUserId, folder, cancellationToken).ConfigureAwait(false);
             return OperationResult.Ok($"Đã xóa lịch sử trò chuyện với {partnerId}.");
+        }
+        catch (OperationCanceledException)
+        {
+            return OperationResult.Fail("Thao tác bị hủy.", "CANCELLED");
         }
         catch (Exception ex)
         {
@@ -341,8 +335,14 @@ public class MessagingService : IMessagingService
                     err?.Message ?? "Lỗi không xác định từ Server.", err?.ErrorCode);
             }
 
-            var rooms = response.GetPayload<List<RoomDto>>()
-                        ?? new List<RoomDto>();
+            if (response.Type != PacketType.GetUserRoomsResponse)
+                return OperationResult<IReadOnlyList<RoomDto>>.Fail(
+                    $"Phản hồi không hợp lệ khi lấy danh sách phòng: {response.Type}.", "INVALID_RESPONSE");
+
+            var rooms = response.GetPayload<List<RoomDto>>();
+            if (rooms == null)
+                return OperationResult<IReadOnlyList<RoomDto>>.Fail(
+                    "Phản hồi danh sách phòng không chứa dữ liệu hợp lệ.", "INVALID_RESPONSE");
 
             return OperationResult<IReadOnlyList<RoomDto>>.Ok(rooms);
         }
@@ -559,9 +559,13 @@ public class MessagingService : IMessagingService
     {
         try
         {
-            var folder = Path.Combine(GetMessagesFolder(currentUserId), roomId);
-            await DeleteLocalHistoryFolderAsync(folder, cancellationToken).ConfigureAwait(false);
+            var folder = GetConversationFolder(currentUserId, roomId);
+            await DeleteLocalHistoryFolderAsync(currentUserId, folder, cancellationToken).ConfigureAwait(false);
             return OperationResult.Ok($"Đã xóa lịch sử phòng {roomId}.");
+        }
+        catch (OperationCanceledException)
+        {
+            return OperationResult.Fail("Thao tác bị hủy.", "CANCELLED");
         }
         catch (Exception ex)
         {
@@ -727,60 +731,71 @@ public class MessagingService : IMessagingService
         MessageDto message,
         CancellationToken cancellationToken = default)
     {
-        if (message == null) return false;
+        ArgumentException.ThrowIfNullOrWhiteSpace(currentUserId);
+        ArgumentNullException.ThrowIfNull(message);
+        ArgumentException.ThrowIfNullOrWhiteSpace(message.MessageId);
 
-        // ── Deduplication: kiểm tra RAM cache trước ──────────────────────────
-        if (_seenMessageIds.ContainsKey(message.MessageId))
-            return false;
+        string convId;
+        if (!string.IsNullOrWhiteSpace(message.RoomId) || message.IsRoomMessage)
+        {
+            convId = message.RoomId ?? message.ConversationId;
+        }
+        else
+        {
+            var partnerId = string.Equals(message.SenderId, currentUserId, StringComparison.Ordinal)
+                ? message.ReceiverId
+                : message.SenderId;
+            if (string.IsNullOrWhiteSpace(partnerId))
+                partnerId = message.ConversationId;
+            convId = GetDirectConvId(currentUserId, partnerId);
+        }
 
-        var convId = string.IsNullOrWhiteSpace(message.RoomId)
-            ? GetDirectConvId(currentUserId, message.SenderId == currentUserId
-                ? message.ReceiverId ?? message.ConversationId
-                : message.SenderId)
-            : message.RoomId;
-
+        var conversationFolder = GetConversationFolder(currentUserId, convId);
         var logFilePath = GetLogFilePath(currentUserId, convId, message.SentAtClientUtc);
         var idxFilePath = GetIdxFilePath(currentUserId, convId, message.SentAtClientUtc);
+        var cacheKey = GetSeenMessageKey(currentUserId, message.MessageId);
+        if (_seenMessageIds.ContainsKey(cacheKey))
+            return false;
 
-        var sem = _fileLocks.GetOrAdd(logFilePath, _ => new SemaphoreSlim(1, 1));
+        var sem = _fileLocks.GetOrAdd(conversationFolder, _ => new SemaphoreSlim(1, 1));
         await sem.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            // ── Deduplication: kiểm tra file trước khi ghi (phòng crash) ────
-            if (await MessageExistsInFileAsync(logFilePath, message.MessageId, cancellationToken)
-                .ConfigureAwait(false))
-            {
-                // Thêm vào cache để lần sau nhanh hơn
-                RegisterSeenId(message.MessageId);
+            if (_seenMessageIds.ContainsKey(cacheKey))
                 return false;
+
+            Directory.CreateDirectory(conversationFolder);
+            await EnsureIndexAsync(logFilePath, idxFilePath, cancellationToken).ConfigureAwait(false);
+
+            foreach (var existingLog in Directory.GetFiles(
+                         conversationFolder, $"*{ProtocolConstants.MessageLogExtension}"))
+            {
+                if (await MessageExistsInFileAsync(existingLog, message.MessageId, cancellationToken)
+                        .ConfigureAwait(false))
+                {
+                    RegisterSeenId(cacheKey);
+                    return false;
+                }
             }
 
-            // ── Đảm bảo thư mục tồn tại ──────────────────────────────────────
-            Directory.CreateDirectory(Path.GetDirectoryName(logFilePath)!);
-
-            // ── Ghi vào .jsonl (FileMode.Append) ─────────────────────────────
-            var jsonLine = JsonSerializer.Serialize(message, JsonOpts) + "\n";
-            var jsonBytes = Encoding.UTF8.GetBytes(jsonLine);
-
+            await EnsureLogEndsWithNewlineAsync(logFilePath, cancellationToken).ConfigureAwait(false);
+            var jsonBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message, JsonOpts) + "\n");
             long byteOffset;
             await using (var fs = new FileStream(logFilePath, FileMode.Append, FileAccess.Write,
                 FileShare.Read, bufferSize: 4096, useAsync: true))
             {
-                byteOffset = fs.Position; // vị trí trước khi ghi = offset của record mới
+                byteOffset = fs.Position;
                 await fs.WriteAsync(jsonBytes, cancellationToken).ConfigureAwait(false);
             }
 
-            // ── Ghi vào .idx: "MessageId,ByteOffset\n" ────────────────────────
-            var idxLine = $"{message.MessageId},{byteOffset}\n";
-            var idxBytes = Encoding.UTF8.GetBytes(idxLine);
+            var idxBytes = Encoding.UTF8.GetBytes($"{message.MessageId},{byteOffset}\n");
             await using (var idxFs = new FileStream(idxFilePath, FileMode.Append, FileAccess.Write,
                 FileShare.Read, bufferSize: 4096, useAsync: true))
             {
                 await idxFs.WriteAsync(idxBytes, cancellationToken).ConfigureAwait(false);
             }
 
-            // ── Cập nhật RAM cache ────────────────────────────────────────────
-            RegisterSeenId(message.MessageId);
+            RegisterSeenId(cacheKey);
             return true;
         }
         finally
@@ -798,137 +813,89 @@ public class MessagingService : IMessagingService
         NetworkPacket packet,
         CancellationToken cancellationToken = default)
     {
-        if (packet == null) return;
+        ArgumentException.ThrowIfNullOrWhiteSpace(currentUserId);
+        ArgumentNullException.ThrowIfNull(packet);
 
         switch (packet.Type)
         {
-            // ── Tin nhắn cá nhân đến (MOD_03_04) ──────────────────────────────
             case PacketType.DirectMessage:
             {
                 var message = packet.GetPayload<MessageDto>();
-                if (message == null) return;
+                if (message == null)
+                    throw new InvalidDataException("Gói DirectMessage không chứa MessageDto hợp lệ.");
 
-                // Đảm bảo metadata chính xác
                 message.ServerTimestampUtc = packet.TimestampUtc;
                 message.IsRoomMessage = false;
-
-                bool appended = await AppendMessageToLocalLogAsync(
-                    currentUserId, message, cancellationToken).ConfigureAwait(false);
-
+                var appended = await AppendMessageToLocalLogAsync(currentUserId, message, cancellationToken)
+                    .ConfigureAwait(false);
                 if (appended)
-                {
                     OnDirectMessageReceived(message);
-
-                    // Gửi ACK về Server để xóa khỏi PendingQueue (MOD_02_07)
-                    if (packet.RequiresAck)
-                    {
-                        try
-                        {
-                            await _networkService.SendAckAsync(currentUserId, packet.PacketId, cancellationToken)
-                                .ConfigureAwait(false);
-                        }
-                        catch (NotImplementedException) { /* TV2 chưa triển khai — bỏ qua khi test */ }
-                        catch (Exception) { /* Lỗi mạng — không ném ra ngoài */ }
-                    }
-                }
+                await AcknowledgePacketAsync(currentUserId, packet, cancellationToken).ConfigureAwait(false);
                 break;
             }
-
-            // ── Tin nhắn phòng đến (MOD_04_11) ────────────────────────────────
             case PacketType.GroupMessage:
             {
                 var message = packet.GetPayload<MessageDto>();
-                if (message == null) return;
+                if (message == null)
+                    throw new InvalidDataException("Gói GroupMessage không chứa MessageDto hợp lệ.");
 
                 message.ServerTimestampUtc = packet.TimestampUtc;
                 message.IsRoomMessage = true;
-
-                bool appended = await AppendMessageToLocalLogAsync(
-                    currentUserId, message, cancellationToken).ConfigureAwait(false);
-
+                var appended = await AppendMessageToLocalLogAsync(currentUserId, message, cancellationToken)
+                    .ConfigureAwait(false);
                 if (appended)
-                {
                     OnRoomMessageReceived(message);
-
-                    if (packet.RequiresAck)
-                    {
-                        try
-                        {
-                            await _networkService.SendAckAsync(currentUserId, packet.PacketId, cancellationToken)
-                                .ConfigureAwait(false);
-                        }
-                        catch (NotImplementedException) { /* TV2 chưa triển khai — bỏ qua khi test */ }
-                        catch (Exception) { /* Lỗi mạng — không ném ra ngoài */ }
-                    }
-                }
+                await AcknowledgePacketAsync(currentUserId, packet, cancellationToken).ConfigureAwait(false);
                 break;
             }
-
-            // ── Phát sóng ghim thông báo đến (MOD_04_14) ──────────────────────
             case PacketType.PinAnnouncementBroadcast:
             {
-                var pinNotice = packet.GetPayload<PinnedNoticeDto>();
-                if (pinNotice == null) return;
+                var notice = packet.GetPayload<PinnedNoticeDto>();
+                if (notice == null)
+                    throw new InvalidDataException("Gói PinAnnouncementBroadcast không chứa PinnedNoticeDto hợp lệ.");
 
-                // Lưu dưới dạng tin nhắn loại PinnedAnnouncement vào local log
-                var pinnedMsg = new MessageDto
+                var pinnedMessage = new MessageDto
                 {
-                    MessageId = pinNotice.MessageId,
-                    ConversationId = pinNotice.RoomId,
-                    SenderId = pinNotice.PinnedByUserId,
-                    SenderName = pinNotice.PinnedByName,
-                    RoomId = pinNotice.RoomId,
-                    Content = pinNotice.Content,
+                    MessageId = notice.MessageId,
+                    ConversationId = notice.RoomId,
+                    SenderId = notice.PinnedByUserId,
+                    SenderName = notice.PinnedByName,
+                    RoomId = notice.RoomId,
+                    Content = notice.Content,
                     Type = MessageType.PinnedAnnouncement,
                     IsRoomMessage = true,
                     IsPinned = true,
-                    SentAtClientUtc = pinNotice.PinnedAtUtc,
+                    SentAtClientUtc = notice.PinnedAtUtc,
                     ServerTimestampUtc = packet.TimestampUtc
                 };
 
-                await AppendMessageToLocalLogAsync(currentUserId, pinnedMsg, cancellationToken)
+                await AppendMessageToLocalLogAsync(currentUserId, pinnedMessage, cancellationToken)
                     .ConfigureAwait(false);
-
-                OnPinnedAnnouncementChanged(pinNotice.RoomId, pinNotice);
-
-                if (packet.RequiresAck)
-                {
-                    try
-                    {
-                        await _networkService.SendAckAsync(currentUserId, packet.PacketId, cancellationToken)
-                            .ConfigureAwait(false);
-                    }
-                    catch (NotImplementedException) { /* TV2 chưa triển khai — bỏ qua khi test */ }
-                    catch (Exception) { /* Lỗi mạng — không ném ra ngoài */ }
-                }
+                OnPinnedAnnouncementChanged(notice.RoomId, notice);
+                await AcknowledgePacketAsync(currentUserId, packet, cancellationToken).ConfigureAwait(false);
                 break;
             }
-
-            // ── Bỏ ghim thông báo (MOD_04_15) ─────────────────────────────────
             case PacketType.UnpinAnnouncementBroadcast:
             {
-                var payload = packet.GetPayload<PinnedNoticeDto>();
-                var roomId = payload?.RoomId ?? packet.TargetId ?? string.Empty;
-                OnPinnedAnnouncementChanged(roomId, null);
+                var notice = packet.GetPayload<PinnedNoticeDto>();
+                var roomId = notice?.RoomId ?? packet.TargetId;
+                if (string.IsNullOrWhiteSpace(roomId))
+                    throw new InvalidDataException("Gói UnpinAnnouncementBroadcast thiếu RoomId.");
 
-                if (packet.RequiresAck)
-                {
-                    try
-                    {
-                        await _networkService.SendAckAsync(currentUserId, packet.PacketId, cancellationToken)
-                            .ConfigureAwait(false);
-                    }
-                    catch (NotImplementedException) { /* TV2 chưa triển khai — bỏ qua khi test */ }
-                    catch (Exception) { /* Lỗi mạng — không ném ra ngoài */ }
-                }
+                OnPinnedAnnouncementChanged(roomId, null);
+                await AcknowledgePacketAsync(currentUserId, packet, cancellationToken).ConfigureAwait(false);
                 break;
             }
-
-            // Các loại gói khác (TV2, TV3, TV5 xử lý)
-            default:
-                break;
         }
     }
+
+    private Task AcknowledgePacketAsync(
+        string currentUserId,
+        NetworkPacket packet,
+        CancellationToken cancellationToken)
+        => packet.RequiresAck
+            ? _networkService.SendAckAsync(currentUserId, packet.PacketId, cancellationToken)
+            : Task.CompletedTask;
 
     // ═══════════════════════════════════════════════════════════════════════════
     // HELPER METHODS (nội bộ TV4)
@@ -945,104 +912,99 @@ public class MessagingService : IMessagingService
         int pageSize,
         CancellationToken cancellationToken)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+        ValidatePathSegment(convId, nameof(convId));
+        if (pageIndex < 0)
+            throw new ArgumentOutOfRangeException(nameof(pageIndex));
+        if (pageSize <= 0)
+            throw new ArgumentOutOfRangeException(nameof(pageSize));
+
         var result = new List<MessageDto>();
+        var messagesFolder = GetConversationFolder(userId, convId);
+        if (!Directory.Exists(messagesFolder))
+            return result;
+
+        var sem = _fileLocks.GetOrAdd(messagesFolder, _ => new SemaphoreSlim(1, 1));
+        await sem.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var messagesFolder = Path.Combine(GetMessagesFolder(userId), convId);
-            if (!Directory.Exists(messagesFolder))
-                return result;
-
-            // Lấy tất cả file .jsonl theo thứ tự thời gian (YYYY-MM.jsonl)
             var logFiles = Directory.GetFiles(messagesFolder, $"*{ProtocolConstants.MessageLogExtension}")
-                .OrderByDescending(f => f) // mới nhất trước
+                .OrderBy(f => f, StringComparer.Ordinal)
                 .ToList();
-
-            // Thu thập tổng danh sách các offset records từ .idx (toàn bộ các file)
-            // để tính trang đúng. Với lượng lịch sử lớn chỉ load những file cần thiết.
             var allRecords = new List<(string LogFile, long Offset)>();
 
             foreach (var logFile in logFiles)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var idxFile = Path.ChangeExtension(logFile, ProtocolConstants.MessageIndexExtension);
-                if (!File.Exists(idxFile))
-                {
-                    // Fallback: scan toàn bộ .jsonl nếu không có .idx
-                    var scanRecords = await ScanLogFileOffsetsAsync(logFile, cancellationToken)
-                        .ConfigureAwait(false);
-                    allRecords.AddRange(scanRecords.Select(o => (logFile, o)));
-                }
-                else
-                {
-                    var idxRecords = await ReadIdxOffsetsAsync(idxFile, cancellationToken)
-                        .ConfigureAwait(false);
-                    allRecords.AddRange(idxRecords.Select(o => (logFile, o)));
-                }
+                await EnsureIndexAsync(logFile, idxFile, cancellationToken).ConfigureAwait(false);
+                var offsets = await ReadIdxOffsetsAsync(idxFile, cancellationToken).ConfigureAwait(false);
+                allRecords.AddRange(offsets.Select(offset => (logFile, offset)));
             }
 
-            // Phân trang từ cuối lên (tin mới nhất ở cuối file)
-            int totalMessages = allRecords.Count;
-            int skip = pageIndex * pageSize;
-            int startFromEnd = skip; // bỏ qua skip record tính từ cuối
-            int take = pageSize;
-
-            // Lấy các record từ cuối (index từ totalMessages-1 trở về)
-            int fromIndex = totalMessages - 1 - startFromEnd;
-            if (fromIndex < 0) return result;
+            long skip = (long)pageIndex * pageSize;
+            long fromIndex = allRecords.Count - 1L - skip;
+            if (fromIndex < 0)
+                return result;
 
             var selectedRecords = new List<(string LogFile, long Offset)>();
-            for (int i = fromIndex; i >= 0 && selectedRecords.Count < take; i--)
-                selectedRecords.Add(allRecords[i]);
+            for (long i = fromIndex; i >= 0 && selectedRecords.Count < pageSize; i--)
+                selectedRecords.Add(allRecords[(int)i]);
+            selectedRecords.Reverse();
 
-            // Đọc nội dung từ file theo offset
-            // Group theo file để giảm số lần mở file
-            var byFile = selectedRecords.GroupBy(r => r.LogFile);
-            var tempMessages = new List<MessageDto>();
-
-            foreach (var group in byFile)
+            foreach (var group in selectedRecords.GroupBy(record => record.LogFile))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var logFile = group.Key;
-                var sem = _fileLocks.GetOrAdd(logFile, _ => new SemaphoreSlim(1, 1));
-                await sem.WaitAsync(cancellationToken).ConfigureAwait(false);
-                try
+                await using var fs = new FileStream(group.Key, FileMode.Open, FileAccess.Read,
+                    FileShare.ReadWrite, bufferSize: 4096, useAsync: true);
+                using var reader = new StreamReader(fs, Encoding.UTF8);
+
+                foreach (var (_, offset) in group)
                 {
-                    await using var fs = new FileStream(logFile, FileMode.Open, FileAccess.Read,
-                        FileShare.ReadWrite, bufferSize: 4096, useAsync: true);
-                    using var reader = new StreamReader(fs, Encoding.UTF8);
-
-                    foreach (var (_, offset) in group)
-                    {
-                        fs.Seek(offset, SeekOrigin.Begin);
-                        reader.DiscardBufferedData();
-                        var line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
-                        if (string.IsNullOrWhiteSpace(line)) continue;
-                        var msg = JsonSerializer.Deserialize<MessageDto>(line, JsonOpts);
-                        if (msg != null) tempMessages.Add(msg);
-                    }
+                    if (offset < 0 || offset >= fs.Length)
+                        continue;
+                    fs.Seek(offset, SeekOrigin.Begin);
+                    reader.DiscardBufferedData();
+                    var line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
+                    var message = JsonSerializer.Deserialize<MessageDto>(line, JsonOpts);
+                    if (message != null)
+                        result.Add(message);
                 }
-                finally { sem.Release(); }
             }
-
-            // Sắp xếp theo thời gian tăng dần (cũ → mới) để hiển thị đúng thứ tự
-            tempMessages.Sort((a, b) => a.SentAtClientUtc.CompareTo(b.SentAtClientUtc));
-            result.AddRange(tempMessages);
         }
-        catch (OperationCanceledException) { /* trả về những gì đã có */ }
-        catch (Exception)
+        finally
         {
-            // Log lỗi (không ném exception lên UI)
+            sem.Release();
         }
+
         return result;
     }
 
     /// <summary>Xóa toàn bộ thư mục lịch sử (.jsonl + .idx) của một convId.</summary>
-    private static Task DeleteLocalHistoryFolderAsync(string folder, CancellationToken cancellationToken)
+    private async Task DeleteLocalHistoryFolderAsync(
+        string userId,
+        string folder,
+        CancellationToken cancellationToken)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        if (Directory.Exists(folder))
-            Directory.Delete(folder, recursive: true);
-        return Task.CompletedTask;
+        var sem = _fileLocks.GetOrAdd(folder, _ => new SemaphoreSlim(1, 1));
+        await sem.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (Directory.Exists(folder))
+                Directory.Delete(folder, recursive: true);
+            var cachePrefix = $"{userId}\0";
+            foreach (var key in _seenMessageIds.Keys)
+            {
+                if (key.StartsWith(cachePrefix, StringComparison.Ordinal))
+                    _seenMessageIds.TryRemove(key, out _);
+            }
+        }
+        finally
+        {
+            sem.Release();
+        }
     }
 
     /// <summary>
@@ -1052,21 +1014,119 @@ public class MessagingService : IMessagingService
         string idxFilePath, CancellationToken cancellationToken)
     {
         var offsets = new List<long>();
-        try
+        await using var fs = new FileStream(idxFilePath, FileMode.Open, FileAccess.Read,
+            FileShare.ReadWrite, bufferSize: 4096, useAsync: true);
+        using var reader = new StreamReader(fs, Encoding.UTF8);
+        string? line;
+        while ((line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false)) != null)
         {
-            await using var fs = new FileStream(idxFilePath, FileMode.Open, FileAccess.Read,
-                FileShare.ReadWrite, bufferSize: 4096, useAsync: true);
-            using var reader = new StreamReader(fs, Encoding.UTF8);
-            string? line;
-            while ((line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false)) != null)
+            var separator = line.LastIndexOf(',');
+            if (separator >= 0 && long.TryParse(line.AsSpan(separator + 1), out var offset) && offset >= 0)
+                offsets.Add(offset);
+        }
+        return offsets;
+    }
+
+    private static async Task EnsureLogEndsWithNewlineAsync(
+        string logFilePath,
+        CancellationToken cancellationToken)
+    {
+        if (!File.Exists(logFilePath))
+            return;
+
+        await using var fs = new FileStream(logFilePath, FileMode.Open, FileAccess.ReadWrite,
+            FileShare.Read, bufferSize: 1, useAsync: true);
+        if (fs.Length == 0)
+            return;
+
+        fs.Position = fs.Length - 1;
+        var lastByte = new byte[1];
+        await fs.ReadExactlyAsync(lastByte, cancellationToken).ConfigureAwait(false);
+        if (lastByte[0] != (byte)'\n')
+        {
+            fs.Position = fs.Length;
+            await fs.WriteAsync(new byte[] { (byte)'\n' }, cancellationToken).ConfigureAwait(false);
+            await fs.FlushAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private static async Task EnsureIndexAsync(
+        string logFilePath,
+        string idxFilePath,
+        CancellationToken cancellationToken)
+    {
+        if (!File.Exists(logFilePath))
+            return;
+
+        var needsRebuild = !File.Exists(idxFilePath);
+        if (!needsRebuild)
+        {
+            var offsets = await ReadIdxOffsetsAsync(idxFilePath, cancellationToken).ConfigureAwait(false);
+            needsRebuild = offsets.Count == 0 || !await IndexCoversLogAsync(
+                logFilePath, offsets[^1], cancellationToken).ConfigureAwait(false);
+        }
+
+        if (needsRebuild)
+            await RebuildIndexAsync(logFilePath, idxFilePath, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task<bool> IndexCoversLogAsync(
+        string logFilePath,
+        long lastOffset,
+        CancellationToken cancellationToken)
+    {
+        await using var fs = new FileStream(logFilePath, FileMode.Open, FileAccess.Read,
+            FileShare.ReadWrite, bufferSize: 4096, useAsync: true);
+        if (lastOffset < 0 || lastOffset >= fs.Length)
+            return false;
+
+        fs.Position = lastOffset;
+        var buffer = new byte[4096];
+        while (true)
+        {
+            var bytesRead = await fs.ReadAsync(buffer.AsMemory(), cancellationToken).ConfigureAwait(false);
+            if (bytesRead == 0)
+                return false;
+
+            var newlineIndex = Array.IndexOf(buffer, (byte)'\n', 0, bytesRead);
+            if (newlineIndex >= 0)
+                return fs.Position - bytesRead + newlineIndex + 1 == fs.Length;
+        }
+    }
+
+    private static async Task RebuildIndexAsync(
+        string logFilePath,
+        string idxFilePath,
+        CancellationToken cancellationToken)
+    {
+        var offsets = await ScanLogFileOffsetsAsync(logFilePath, cancellationToken).ConfigureAwait(false);
+        await using var logStream = new FileStream(logFilePath, FileMode.Open, FileAccess.Read,
+            FileShare.ReadWrite, bufferSize: 4096, useAsync: true);
+        using var logReader = new StreamReader(logStream, Encoding.UTF8, leaveOpen: true);
+        await using var indexStream = new FileStream(idxFilePath, FileMode.Create, FileAccess.Write,
+            FileShare.Read, bufferSize: 4096, useAsync: true);
+        await using var indexWriter = new StreamWriter(indexStream, Encoding.UTF8);
+
+        foreach (var offset in offsets)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            logStream.Seek(offset, SeekOrigin.Begin);
+            logReader.DiscardBufferedData();
+            var line = await logReader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+            try
             {
-                var parts = line.Split(',');
-                if (parts.Length >= 2 && long.TryParse(parts[1], out long offset))
-                    offsets.Add(offset);
+                var message = JsonSerializer.Deserialize<MessageDto>(line, JsonOpts);
+                if (message != null)
+                    await indexWriter.WriteLineAsync($"{message.MessageId},{offset}".AsMemory(), cancellationToken)
+                        .ConfigureAwait(false);
+            }
+            catch (JsonException)
+            {
+                // Ignore a torn/corrupt log line while rebuilding its index.
             }
         }
-        catch { /* file có thể đang bị ghi */ }
-        return offsets;
     }
 
     /// <summary>
@@ -1076,22 +1136,26 @@ public class MessagingService : IMessagingService
         string logFilePath, CancellationToken cancellationToken)
     {
         var offsets = new List<long>();
-        try
-        {
-            await using var fs = new FileStream(logFilePath, FileMode.Open, FileAccess.Read,
-                FileShare.ReadWrite, bufferSize: 4096, useAsync: true);
-            using var reader = new StreamReader(fs, Encoding.UTF8, leaveOpen: true);
+        await using var fs = new FileStream(logFilePath, FileMode.Open, FileAccess.Read,
+            FileShare.ReadWrite, bufferSize: 4096, useAsync: true);
+        var buffer = new byte[4096];
+        long position = 0;
+        long lineStart = 0;
+        int bytesRead;
 
-            long pos = 0;
-            string? line;
-            while ((line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false)) != null)
+        while ((bytesRead = await fs.ReadAsync(buffer.AsMemory(), cancellationToken).ConfigureAwait(false)) > 0)
+        {
+            for (var index = 0; index < bytesRead; index++, position++)
             {
-                offsets.Add(pos);
-                // Tính vị trí byte tiếp theo (UTF-8 + \n)
-                pos += Encoding.UTF8.GetByteCount(line) + 1; // +1 cho '\n'
+                if (buffer[index] != (byte)'\n')
+                    continue;
+                offsets.Add(lineStart);
+                lineStart = position + 1;
             }
         }
-        catch { /* bỏ qua */ }
+
+        if (lineStart < position)
+            offsets.Add(lineStart);
         return offsets;
     }
 
@@ -1102,22 +1166,28 @@ public class MessagingService : IMessagingService
     private static async Task<bool> MessageExistsInFileAsync(
         string logFilePath, string messageId, CancellationToken cancellationToken)
     {
-        if (!File.Exists(logFilePath)) return false;
-        try
+        if (!File.Exists(logFilePath))
+            return false;
+
+        await using var fs = new FileStream(logFilePath, FileMode.Open, FileAccess.Read,
+            FileShare.ReadWrite, bufferSize: 4096, useAsync: true);
+        using var reader = new StreamReader(fs, Encoding.UTF8);
+        string? line;
+        while ((line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false)) != null)
         {
-            await using var fs = new FileStream(logFilePath, FileMode.Open, FileAccess.Read,
-                FileShare.ReadWrite, bufferSize: 4096, useAsync: true);
-            using var reader = new StreamReader(fs, Encoding.UTF8);
-            string? line;
-            while ((line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false)) != null)
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+            try
             {
-                // Dùng kiểm tra chuỗi nhanh (không cần deserialize toàn bộ)
-                if (line.Contains($"\"MessageId\":\"{messageId}\"", StringComparison.Ordinal) ||
-                    line.Contains($"\"messageId\":\"{messageId}\"", StringComparison.Ordinal))
+                var message = JsonSerializer.Deserialize<MessageDto>(line, JsonOpts);
+                if (string.Equals(message?.MessageId, messageId, StringComparison.Ordinal))
                     return true;
             }
+            catch (JsonException)
+            {
+                // Ignore a torn/corrupt log line; later valid records remain readable.
+            }
         }
-        catch { /* bỏ qua lỗi đọc */ }
         return false;
     }
 
@@ -1128,21 +1198,25 @@ public class MessagingService : IMessagingService
     private void OnPacketReceivedFromNetwork(object? sender, NetworkPacket packet)
     {
         var userId = _networkService.CurrentUserId;
-        if (string.IsNullOrWhiteSpace(userId)) return;
-
-        // Fire-and-forget với CancellationToken.None (không thể inject CT ở đây)
-        _ = Task.Run(async () =>
+        if (string.IsNullOrWhiteSpace(userId))
         {
-            try
-            {
-                await ProcessIncomingPacketAsync(userId, packet, CancellationToken.None)
-                    .ConfigureAwait(false);
-            }
-            catch (Exception)
-            {
-                // Log lỗi nền (không ném ra ngoài)
-            }
-        });
+            System.Diagnostics.Trace.TraceError("Received message packet without an authenticated user.");
+            return;
+        }
+
+        _ = ProcessIncomingPacketFromNetworkAsync(userId, packet);
+    }
+
+    private async Task ProcessIncomingPacketFromNetworkAsync(string userId, NetworkPacket packet)
+    {
+        try
+        {
+            await ProcessIncomingPacketAsync(userId, packet, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Trace.TraceError("Failed to process incoming packet {0}: {1}", packet.PacketId, ex);
+        }
     }
 
     // ─── Các hàm phát Event ──────────────────────────────────────────────────
@@ -1162,10 +1236,19 @@ public class MessagingService : IMessagingService
     /// LocalData/{userId}/Messages/
     /// </summary>
     private static string GetMessagesFolder(string userId)
-        => Path.Combine(
+    {
+        ValidatePathSegment(userId, nameof(userId));
+        return Path.Combine(
             ProtocolConstants.LocalDataRootFolder,
             userId,
             ProtocolConstants.MessagesFolderName);
+    }
+
+    private static string GetConversationFolder(string userId, string convId)
+    {
+        ValidatePathSegment(convId, nameof(convId));
+        return Path.Combine(GetMessagesFolder(userId), convId);
+    }
 
     /// <summary>
     /// Đường dẫn file .jsonl cho một tháng cụ thể:
@@ -1173,8 +1256,7 @@ public class MessagingService : IMessagingService
     /// </summary>
     private static string GetLogFilePath(string userId, string convId, DateTime date)
         => Path.Combine(
-            GetMessagesFolder(userId),
-            convId,
+            GetConversationFolder(userId, convId),
             $"{date:yyyy-MM}{ProtocolConstants.MessageLogExtension}");
 
     /// <summary>
@@ -1183,8 +1265,7 @@ public class MessagingService : IMessagingService
     /// </summary>
     private static string GetIdxFilePath(string userId, string convId, DateTime date)
         => Path.Combine(
-            GetMessagesFolder(userId),
-            convId,
+            GetConversationFolder(userId, convId),
             $"{date:yyyy-MM}{ProtocolConstants.MessageIndexExtension}");
 
     /// <summary>
@@ -1193,25 +1274,59 @@ public class MessagingService : IMessagingService
     /// </summary>
     private static string GetDirectConvId(string userIdA, string userIdB)
     {
-        // Sắp xếp để đảm bảo tính nhất quán
+        ValidatePathSegment(userIdA, nameof(userIdA));
+        ValidatePathSegment(userIdB, nameof(userIdB));
         var ids = new[] { userIdA, userIdB };
         Array.Sort(ids, StringComparer.Ordinal);
         return $"dm_{ids[0]}_{ids[1]}";
     }
+
+    private static string GetDirectPartnerId(string currentUserId, string convId, MessageDto? lastMessage)
+    {
+        if (lastMessage != null)
+        {
+            var partnerId = string.Equals(lastMessage.SenderId, currentUserId, StringComparison.Ordinal)
+                ? lastMessage.ReceiverId
+                : lastMessage.SenderId;
+            if (!string.IsNullOrWhiteSpace(partnerId))
+                return partnerId;
+        }
+
+        var prefix = $"dm_{currentUserId}_";
+        if (convId.StartsWith(prefix, StringComparison.Ordinal))
+            return convId[prefix.Length..];
+
+        var suffix = $"_{currentUserId}";
+        if (convId.StartsWith("dm_", StringComparison.Ordinal) &&
+            convId.EndsWith(suffix, StringComparison.Ordinal))
+            return convId[3..^suffix.Length];
+
+        return convId.StartsWith("dm_", StringComparison.Ordinal) ? string.Empty : convId;
+    }
+
+    private static void ValidatePathSegment(string value, string parameterName)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value is "." or ".." ||
+            Path.IsPathRooted(value) || value.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
+            value.Contains(Path.DirectorySeparatorChar) || value.Contains(Path.AltDirectorySeparatorChar))
+            throw new ArgumentException("Identifier must be a valid single path segment.", parameterName);
+    }
+
+    private static string GetSeenMessageKey(string userId, string messageId)
+        => $"{userId}\0{messageId}";
 
     /// <summary>Rút gọn nội dung preview tối đa 80 ký tự.</summary>
     private static string TruncatePreview(string content, int maxLength = 80)
         => content.Length <= maxLength ? content : content[..maxLength] + "…";
 
     /// <summary>Thêm MessageId vào RAM cache, giữ tối đa MaxDeduplicationCacheSize entries.</summary>
-    private void RegisterSeenId(string messageId)
+    private void RegisterSeenId(string cacheKey)
     {
         lock (_seenIdQueue)
         {
-            if (_seenMessageIds.TryAdd(messageId, true))
+            if (_seenMessageIds.TryAdd(cacheKey, true))
             {
-                _seenIdQueue.Enqueue(messageId);
-                // Dọn dẹp khi vượt giới hạn
+                _seenIdQueue.Enqueue(cacheKey);
                 while (_seenIdQueue.Count > MaxDeduplicationCacheSize)
                 {
                     if (_seenIdQueue.TryDequeue(out var old))
