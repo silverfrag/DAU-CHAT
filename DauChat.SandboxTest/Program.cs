@@ -1,44 +1,71 @@
-using DauChat.Core.AuthAndRooms;
-using DauChat.Core.FileAndStorage;
-using DauChat.Core.Messaging;
 using DauChat.Core.Networking;
 using DauChat.Shared.Enums;
-using DauChat.Shared.Interfaces;
 using DauChat.Shared.Models;
 using DauChat.Shared.Networking;
 
-Console.WriteLine("=== DAU CHAT SANDBOX TEST (TV2 - TV5) ===");
+namespace DauChat.SandboxTest;
 
-// 1. Kiểm thử nhanh khởi tạo 4 Services theo đúng ranh giới kiến trúc
-INetworkService networkService = new NetworkService();
-IAuthRoomService authRoomService = new AuthRoomService(networkService);
-IMessagingService messagingService = new MessagingService(networkService, authRoomService);
-IFileStorageService fileStorageService = new FileStorageService(networkService);
-
-Console.WriteLine($"[OK] Đã khởi tạo: {networkService.GetType().Name}, {authRoomService.GetType().Name}, {messagingService.GetType().Name}, {fileStorageService.GetType().Name}");
-
-// 2. Kiểm thử Length-prefix framing của NetworkPacket (4 byte length + payload)
-var sampleMessage = new MessageDto
+internal class Program
 {
-    ConversationId = "room_23CT1",
-    SenderId = "sv_001",
-    SenderName = "Sinh viên DAU",
-    RoomId = "room_23CT1",
-    IsRoomMessage = true,
-    Content = "Xin chào DAU Chat Team 5!"
-};
+    static async Task Main(string[] args)
+    {
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
+        Console.WriteLine("=== BẮT ĐẦU TEST XẢ PENDING QUEUE (TV2) ===");
 
-var packet = NetworkPacket.Create(
-    PacketType.GroupMessage,
-    senderId: sampleMessage.SenderId,
-    payload: sampleMessage,
-    targetId: sampleMessage.RoomId,
-    requiresAck: true);
+        int port = 9050;
+        string ip = "127.0.0.1";
 
-byte[] framedBytes = packet.ToFramedBytes();
-using var memoryStream = new MemoryStream(framedBytes);
-NetworkPacket? decodedPacket = await NetworkPacket.ReadFramedAsync(memoryStream);
-MessageDto? decodedMessage = decodedPacket?.GetPayload<MessageDto>();
+        // 1. Khởi động Server
+        var server = new NetworkService();
+        await server.StartServerAsync(ip, port);
+        Console.WriteLine("[Server] Đã chạy.");
 
-Console.WriteLine($"[OK] Length-prefix framed bytes: {framedBytes.Length} bytes");
-Console.WriteLine($"[OK] Decoded PacketType: {decodedPacket?.Type}, MessageId: {decodedMessage?.MessageId}, Content: \"{decodedMessage?.Content}\"");
+        // ĐÂY LÀ ĐOẠN QUAN TRỌNG BỊ THIẾU: Server lắng nghe và chuyển tiếp tin nhắn
+        server.PacketReceived += (s, packet) =>
+        {
+            Console.WriteLine($"[Server Nhận] Từ: {packet.SenderId} -> Đến: {packet.TargetId} | Loại: {packet.Type}");
+
+            // Nếu là tin nhắn 1-1, Server đẩy vào hàm SendToUserAsync 
+            // (Hàm này sẽ tự biết B đang offline để ném vào Queue)
+            if (packet.Type == PacketType.DirectMessage && packet.TargetId != null)
+            {
+                _ = server.SendToUserAsync(packet.TargetId, packet);
+            }
+        };
+
+        // 2. Client A kết nối và Đăng nhập
+        var clientA = new NetworkService();
+        clientA.CurrentUserId = "user_A";
+        await clientA.ConnectAsync(ip, port);
+        await clientA.SendPacketAsync(NetworkPacket.Create(PacketType.LoginRequest, "user_A", "Login", "user_A"));
+        await Task.Delay(500); // Đợi Server map UserId
+
+        // 3. Client A gửi tin nhắn cho B (Lúc này B CHƯA ĐĂNG NHẬP)
+        Console.WriteLine("\n--- Client A gửi tin cho B (B đang Offline) ---");
+        var chatPacket = NetworkPacket.Create(
+            PacketType.DirectMessage,
+            "user_A",
+            payload: "Tin nhắn này gửi lúc B offline. B sẽ nhận được khi đăng nhập!",
+            targetId: "user_B"
+        );
+        await clientA.SendPacketAsync(chatPacket);
+        await Task.Delay(1000);
+
+        // 4. Client B bắt đầu kết nối và Đăng nhập
+        Console.WriteLine("\n--- Bây giờ Client B mới Đăng nhập ---");
+        var clientB = new NetworkService();
+        clientB.CurrentUserId = "user_B";
+        clientB.PacketReceived += (s, packet) =>
+            Console.WriteLine($"[Client B Nhận] Từ {packet.SenderId}: {packet.PayloadJson}");
+
+        await clientB.ConnectAsync(ip, port);
+
+        // Gửi Login, Server sẽ kích hoạt hàm FlushPendingQueueAsync xả tin nhắn
+        await clientB.SendPacketAsync(NetworkPacket.Create(PacketType.LoginRequest, "user_B", "Login", "user_B"));
+
+        await Task.Delay(2000); // Đợi xả queue
+
+        Console.WriteLine("\n=== KẾT THÚC TEST ===");
+        Console.ReadLine();
+    }
+}
