@@ -109,6 +109,15 @@ public enum PacketType
     RegenerateClassCodeResponse = 620,
     #endregion
 
+    #region Phân hệ 7: Sao lưu, Khôi phục & Đồng bộ LAN (TV5 - MOD_07_01 -> MOD_07_10)
+    SyncPushSnapshot = 701,
+    SyncPushResponse = 702,
+    SyncCheckRequest = 703,
+    SyncCheckResponse = 704,
+    SyncPullRequest = 705,
+    SyncPullResponse = 706,
+    #endregion
+
     #region Phân hệ 8: Quản trị & Giám sát Server (TV2 - MOD_08_01 -> MOD_08_04)
     ServerStartRequest = 801,
     ServerStopRequest = 802,

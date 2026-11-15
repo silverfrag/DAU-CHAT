@@ -28,6 +28,7 @@ public sealed class StorageBackupViewModel : ObservableObject
     private string _lastBackupLabel = "Chưa sao lưu trong phiên này";
     private string _localFolderPathLabel = "LocalData/{UserId}/";
     private bool _includeFilesWithBackup;
+    private string _lanSyncStatusText = "Server LAN Vault: Đang kiểm tra...";
 
     public StorageBackupViewModel(Action<string> notify, Func<Task>? onStorageDataChangedAsync = null)
     {
@@ -35,6 +36,8 @@ public sealed class StorageBackupViewModel : ObservableObject
         _onStorageDataChangedAsync = onStorageDataChangedAsync;
         ExportBackupZipCommand = new AsyncRelayCommand(ExportBackupZipAsync);
         RestoreBackupZipCommand = new AsyncRelayCommand(RestoreBackupZipAsync);
+        PushLanSyncCommand = new AsyncRelayCommand(PushLanSyncAsync);
+        PullLanSyncCommand = new AsyncRelayCommand(PullLanSyncAsync);
         CleanupOldFilesCommand = new AsyncRelayCommand(CleanupOldFilesAsync);
     }
 
@@ -42,6 +45,8 @@ public sealed class StorageBackupViewModel : ObservableObject
 
     public ICommand ExportBackupZipCommand { get; }
     public ICommand RestoreBackupZipCommand { get; }
+    public ICommand PushLanSyncCommand { get; }
+    public ICommand PullLanSyncCommand { get; }
     public ICommand CleanupOldFilesCommand { get; }
 
     public string UsedCapacityText { get => _usedCapacityText; set => SetProperty(ref _usedCapacityText, value); }
@@ -97,6 +102,12 @@ public sealed class StorageBackupViewModel : ObservableObject
         set => SetProperty(ref _includeFilesWithBackup, value);
     }
 
+    public string LanSyncStatusText
+    {
+        get => _lanSyncStatusText;
+        set => SetProperty(ref _lanSyncStatusText, value);
+    }
+
     public async Task RefreshAsync()
     {
         var user = ClientServiceHost.Current.AuthRoom.CurrentUser;
@@ -118,6 +129,11 @@ public sealed class StorageBackupViewModel : ObservableObject
         var storage = ClientServiceHost.Current.FileStorage;
         var stats = await storage.GetStorageStatsAsync(user.UserId);
         var files = await storage.GetAllLocalFilesAsync(user.UserId);
+
+        var syncCheck = await storage.CheckLanSyncAvailableAsync(user.UserId);
+        LanSyncStatusText = syncCheck.HasSnapshot
+            ? $"Server LAN Vault: Có sẵn bản sao lưu ({syncCheck.SnapshotSummary}) lúc {syncCheck.LastSnapshotUtc?.ToLocalTime():dd/MM/yyyy HH:mm}"
+            : "Server LAN Vault: Chưa có bản sao lưu nào trên Server LAN.";
 
         long docsBytes = files.Where(f => f.Category is FileCategory.PDF or FileCategory.CAD or FileCategory.Document).Sum(f => f.FileSizeBytes);
         long imgBytes = files.Where(f => f.Category == FileCategory.Image).Sum(f => f.FileSizeBytes);
@@ -194,6 +210,31 @@ public sealed class StorageBackupViewModel : ObservableObject
         if (dlg.ShowDialog() != true) return;
 
         var res = await ClientServiceHost.Current.FileStorage.RestoreBackupZipAsync(user.UserId, dlg.FileName);
+        _notify(res.Message);
+        if (res.Success)
+        {
+            await RefreshAsync();
+            if (_onStorageDataChangedAsync is not null)
+            {
+                await _onStorageDataChangedAsync();
+            }
+        }
+    }
+
+    private async Task PushLanSyncAsync()
+    {
+        var user = ClientServiceHost.Current.AuthRoom.CurrentUser;
+        if (user is null) return;
+        var res = await ClientServiceHost.Current.FileStorage.PushSnapshotToLanServerAsync(user.UserId, IncludeFilesWithBackup);
+        _notify(res.Message);
+        await RefreshAsync();
+    }
+
+    private async Task PullLanSyncAsync()
+    {
+        var user = ClientServiceHost.Current.AuthRoom.CurrentUser;
+        if (user is null) return;
+        var res = await ClientServiceHost.Current.FileStorage.PullSnapshotFromLanServerAsync(user.UserId);
         _notify(res.Message);
         if (res.Success)
         {
