@@ -13,8 +13,20 @@ public sealed class ClassDto
     public string? LecturerId { get; set; }
     public string? LecturerName { get; set; }
     public string? LinkedRoomId { get; set; }
+    public string JoinCode { get; set; } = string.Empty;
+    public bool AllowStudentJoinByCode { get; set; } = true;
     public int MemberCount { get; set; }
     public List<string> MemberIds { get; set; } = new();
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Kết quả khi Sinh viên tham gia lớp học / phòng môn học bằng mã lớp (kiểu Google Classroom).
+/// </summary>
+public sealed class ClassJoinResultDto
+{
+    public ClassDto? JoinedClass { get; set; }
+    public RoomDto? JoinedRoom { get; set; }
+    public string Summary { get; set; } = string.Empty;
 }
 

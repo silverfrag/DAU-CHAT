@@ -103,6 +103,10 @@ public enum PacketType
     RemoveClassMembersResponse = 614,
     LinkClassRoomRequest = 615,
     LinkClassRoomResponse = 616,
+    JoinByClassCodeRequest = 617,
+    JoinByClassCodeResponse = 618,
+    RegenerateClassCodeRequest = 619,
+    RegenerateClassCodeResponse = 620,
     #endregion
 
     #region Phân hệ 8: Quản trị & Giám sát Server (TV2 - MOD_08_01 -> MOD_08_04)

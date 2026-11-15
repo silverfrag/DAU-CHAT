@@ -3,24 +3,312 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:DauChat.Client.UI"
+        xmlns:views="clr-namespace:DauChat.Client.UI.Views"
         mc:Ignorable="d"
-        Title="DAU Chat - Trường Đại học Kiến trúc Đà Nẵng"
-        Height="600"
-        Width="960"
-        WindowStartupLocation="CenterScreen">
-    <Grid Background="#F5F7FA">
-        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-            <TextBlock Text="DAU CHAT - ĐẠI HỌC KIẾN TRÚC ĐÀ NẴNG"
-                       FontSize="22"
-                       FontWeight="Bold"
-                       Foreground="#1E3A8A"
-                       HorizontalAlignment="Center" />
-            <TextBlock Text="Khung giao diện WPF (.NET 10.0 LTS) - TV1 Leader (Team 5)"
-                       FontSize="14"
-                       Foreground="#475569"
-                       Margin="0,8,0,0"
-                       HorizontalAlignment="Center" />
-        </StackPanel>
+        Title="DAU Chat • Hệ thống Giao tiếp &amp; Chia sẻ Tài liệu Nội bộ ĐH Kiến trúc Đà Nẵng"
+        Height="840"
+        Width="1380"
+        MinHeight="680"
+        MinWidth="1060"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource CanvasBgBrush}"
+        Foreground="{StaticResource TextBodyBrush}"
+        FontFamily="{StaticResource PrimaryFont}">
+
+    <Window.Resources>
+        <!-- Style nút điều hướng AppRail -->
+        <Style x:Key="AppRailRadioStyle" TargetType="RadioButton">
+            <Setter Property="Width" Value="72" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Grid Background="Transparent">
+                            <Border x:Name="ActiveBar"
+                                    Width="4"
+                                    Height="30"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top"
+                                    Margin="-8,8,0,0"
+                                    CornerRadius="0,3,3,0"
+                                    Background="{StaticResource DauRedBrush}"
+                                    Visibility="Collapsed" />
+
+                            <Border x:Name="HoverBox"
+                                    CornerRadius="14"
+                                    Padding="4,8"
+                                    Background="Transparent">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Border x:Name="IconPill"
+                                            Width="36" Height="36"
+                                            CornerRadius="11"
+                                            Background="Transparent"
+                                            HorizontalAlignment="Center">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <TextBlock Text="{TemplateBinding Tag}"
+                                               FontSize="10.5"
+                                               FontWeight="SemiBold"
+                                               Foreground="{TemplateBinding Foreground}"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,4,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="HoverBox" Property="Background" Value="{StaticResource SurfaceSubtleBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="ActiveBar" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="IconPill" Property="Background" Value="{StaticResource DauRedSoftBrush}" />
+                                <Setter TargetName="HoverBox" Property="Background" Value="Transparent" />
+                                <Setter Property="Foreground" Value="{StaticResource DauRedTextBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <!-- 1. MÀN HÌNH ĐĂNG NHẬP -->
+        <views:LoginView DataContext="{Binding Login}"
+                         Visibility="{Binding DataContext.IsAuthenticated, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBoolToVis}}" />
+
+        <!-- 2. KHÔNG GIAN LÀM VIỆC CHÍNH SAU KHI ĐĂNG NHẬP -->
+        <Grid DataContext="{Binding Shell}"
+              Visibility="{Binding DataContext.IsAuthenticated, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="88" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- THANH ĐIỀU HƯỚNG TRÁI (APP RAIL) -->
+            <Border Grid.Column="0"
+                    Background="{StaticResource SurfaceWhiteBrush}"
+                    BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="0,0,1,0"
+                    Padding="8,18">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Logo DAU -->
+                    <Button Grid.Row="0"
+                            Margin="0,0,0,22"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            HorizontalAlignment="Center"
+                            Command="{Binding NavigateHomeCommand}"
+                            ToolTip="DAU Chat • Đại học Kiến trúc Đà Nẵng">
+                        <Image Source="pack://application:,,,/Assets/dau-logo.png"
+                               Width="44"
+                               Height="44"
+                               Stretch="Uniform" />
+                    </Button>
+
+                    <!-- Điều hướng phân quyền RBAC -->
+                    <StackPanel Grid.Row="1" HorizontalAlignment="Center">
+                        <!-- Quản trị (Chỉ hiện cho tài khoản Admin - màn hình chính của Admin) -->
+                        <RadioButton Tag="Quản trị"
+                                     Style="{StaticResource AppRailRadioStyle}"
+                                     Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"
+                                     IsChecked="{Binding ActiveSection, Converter={StaticResource EnumEquals}, ConverterParameter=Admin, Mode=OneWay}"
+                                     Command="{Binding NavigateCommand}"
+                                     CommandParameter="Admin">
+                            <Path Data="{StaticResource IconDashboard}"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                                  StrokeThickness="2"
+                                  Width="19" Height="19" Stretch="Uniform" />
+                        </RadioButton>
+
+                        <!-- Tin nhắn 1-1 (GV & SV) -->
+                        <RadioButton Tag="Tin nhắn"
+                                     Style="{StaticResource AppRailRadioStyle}"
+                                     Visibility="{Binding IsNotAdmin, Converter={StaticResource BoolToVis}}"
+                                     IsChecked="{Binding ActiveSection, Converter={StaticResource EnumEquals}, ConverterParameter=Messages, Mode=OneWay}"
+                                     Command="{Binding NavigateCommand}"
+                                     CommandParameter="Messages">
+                            <Grid Width="36" Height="36">
+                                <Path Data="{StaticResource IconMessage}"
+                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                                      StrokeThickness="2"
+                                      Width="19" Height="19" Stretch="Uniform"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Border HorizontalAlignment="Right"
+                                        VerticalAlignment="Top"
+                                        Margin="0,2,1,0"
+                                        MinWidth="16"
+                                        Height="16"
+                                        Padding="4,0"
+                                        CornerRadius="8"
+                                        Background="{StaticResource DauRedBrush}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Chat.TotalUnreadCount}" Value="0">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding Chat.TotalUnreadCount}"
+                                               FontSize="9"
+                                               FontWeight="Bold"
+                                               Foreground="White"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Border>
+                            </Grid>
+                        </RadioButton>
+
+                        <!-- Phòng học (GV/SV) / Phòng chat (Admin) -->
+                        <RadioButton Tag="{Binding RoomsNavLabel}"
+                                     Style="{StaticResource AppRailRadioStyle}"
+                                     IsChecked="{Binding ActiveSection, Converter={StaticResource EnumEquals}, ConverterParameter=Rooms, Mode=OneWay}"
+                                     Command="{Binding NavigateCommand}"
+                                     CommandParameter="Rooms">
+                            <Path Data="{StaticResource IconBookOpen}"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                                  StrokeThickness="2"
+                                  Width="19" Height="19" Stretch="Uniform" />
+                        </RadioButton>
+
+                        <!-- Lớp học phần (Chỉ hiện cho Giảng viên) -->
+                        <RadioButton Tag="Lớp học"
+                                     Style="{StaticResource AppRailRadioStyle}"
+                                     Visibility="{Binding IsLecturer, Converter={StaticResource BoolToVis}}"
+                                     IsChecked="{Binding ActiveSection, Converter={StaticResource EnumEquals}, ConverterParameter=Classes, Mode=OneWay}"
+                                     Command="{Binding NavigateCommand}"
+                                     CommandParameter="Classes">
+                            <Path Data="{StaticResource IconGraduationCap}"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                                  StrokeThickness="2"
+                                  Width="20" Height="20" Stretch="Uniform" />
+                        </RadioButton>
+
+                        <!-- Tài liệu (GV & SV) -->
+                        <RadioButton Tag="Tài liệu"
+                                     Style="{StaticResource AppRailRadioStyle}"
+                                     Visibility="{Binding IsNotAdmin, Converter={StaticResource BoolToVis}}"
+                                     IsChecked="{Binding ActiveSection, Converter={StaticResource EnumEquals}, ConverterParameter=Files, Mode=OneWay}"
+                                     Command="{Binding NavigateCommand}"
+                                     CommandParameter="Files">
+                            <Path Data="{StaticResource IconFolderOpen}"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                                  StrokeThickness="2"
+                                  Width="19" Height="19" Stretch="Uniform" />
+                        </RadioButton>
+
+                        <!-- Lưu trữ (GV & SV) -->
+                        <RadioButton Tag="Lưu trữ"
+                                     Style="{StaticResource AppRailRadioStyle}"
+                                     Visibility="{Binding IsNotAdmin, Converter={StaticResource BoolToVis}}"
+                                     IsChecked="{Binding ActiveSection, Converter={StaticResource EnumEquals}, ConverterParameter=Storage, Mode=OneWay}"
+                                     Command="{Binding NavigateCommand}"
+                                     CommandParameter="Storage">
+                            <Path Data="{StaticResource IconHardDrive}"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                                  StrokeThickness="2"
+                                  Width="19" Height="19" Stretch="Uniform" />
+                        </RadioButton>
+                    </StackPanel>
+
+                    <!-- Cài đặt & Hồ sơ người dùng -->
+                    <StackPanel Grid.Row="2" HorizontalAlignment="Center">
+                        <Button Style="{StaticResource IconButtonStyle}"
+                                Command="{Binding OpenProfileCommand}"
+                                ToolTip="Hồ sơ cá nhân, Đổi mật khẩu &amp; Đăng xuất"
+                                Margin="0,0,0,10">
+                            <Path Data="{StaticResource IconSettings}"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  StrokeThickness="1.9"
+                                  Width="19" Height="19" Stretch="Uniform" />
+                        </Button>
+
+                        <Button Background="Transparent"
+                                BorderThickness="0"
+                                Cursor="Hand"
+                                Command="{Binding OpenProfileCommand}"
+                                ToolTip="{Binding CurrentUserName}">
+                            <Grid Width="38" Height="38">
+                                <Border CornerRadius="13" Background="{StaticResource DarkAvatarBrush}">
+                                    <TextBlock Text="{Binding CurrentUserInitials}"
+                                               FontSize="11.5"
+                                               FontWeight="Bold"
+                                               Foreground="White"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Border>
+                                <Ellipse Width="11" Height="11"
+                                         Fill="{Binding CurrentPresence, Converter={StaticResource PresenceToBrush}}"
+                                         Stroke="White"
+                                         StrokeThickness="2"
+                                         HorizontalAlignment="Right"
+                                         VerticalAlignment="Bottom"
+                                         Margin="0,0,-1,-1" />
+                            </Grid>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- VÙNG HIỂN THỊ PHÂN HỆ CHÍNH -->
+            <Grid x:Name="MainContentHost" Grid.Column="1">
+                <views:ChatWorkspaceView DataContext="{Binding Chat}"
+                                         Visibility="{Binding DataContext.IsChatViewVisible, ElementName=MainContentHost, Converter={StaticResource BoolToVis}}" />
+
+                <views:LecturerClassesView DataContext="{Binding Classes}"
+                                           Visibility="{Binding DataContext.ActiveSection, ElementName=MainContentHost, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Classes}" />
+
+                <views:FilesLibraryView DataContext="{Binding Files}"
+                                        Visibility="{Binding DataContext.ActiveSection, ElementName=MainContentHost, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Files}" />
+
+                <views:StorageBackupView DataContext="{Binding Storage}"
+                                         Visibility="{Binding DataContext.ActiveSection, ElementName=MainContentHost, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Storage}" />
+
+                <views:AdminCenterView DataContext="{Binding Admin}"
+                                       Visibility="{Binding DataContext.ActiveSection, ElementName=MainContentHost, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Admin}" />
+            </Grid>
+
+            <!-- OVERLAY CÁC MODAL -->
+            <views:ModalsOverlay Grid.Column="0" Grid.ColumnSpan="2" DataContext="{Binding}" />
+
+            <!-- TOAST THÔNG BÁO NỔI -->
+            <Border Grid.Column="1"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="0,88,24,0"
+                    Background="#0F172A"
+                    CornerRadius="12"
+                    Padding="14,10"
+                    Visibility="{Binding HasToast, Converter={StaticResource BoolToVis}}">
+                <Border.Effect>
+                    <DropShadowEffect Color="#0F172A" Opacity="0.24" BlurRadius="18" ShadowDepth="4" />
+                </Border.Effect>
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource IconCheck}"
+                          Stroke="#34D399"
+                          StrokeThickness="2.2"
+                          Width="15" Height="15" Stretch="Uniform"
+                          VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding ToastMessage}"
+                               Margin="9,0,0,0"
+                               FontSize="12.5"
+                               FontWeight="Medium"
+                               Foreground="White" />
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>
