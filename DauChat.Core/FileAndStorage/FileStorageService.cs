@@ -77,6 +77,7 @@ public class FileStorageService : IFileStorageService
     public Task<OperationResult<string>> ExportBackupZipAsync(
         string currentUserId,
         string destinationZipPath,
+        bool includeFiles = false,
         CancellationToken cancellationToken = default)
         => throw new NotImplementedException("TODO (TV5 - MOD_07_07): Nén toàn bộ LocalData/{UserId} thành file .zip.");
 

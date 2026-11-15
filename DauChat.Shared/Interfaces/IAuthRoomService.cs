@@ -144,6 +144,23 @@ public interface IAuthRoomService
         string classId,
         string roomName,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Tham gia lớp học / phòng học phần trực tiếp bằng Mã lớp (kiểu Google Classroom).</summary>
+    Task<OperationResult<ClassJoinResultDto>> JoinByCodeAsync(
+        string userId,
+        string joinCode,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult(OperationResult<ClassJoinResultDto>.Fail(
+            "Chức năng tham gia bằng mã lớp chưa được cài đặt ở tầng dịch vụ.",
+            "NOT_IMPLEMENTED"));
+
+    /// <summary>Tạo mới / xoay vòng Mã lớp cho lớp học hoặc phòng học.</summary>
+    Task<OperationResult<string>> RegenerateJoinCodeAsync(
+        string classId,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult(OperationResult<string>.Fail(
+            "Chức năng cấp lại mã lớp chưa được cài đặt ở tầng dịch vụ.",
+            "NOT_IMPLEMENTED"));
     #endregion
 
     #region Sự kiện thay đổi Metadata cho UI

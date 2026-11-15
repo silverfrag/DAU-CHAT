@@ -25,10 +25,17 @@ Hệ thống Chat & trao đổi tài liệu đồ án nội bộ xây dựng tr�
 4. **`DauChat.Client.UI`** (`net10.0-windows`, WPF App) — Độc quyền giao diện bởi TV1 (`feature/tv1-client-ui`).
 5. **`DauChat.SandboxTest`** (`net10.0`, Console App) — Môi trường kiểm thử logic cho TV2–TV5.
 
+## Tài liệu yêu cầu đầy đủ
+
+Toàn bộ cây phân rã chức năng, phân công TV1-TV5, yêu cầu MOD_01 đến MOD_08, kiến trúc Local-First, Transient Relay, Server Metadata và quy tắc kiểm thử được ghi tại:
+
+- [PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md)
+
 ## Lệnh build và chạy thử
 ```powershell
 dotnet build DauChat.sln
 dotnet run --project DauChat.SandboxTest/DauChat.SandboxTest.csproj
 dotnet run --project DauChat.Server/DauChat.Server.csproj
+dotnet run --project DauChat.Client.UI/DauChat.Client.UI.csproj
 ```
 

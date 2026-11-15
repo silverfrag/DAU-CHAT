@@ -1,8 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\DauChat.Shared\DauChat.Shared.csproj" />
     <ProjectReference Include="..\DauChat.Core\DauChat.Core.csproj" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0" />
   </ItemGroup>
 
   <PropertyGroup>

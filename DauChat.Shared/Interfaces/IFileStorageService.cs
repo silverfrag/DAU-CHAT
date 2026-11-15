@@ -74,6 +74,7 @@ public interface IFileStorageService
     Task<OperationResult<string>> ExportBackupZipAsync(
         string currentUserId,
         string destinationZipPath,
+        bool includeFiles = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>MOD_07_08: Giải nén file .zip sao lưu và khôi phục lịch sử chat/tài liệu trên thiết bị mới.</summary>
