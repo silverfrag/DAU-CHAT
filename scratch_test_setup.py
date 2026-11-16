@@ -22,7 +22,7 @@ def create_report():
     # 2. Setup Styles (Pure Black Academic Tech Dev Standard)
     styles = doc.styles
 
-    # Normal Style
+    # Normal Style - Default to LEFT alignment to prevent accidental justification stretching!
     style_normal = styles['Normal']
     font = style_normal.font
     font.name = 'Times New Roman'
@@ -31,17 +31,17 @@ def create_report():
     style_normal.paragraph_format.line_spacing = 1.3
     style_normal.paragraph_format.space_after = Pt(4)
     style_normal.paragraph_format.space_before = Pt(0)
-    style_normal.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    style_normal.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
 
     # Heading 1 (e.g. 1. ĐẶT TÊN ĐỀ TÀI)
     style_h1 = styles['Heading 1']
     h1_font = style_h1.font
     h1_font.name = 'Times New Roman'
-    h1_font.size = Pt(14.5)
+    h1_font.size = Pt(14)
     h1_font.bold = True
     h1_font.color.rgb = RGBColor(0, 0, 0) # Pure Black
     style_h1.paragraph_format.space_before = Pt(14)
-    style_h1.paragraph_format.space_after = Pt(6)
+    style_h1.paragraph_format.space_after = Pt(4)
     style_h1.paragraph_format.keep_with_next = True
     style_h1.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
 
@@ -49,11 +49,11 @@ def create_report():
     style_h2 = styles['Heading 2']
     h2_font = style_h2.font
     h2_font.name = 'Times New Roman'
-    h2_font.size = Pt(13.5)
+    h2_font.size = Pt(13)
     h2_font.bold = True
     h2_font.color.rgb = RGBColor(0, 0, 0) # Pure Black
     style_h2.paragraph_format.space_before = Pt(10)
-    style_h2.paragraph_format.space_after = Pt(4)
+    style_h2.paragraph_format.space_after = Pt(3)
     style_h2.paragraph_format.keep_with_next = True
     style_h2.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
 
@@ -72,4 +72,4 @@ def create_report():
 
     return doc
 
-print("Academic pure black setup ready.")
+print("Academic pure black setup ready (Default LEFT alignment to prevent word spacing bugs).")

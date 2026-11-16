@@ -4,7 +4,7 @@ import docx
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx_helpers import set_table_borders, add_header_styled_row, add_data_row, add_tech_box, add_figure
+from docx_helpers import set_table_borders, add_header_styled_row, add_data_row, add_tech_box, add_figure, add_body_p, add_bullet_p
 
 def add_table_dictionary(doc, tbl_name, tbl_desc, columns_data):
     p_h = doc.add_paragraph()
@@ -34,13 +34,10 @@ def add_section_6(doc):
     doc.add_heading("6. THIẾT KẾ CƠ SỞ DỮ LIỆU & KIẾN TRÚC LƯU TRỮ LAI", level=1)
 
     doc.add_heading("6.1. Danh mục Bảng CSDL Server (SQLite) & Cấu trúc lưu trữ Client Local-First", level=2)
-    p_db_intro = doc.add_paragraph(
-        "Khác biệt hoàn toàn với các đồ án mạng truyền thống (thường sử dụng SQL Server để lưu toàn bộ dữ liệu tin nhắn và file dẫn đến quá tải hệ thống), DAU Chat hiện thực hóa Kiến trúc Lưu trữ Lai (Hybrid Storage Architecture):\n"
-        "1. Kho Metadata Máy chủ (Server SQLite Store): Lưu trữ trong tệp dauchat-metadata.db sử dụng thư viện siêu nhẹ Microsoft.Data.Sqlite. Kho này chỉ quản lý danh mục tài khoản, vai trò, lớp học và phòng chat; tuyệt đối không lưu nội dung chat và file đính kèm.\n"
-        "2. Kho Lưu trữ Cục bộ Máy trạm (Client Local-First Store): Mỗi máy trạm quản lý độc lập toàn bộ lịch sử trò chuyện và tài liệu tải về trong thư mục LocalData/{UserId}/, đảm bảo tính bảo mật, tốc độ đọc ghi tức thì và không làm hao tổn tài nguyên máy chủ.\n"
-        "3. Kho Vùng đệm Nóng Mạng LAN (Server Vault Hot-Cache): Lưu trữ các bản snapshot nén của người dùng tại ServerData/Vaults/{UserId}/latest_snapshot.bin với hạn ngạch nghiêm ngặt 1GB/user và cơ chế dọn dẹp LRU."
-    )
-    p_db_intro.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    add_body_p(doc, "Khác biệt hoàn toàn với các đồ án mạng truyền thống (thường sử dụng SQL Server để lưu toàn bộ dữ liệu tin nhắn và file dẫn đến quá tải hệ thống), DAU Chat hiện thực hóa Kiến trúc Lưu trữ Lai (Hybrid Storage Architecture) phân tách 3 vùng lưu trữ độc lập:")
+    add_bullet_p(doc, "Lưu trữ trong tệp dauchat-metadata.db sử dụng thư viện siêu nhẹ Microsoft.Data.Sqlite. Kho này chỉ quản lý danh mục tài khoản, vai trò, lớp học và phòng chat; tuyệt đối không lưu nội dung chat và file đính kèm.", bold_prefix="1. Kho Metadata Máy chủ (Server SQLite Store):")
+    add_bullet_p(doc, "Mỗi máy trạm quản lý độc lập toàn bộ lịch sử trò chuyện và tài liệu tải về trong thư mục LocalData/{UserId}/, đảm bảo tính bảo mật, tốc độ đọc ghi tức thì và không làm hao tổn tài nguyên máy chủ.", bold_prefix="2. Kho Lưu trữ Cục bộ Máy trạm (Client Local-First Store):")
+    add_bullet_p(doc, "Lưu trữ các bản snapshot nén của người dùng tại ServerData/Vaults/{UserId}/latest_snapshot.bin với hạn ngạch nghiêm ngặt 1GB/user và cơ chế dọn dẹp LRU.", bold_prefix="3. Kho Vùng đệm Nóng Mạng LAN (Server Vault Hot-Cache):")
 
     # Table List
     p_tlist = doc.add_paragraph("Bảng 6.1: Danh mục các bảng CSDL Metadata Server và Cấu trúc tệp Client Local:")
@@ -185,17 +182,14 @@ def add_section_6(doc):
     add_figure(doc, 'e:/DAU-Chat-Team5/diagrams/diagram_erd.png', 
                "Hình 6.1: Sơ đồ quan hệ thực thể Cơ sở dữ liệu (ERD) & Liên kết lưu trữ Hybrid Local-First")
 
-    p_erd_notes = doc.add_paragraph(
-        "Các quan hệ chính trong sơ đồ ERD:\n"
-        "• Quan hệ 1 – N (Roles – Users): Một vai trò (Admin, Teacher, Student) có thể gán cho nhiều tài khoản người dùng; mỗi tài khoản chỉ thuộc duy nhất một vai trò chính.\n"
-        "• Quan hệ N – M (Users – Classes qua ClassMembers): Một sinh viên có thể tham gia nhiều lớp học phần khác nhau; mỗi lớp học phần tập hợp danh sách nhiều sinh viên.\n"
-        "• Quan hệ 1 – N (Users – Classes qua LecturerId): Một Giảng viên có thể phụ trách giảng dạy và làm chủ nhiệm của nhiều lớp học phần.\n"
-        "• Quan hệ 1 – N (Classes – Rooms): Một lớp học có thể sở hữu nhiều phòng chat (Phòng thảo luận chung của lớp, các phòng làm đồ án nhóm của từng đề tài).\n"
-        "• Quan hệ N – M (Users – Rooms qua RoomMembers): Một người dùng có thể tham gia vào nhiều phòng chat; mỗi phòng chat chứa nhiều thành viên với vai trò Owner hoặc Member.\n"
-        "• Quan hệ 1 – N (Users – SystemAuditLogs): Một tài khoản phát sinh nhiều bản ghi nhật ký sự kiện kiểm toán hệ thống phục vụ công tác giám sát an ninh.\n"
-        "• Liên kết Lai (Hybrid Linkage): Bảng Users và Rooms liên kết với các tệp tin nhắn .jsonl và kho tệp Files/ của Client thông qua các trường khóa ngoại mềm RoomId và UserId mà không cần thực hiện truy vấn SQL JOIN qua mạng, giúp hệ thống đạt hiệu năng vô hạn."
-    )
-    p_erd_notes.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    add_body_p(doc, "Các mối quan hệ thực thể cốt lõi trong sơ đồ quan hệ CSDL (Hình 6.1):")
+    add_bullet_p(doc, "Một vai trò (Admin, Teacher, Student) có thể gán cho nhiều tài khoản người dùng; mỗi tài khoản chỉ thuộc duy nhất một vai trò chính.", bold_prefix="• Quan hệ 1 – N (Roles – Users):")
+    add_bullet_p(doc, "Một sinh viên có thể tham gia nhiều lớp học phần khác nhau; mỗi lớp học phần tập hợp danh sách nhiều sinh viên.", bold_prefix="• Quan hệ N – M (Users – Classes qua ClassMembers):")
+    add_bullet_p(doc, "Một Giảng viên có thể phụ trách giảng dạy và làm chủ nhiệm của nhiều lớp học phần.", bold_prefix="• Quan hệ 1 – N (Users – Classes qua LecturerId):")
+    add_bullet_p(doc, "Một lớp học có thể sở hữu nhiều phòng chat (Phòng thảo luận chung của lớp, các phòng làm đồ án nhóm của từng đề tài).", bold_prefix="• Quan hệ 1 – N (Classes – Rooms):")
+    add_bullet_p(doc, "Một người dùng có thể tham gia vào nhiều phòng chat; mỗi phòng chat chứa nhiều thành viên với vai trò Owner hoặc Member.", bold_prefix="• Quan hệ N – M (Users – Rooms qua RoomMembers):")
+    add_bullet_p(doc, "Một tài khoản phát sinh nhiều bản ghi nhật ký sự kiện kiểm toán hệ thống phục vụ công tác giám sát an ninh.", bold_prefix="• Quan hệ 1 – N (Users – SystemAuditLogs):")
+    add_bullet_p(doc, "Bảng Users và Rooms liên kết với các tệp tin nhắn .jsonl và kho tệp Files/ của Client thông qua các trường khóa ngoại mềm RoomId và UserId mà không cần thực hiện truy vấn SQL JOIN qua mạng, giúp hệ thống đạt hiệu năng vô hạn.", bold_prefix="• Liên kết Lai (Hybrid Linkage):")
 
 def add_section_7(doc):
     doc.add_heading("7. CHIA & QUẢN LÝ CÔNG VIỆC THEO NHÓM (TEAM 5)", level=1)
@@ -290,17 +284,18 @@ def add_section_7(doc):
     for idx, row in enumerate(log_data):
         add_data_row(tbl_log, row, is_even=(idx % 2 == 1), col_widths=log_widths)
 
-    p_conc = doc.add_paragraph()
-    p_conc.paragraph_format.space_before = Pt(12)
-    p_conc.paragraph_format.space_after = Pt(4)
-    r_cc = p_conc.add_run(
-        "KẾT LUẬN CHUNG CỦA BÁO CÁO:\n"
-        "Báo cáo phân tích hệ thống thông tin đề tài \"DAU Chat\" đã hoàn thành xuất sắc toàn bộ 7 mục nội dung theo đúng biểu mẫu chuẩn của Khoa Công nghệ Thông tin - Trường Đại học Kiến trúc Đà Nẵng. Mọi phân tích kiến trúc, đối tượng, module và luồng dữ liệu đều được đối soát và phản ánh chính xác 100% trên mã nguồn thực tế C# .NET 10.0 LTS của nhóm Team 5. Hệ thống hoàn toàn sẵn sàng cho buổi báo cáo giữa kỳ và trình diễn thực tế (live demo) kết nối đa máy qua mạng LAN trước Giảng viên hướng dẫn TS. Đặng Hùng Vĩ."
-    )
-    r_cc.font.name = 'Times New Roman'
-    r_cc.font.size = Pt(12)
-    r_cc.font.bold = True
-    r_cc.font.color.rgb = RGBColor(0, 0, 0)
+    p_conc_h = doc.add_paragraph()
+    p_conc_h.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_conc_h.paragraph_format.space_before = Pt(14)
+    p_conc_h.paragraph_format.space_after = Pt(2)
+    p_conc_h.paragraph_format.keep_with_next = True
+    r_cch = p_conc_h.add_run("KẾT LUẬN CHUNG CỦA BÁO CÁO")
+    r_cch.font.name = 'Times New Roman'
+    r_cch.font.size = Pt(13)
+    r_cch.font.bold = True
+    r_cch.font.color.rgb = RGBColor(0, 0, 0)
+
+    add_body_p(doc, "Báo cáo phân tích hệ thống thông tin đề tài \"DAU Chat\" đã hoàn thành xuất sắc toàn bộ 7 mục nội dung theo đúng biểu mẫu chuẩn của Khoa Công nghệ Thông tin - Trường Đại học Kiến trúc Đà Nẵng. Mọi phân tích kiến trúc, đối tượng, module và luồng dữ liệu đều được đối soát và phản ánh chính xác 100% trên mã nguồn thực tế C# .NET 10.0 LTS của nhóm Team 5. Hệ thống hoàn toàn sẵn sàng cho buổi báo cáo giữa kỳ và trình diễn thực tế (live demo) kết nối đa máy qua mạng LAN trước Giảng viên hướng dẫn TS. Đặng Hùng Vĩ.")
 
     # PHỤ LỤC. BẢNG ĐỐI CHIẾU DANH MỤC TỆP NGUỒN C# .NET 10 THỰC TẾ
     doc.add_page_break()

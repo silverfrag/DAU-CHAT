@@ -4,20 +4,26 @@ import docx
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx_helpers import set_table_borders, add_header_styled_row, add_data_row, add_tech_box, add_figure
+from docx_helpers import set_table_borders, add_header_styled_row, add_data_row, add_tech_box, add_figure, add_body_p, add_bullet_p
 
 def add_ipo_module_table(doc, mod_id, mod_name, subsystem, priority, input_text, process_text, output_text, exception_text, note_text):
     p_h = doc.add_paragraph()
+    p_h.alignment = WD_ALIGN_PARAGRAPH.LEFT
     p_h.paragraph_format.space_before = Pt(8)
-    p_h.paragraph_format.space_after = Pt(2)
+    p_h.paragraph_format.space_after = Pt(1)
     p_h.paragraph_format.keep_with_next = True
-    r_id = p_h.add_run(f"• Module: [{mod_id}] – {mod_name}\n")
+    r_id = p_h.add_run(f"• Module: [{mod_id}] – {mod_name}")
     r_id.font.name = 'Times New Roman'
     r_id.font.size = Pt(11.5)
     r_id.font.bold = True
     r_id.font.color.rgb = RGBColor(0, 0, 0)
 
-    r_sub = p_h.add_run(f"Thuộc phân hệ: {subsystem} | Mức độ ưu tiên: {priority}")
+    p_sub = doc.add_paragraph()
+    p_sub.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_sub.paragraph_format.space_before = Pt(0)
+    p_sub.paragraph_format.space_after = Pt(3)
+    p_sub.paragraph_format.keep_with_next = True
+    r_sub = p_sub.add_run(f"Thuộc phân hệ: {subsystem} | Mức độ ưu tiên: {priority}")
     r_sub.font.name = 'Times New Roman'
     r_sub.font.size = Pt(10.5)
     r_sub.font.italic = True
@@ -47,15 +53,12 @@ def add_section_4(doc):
     doc.add_heading("4. PHÂN TÍCH CHỨC NĂNG ĐẾN TẬN CÙNG (CHỨC NĂNG CON → MODULE)", level=1)
 
     doc.add_heading("4.1. Cấu trúc phân rã chức năng (Functional Decomposition Tree)", level=2)
-    p_tree_intro = doc.add_paragraph(
-        "Nhằm quản lý và kiểm soát chất lượng mã nguồn .NET 10 một cách chặt chẽ nhất, toàn bộ 8 phân hệ của hệ thống DAU Chat được phân rã đến tận cùng thành 63 module chức năng đơn nguyên (Atomic Modules, mã hiệu MOD_XX_YY). Mỗi module được gắn nhãn phân quyền rõ ràng:\n"
-        "• [ALL]: Mọi người dùng (Admin, Giảng viên, Sinh viên) đều có quyền thực thi.\n"
-        "• [A]: Quyền độc quyền của Quản trị viên (Admin).\n"
-        "• [GV]: Quyền hạn của Giảng viên.\n"
-        "• [SV]: Quyền hạn của Sinh viên.\n"
-        "• [HT]: Chức năng nền tảng của Hệ thống mạng / Server."
-    )
-    p_tree_intro.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    add_body_p(doc, "Nhằm quản lý và kiểm soát chất lượng mã nguồn .NET 10 một cách chặt chẽ nhất, toàn bộ 8 phân hệ của hệ thống DAU Chat được phân rã đến tận cùng thành 63 module chức năng đơn nguyên (Atomic Modules, mã hiệu MOD_XX_YY). Mỗi module được gắn nhãn phân quyền rõ ràng:")
+    add_bullet_p(doc, "Mọi người dùng (Admin, Giảng viên, Sinh viên) đều có quyền thực thi.", bold_prefix="• [ALL]:")
+    add_bullet_p(doc, "Quyền độc quyền của Quản trị viên (Admin).", bold_prefix="• [A]:")
+    add_bullet_p(doc, "Quyền hạn của Giảng viên.", bold_prefix="• [GV]:")
+    add_bullet_p(doc, "Quyền hạn của Sinh viên.", bold_prefix="• [SV]:")
+    add_bullet_p(doc, "Chức năng nền tảng của Hệ thống mạng / Server.", bold_prefix="• [HT]:")
 
     tree_text = (
         "1. PHÂN HỆ QUẢN LÝ TÀI KHOẢN & XÁC THỰC (TV3 phụ trách Core, TV1 phụ trách UI)\n"
@@ -503,64 +506,49 @@ def add_section_5(doc):
         add_data_row(tbl_df, row, is_even=(idx % 2 == 1), col_widths=df_widths)
 
     doc.add_heading("5.3. Sơ đồ kiến trúc & luồng dữ liệu chuyên sâu", level=2)
-    p_diag_intro = doc.add_paragraph(
-        "Nhằm làm sáng tỏ tường minh cơ chế vận hành ở tầng mạng và lưu trữ, 4 sơ đồ kiến trúc và luồng dữ liệu kỹ thuật được xây dựng chi tiết dưới đây theo đúng chuẩn kỹ thuật phần mềm:"
-    )
-    p_diag_intro.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    add_body_p(doc, "Nhằm làm sáng tỏ tường minh cơ chế vận hành ở tầng mạng và lưu trữ, 4 sơ đồ kiến trúc và luồng dữ liệu kỹ thuật được xây dựng chi tiết dưới đây theo đúng chuẩn kỹ thuật phần mềm:")
 
     # Sơ đồ 1: Tổng thể
     add_figure(doc, 'e:/DAU-Chat-Team5/diagrams/diagram_system_architecture.png', 
                "Hình 5.1: Sơ đồ kiến trúc tổng thể hệ thống DAU Chat (C4 Component Architecture & Network Protocol Specification)")
 
-    p_arch_desc = doc.add_paragraph(
-        "Giải thích cơ chế vận hành kiến trúc (Hình 5.1):\n"
-        "• Tầng Ứng dụng Client (WPF Native .NET 10): Hoạt động theo mô hình Local-First độc lập. Mọi tin nhắn văn bản gửi hoặc nhận đều được ghi nối tiếp vào tệp Append-only log (.jsonl) và đánh chỉ mục nhị phân (.idx) trực tiếp trên ổ đĩa máy trạm. Tệp tài liệu nhận về được lưu tại thư mục Files/ và quản lý bởi file_manifest.jsonl. Nhờ đó, Client hoàn toàn tự chủ về dữ liệu mà không cần tải lại từ máy chủ.\n"
-        "• Kênh Mạng TCP Socket Stream: Sử dụng kết nối TCP thuần hướng luồng (Stream-oriented). Cơ chế đóng gói nhị phân Length-prefix (4 byte Big-Endian xác định độ dài gói tin, 1 byte xác định PacketType và mảng byte Payload) giúp loại bỏ triệt để hiện tượng vỡ gói hoặc dính gói trên đường truyền mạng LAN trường học.\n"
-        "• Tầng Máy chủ Server: Chia làm 3 khối chức năng độc lập:\n"
-        "  1. Dispatcher & Connection Manager: Điều phối các luồng kết nối đa nhiệm (Async/Await), theo dõi nhịp tim Heartbeat.\n"
-        "  2. Transient Relay & Pending Queue: Cầu nối RAM-to-RAM trực tiếp khi hai máy cùng Online; lưu trữ tạm thời trên bộ nhớ RAM (FIFO + TTL 7 ngày) khi người nhận Offline và xóa ngay khi nhận được xác nhận PacketAck.\n"
-        "  3. Server Vault (Kho đệm nóng LAN): Vùng đệm sao lưu có kiểm soát hạn ngạch 1GB/user và cơ chế dọn dẹp LRU, hỗ trợ học tập xoay tua phòng máy."
-    )
-    p_arch_desc.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    add_body_p(doc, "Giải thích cơ chế vận hành kiến trúc tổng thể của hệ thống DAU Chat (Hình 5.1):")
+    add_bullet_p(doc, "Hoạt động theo mô hình Local-First độc lập. Mọi tin nhắn văn bản gửi hoặc nhận đều được ghi nối tiếp vào tệp Append-only log (.jsonl) và đánh chỉ mục nhị phân (.idx) trực tiếp trên ổ đĩa máy trạm. Tệp tài liệu nhận về được lưu tại thư mục Files/ và quản lý bởi file_manifest.jsonl. Nhờ đó, Client hoàn toàn tự chủ về dữ liệu mà không cần tải lại từ máy chủ.", bold_prefix="• Tầng Ứng dụng Client (WPF Native .NET 10):")
+    add_bullet_p(doc, "Sử dụng kết nối TCP thuần hướng luồng (Stream-oriented). Cơ chế đóng gói nhị phân Length-prefix (4 byte Big-Endian xác định độ dài gói tin, 1 byte xác định PacketType và mảng byte Payload) giúp loại bỏ triệt để hiện tượng vỡ gói hoặc dính gói trên đường truyền mạng LAN trường học.", bold_prefix="• Kênh Mạng TCP Socket Stream:")
+    add_bullet_p(doc, "Tầng máy chủ được chia làm 3 khối chức năng phân tách rõ ràng:", bold_prefix="• Tầng Máy chủ Server:")
+    add_bullet_p(doc, "Điều phối các luồng kết nối đa nhiệm (Async/Await), theo dõi nhịp tim Heartbeat.", bold_prefix="- Dispatcher & Connection Manager:", indent_inches=0.5)
+    add_bullet_p(doc, "Cầu nối RAM-to-RAM trực tiếp khi hai máy cùng Online; lưu trữ tạm thời trên bộ nhớ RAM (FIFO + TTL 7 ngày) khi người nhận Offline và xóa ngay khi nhận được xác nhận PacketAck.", bold_prefix="- Transient Relay & Pending Queue:", indent_inches=0.5)
+    add_bullet_p(doc, "Vùng đệm sao lưu có kiểm soát hạn ngạch 1GB/user và cơ chế dọn dẹp LRU, hỗ trợ học tập xoay tua phòng máy.", bold_prefix="- Server Vault (Kho đệm nóng LAN):", indent_inches=0.5)
 
     # Sơ đồ 2: Luồng tin nhắn
     add_figure(doc, 'e:/DAU-Chat-Team5/diagrams/diagram_message_flow.png', 
                "Hình 5.2: Biểu đồ tuần tự định tuyến tin nhắn và vòng đời hàng đợi tạm thời (UML Sequence Diagram)")
 
-    p_msg_desc = doc.add_paragraph(
-        "Giải thích luồng tin nhắn (Hình 5.2):\n"
-        "1. Phía Bên gửi: Khi người dùng nhấn gửi, động cơ Messaging tạo mã định danh UUID v4 và nhãn thời gian UTC. Tin nhắn lập tức được ghi nối tiếp vào tệp .jsonl cục bộ của người gửi (đảm bảo không mất dữ liệu ngay cả khi mạng sập ngay tức khắc) và đóng gói vào MessagePacket gửi qua Socket.\n"
-        "2. Phía Máy chủ: Server đọc 4 byte Header để bóc tách gói tin. Tra cứu bảng ActiveConnectionMap:\n"
-        "   - Nhánh Online (Direct Stream): Nếu người nhận đang kết nối, Server bơm gói tin RAM-to-RAM thẳng sang Socket của người nhận. Độ trễ đạt < 50ms.\n"
-        "   - Nhánh Offline (Pending Queue): Nếu người nhận ngắt kết nối, gói tin được đưa vào hàng đợi FIFO trên RAM kèm thời gian sống TTL 7 ngày. Khi người dùng đăng nhập lại, hệ thống tự động xả toàn bộ tin nhắn tồn đọng.\n"
-        "3. Phía Bên nhận: Nhận gói tin từ Socket, ghi nối tiếp vào file .jsonl của mình, cập nhật file chỉ mục .idx, kích hoạt sự kiện UI hiển thị bóng chat và gửi gói tin xác nhận PacketAck (204) ngược lại để Server xóa tin khỏi RAM."
-    )
-    p_msg_desc.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    add_body_p(doc, "Giải thích luồng định tuyến tin nhắn và chu trình hàng đợi tạm thời (Hình 5.2):")
+    add_bullet_p(doc, "Khi người dùng nhấn gửi, động cơ Messaging tạo mã định danh UUID v4 và nhãn thời gian UTC. Tin nhắn lập tức được ghi nối tiếp vào tệp .jsonl cục bộ của người gửi (đảm bảo không mất dữ liệu ngay cả khi mạng sập tức khắc) và đóng gói vào MessagePacket gửi qua Socket.", bold_prefix="1. Phía Bên gửi:")
+    add_bullet_p(doc, "Server đọc 4 byte Header để bóc tách gói tin và tra cứu bảng ActiveConnectionMap:", bold_prefix="2. Phía Máy chủ:")
+    add_bullet_p(doc, "Nếu người nhận đang kết nối, Server bơm gói tin RAM-to-RAM thẳng sang Socket của người nhận. Độ trễ đạt < 50ms.", bold_prefix="- Nhánh Online (Direct Stream):", indent_inches=0.5)
+    add_bullet_p(doc, "Nếu người nhận ngắt kết nối, gói tin được đưa vào hàng đợi FIFO trên RAM kèm thời gian sống TTL 7 ngày. Khi người dùng đăng nhập lại, hệ thống tự động xả toàn bộ tin nhắn tồn đọng.", bold_prefix="- Nhánh Offline (Pending Queue):", indent_inches=0.5)
+    add_bullet_p(doc, "Nhận gói tin từ Socket, ghi nối tiếp vào file .jsonl của mình, cập nhật file chỉ mục .idx, kích hoạt sự kiện UI hiển thị bóng chat và gửi gói tin xác nhận PacketAck (204) ngược lại để Server xóa tin khỏi RAM.", bold_prefix="3. Phía Bên nhận:")
 
     # Sơ đồ 3: Luồng truyền file
     add_figure(doc, 'e:/DAU-Chat-Team5/diagrams/diagram_file_streaming_flow.png', 
                "Hình 5.3: Quy trình truyền tệp phân mảnh (Chunking 64KB), xác thực SHA-256 và cơ chế phản hồi kép")
 
-    p_file_desc = doc.add_paragraph(
-        "Giải thích luồng truyền tệp phân mảnh và cơ chế phản hồi kép (Hình 5.3):\n"
-        "1. Giai đoạn Chuẩn bị: Người dùng kéo thả các tệp đồ án nặng vào khay soạn thảo Staged File Tray. Hệ thống tính toán mã băm gốc SHA-256 và gửi gói tin FileTransferRequest (301) xin phép truyền tệp.\n"
-        "2. Giai đoạn Phân mảnh & Bơm luồng: Tệp được đọc tuần tự từng khối 64KB (65,536 bytes) và đóng gói thành FileChunkPacket (302). Server đóng vai trò cầu nối RAM-to-RAM, chuyển tiếp tức thì từng chunk sang bên nhận mà không ghi đĩa Server.\n"
-        "3. Giai đoạn Tái cấu trúc & Xác thực Toàn vẹn: Bên nhận ghi nối tiếp các chunk vào tệp tạm thời filename.part. Khi nhận đủ 100% các chunk, bên nhận tính toán lại mã SHA-256 của toàn bộ tệp ghép; nếu trùng khớp tuyệt đối mới đổi tên thành tệp chính thức và ghi vào file_manifest.jsonl.\n"
-        "4. Cơ chế Phản hồi Kép (Dual Receiver Actions):\n"
-        "   - Thao tác 1 - 'MỞ FILE' (Quick View): Gọi Process.Start để kích hoạt ngay ứng dụng chuyên ngành mặc định trên Windows (AutoCAD mở .dwg, Adobe Photoshop mở .psd, Word mở .docx).\n"
-        "   - Thao tác 2 - 'LƯU VỀ MÁY' (Save As): Mở SaveFileDialog cho phép người dùng tự do lưu tệp ra Desktop, USB hoặc ổ đĩa cá nhân ngoài phân vùng của ứng dụng."
-    )
-    p_file_desc.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    add_body_p(doc, "Giải thích luồng truyền tệp phân mảnh và cơ chế phản hồi kép (Hình 5.3):")
+    add_bullet_p(doc, "Người dùng kéo thả các tệp đồ án nặng vào khay soạn thảo Staged File Tray. Hệ thống tính toán mã băm gốc SHA-256 và gửi gói tin FileTransferRequest (301) xin phép truyền tệp.", bold_prefix="1. Giai đoạn Chuẩn bị:")
+    add_bullet_p(doc, "Tệp được đọc tuần tự từng khối 64KB (65,536 bytes) và đóng gói thành FileChunkPacket (302). Server đóng vai trò cầu nối RAM-to-RAM, chuyển tiếp tức thì từng chunk sang bên nhận mà không ghi đĩa Server.", bold_prefix="2. Giai đoạn Phân mảnh & Bơm luồng:")
+    add_bullet_p(doc, "Bên nhận ghi nối tiếp các chunk vào tệp tạm thời filename.part. Khi nhận đủ 100% các chunk, bên nhận tính toán lại mã SHA-256 của toàn bộ tệp ghép; nếu trùng khớp tuyệt đối mới đổi tên thành tệp chính thức và ghi vào file_manifest.jsonl.", bold_prefix="3. Giai đoạn Tái cấu trúc & Xác thực Toàn vẹn:")
+    add_bullet_p(doc, "Giao diện phía nhận cung cấp 2 nút xử lý thuận tiện:", bold_prefix="4. Cơ chế Phản hồi Kép (Dual Receiver Actions):")
+    add_bullet_p(doc, "Gọi Process.Start để kích hoạt ngay ứng dụng chuyên ngành mặc định trên Windows (AutoCAD mở .dwg, Adobe Photoshop mở .psd, Word mở .docx).", bold_prefix="- Thao tác 1 - 'MỞ FILE' (Quick View):", indent_inches=0.5)
+    add_bullet_p(doc, "Mở SaveFileDialog cho phép người dùng tự do lưu tệp ra Desktop, USB hoặc ổ đĩa cá nhân ngoài phân vùng của ứng dụng.", bold_prefix="- Thao tác 2 - 'LƯU VỀ MÁY' (Save As):", indent_inches=0.5)
 
     # Sơ đồ 4: Luồng LAN Vault
     add_figure(doc, 'e:/DAU-Chat-Team5/diagrams/diagram_lan_vault_sync_flow.png', 
                "Hình 5.4: Sơ đồ cơ chế đồng bộ mạng LAN Socket Sync & Chế độ phòng máy thực hành (Lab PC Mode)")
 
-    p_vault_desc = doc.add_paragraph(
-        "Giải thích cơ chế đồng bộ đa máy và bảo mật phòng thực hành (Hình 5.4):\n"
-        "• Tình huống 1 - Rời phòng máy Lab (Lab PC Mode - Auto Push & Wipe): Khi sinh viên kết thúc buổi thực hành và nhấn Đăng xuất trên máy tính trường, hộp thoại cảnh báo bảo mật hỏi sinh viên có muốn kích hoạt chế độ phòng máy công cộng. Khi xác nhận, Client tự động nén toàn bộ thư mục LocalData (Messages và Files) thành tệp sao lưu nén, gửi gói tin VaultPushRequest (701) qua Socket lên Server Vault. Sau khi Server lưu trữ thành công và trả về VaultPushAck (702), Client lập tức xóa sạch thư mục LocalData trên máy phòng máy, triệt tiêu hoàn toàn nguy cơ bị lộ bài tập và lịch sử chat cá nhân.\n"
-        "• Tình huống 2 - Đăng nhập máy mới (Auto Detect & Restore): Khi sinh viên về phòng trọ hoặc chuyển sang phòng máy khác và đăng nhập vào DAU Chat, Client tự động truy vấn trạng thái sao lưu qua VaultStatusQuery (705). Server phát hiện có bản sao lưu trên Server Vault và thông báo cho sinh viên. Khi sinh viên đồng ý, tệp sao lưu được tải về qua mạng LAN với tốc độ cao (VaultPullRequest 703 / 704) và giải nén trực tiếp vào thư mục LocalData. Toàn bộ lịch sử trò chuyện và tệp đính kèm được phục hồi nguyên vẹn như đang ngồi tại máy cũ."
-    )
-    p_vault_desc.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    add_body_p(doc, "Giải thích cơ chế đồng bộ đa máy và bảo mật phòng thực hành (Hình 5.4):")
+    add_bullet_p(doc, "Khi sinh viên kết thúc buổi thực hành và nhấn Đăng xuất trên máy tính trường, hộp thoại cảnh báo bảo mật hỏi sinh viên có muốn kích hoạt chế độ phòng máy công cộng. Khi xác nhận, Client tự động nén toàn bộ thư mục LocalData (Messages và Files) thành tệp sao lưu nén, gửi gói tin VaultPushRequest (701) qua Socket lên Server Vault. Sau khi Server lưu trữ thành công và trả về VaultPushAck (702), Client lập tức xóa sạch thư mục LocalData trên máy phòng máy, triệt tiêu hoàn toàn nguy cơ bị lộ bài tập và lịch sử chat cá nhân.", bold_prefix="• Tình huống 1 - Rời phòng máy Lab (Lab PC Mode - Auto Push & Wipe):")
+    add_bullet_p(doc, "Khi sinh viên về phòng trọ hoặc chuyển sang phòng máy khác và đăng nhập vào DAU Chat, Client tự động truy vấn trạng thái sao lưu qua VaultStatusQuery (705). Server phát hiện có bản sao lưu trên Server Vault và thông báo cho sinh viên. Khi sinh viên đồng ý, tệp sao lưu được tải về qua mạng LAN với tốc độ cao (VaultPullRequest 703 / 704) và giải nén trực tiếp vào thư mục LocalData. Toàn bộ lịch sử trò chuyện và tệp đính kèm được phục hồi nguyên vẹn như đang ngồi tại máy cũ.", bold_prefix="• Tình huống 2 - Đăng nhập máy mới (Auto Detect & Restore):")
 
 print("Section 4 and 5 builder functions updated.")

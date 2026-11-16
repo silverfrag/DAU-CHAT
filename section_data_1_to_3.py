@@ -1,23 +1,28 @@
-# Section 1, 2, 3 Data and Builder Functions for DAU Chat Report (Academic Tech Dev Edition)
+# Section 1, 2, 3 Data and Builder Functions for DAU Chat Report (Zero-Spacing-Bug Academic Tech Edition)
 
 import docx
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx_helpers import set_table_borders, add_header_styled_row, add_data_row, add_tech_box, add_figure
+from docx_helpers import set_table_borders, set_table_no_borders, add_header_styled_row, add_data_row, add_tech_box, add_figure, add_body_p, add_bullet_p
 
 def add_cover_page(doc):
-    p_inst = doc.add_paragraph()
-    p_inst.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_inst.paragraph_format.space_before = Pt(0)
-    p_inst.paragraph_format.space_after = Pt(2)
-    r1 = p_inst.add_run("TRƯỜNG ĐẠI HỌC KIẾN TRÚC ĐÀ NẴNG\n")
+    # Header institution
+    p_inst1 = doc.add_paragraph()
+    p_inst1.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_inst1.paragraph_format.space_before = Pt(0)
+    p_inst1.paragraph_format.space_after = Pt(2)
+    r1 = p_inst1.add_run("TRƯỜNG ĐẠI HỌC KIẾN TRÚC ĐÀ NẴNG")
     r1.font.name = 'Times New Roman'
     r1.font.size = Pt(13.5)
     r1.font.bold = True
     r1.font.color.rgb = RGBColor(0, 0, 0)
 
-    r2 = p_inst.add_run("KHOA CÔNG NGHỆ THÔNG TIN")
+    p_inst2 = doc.add_paragraph()
+    p_inst2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_inst2.paragraph_format.space_before = Pt(0)
+    p_inst2.paragraph_format.space_after = Pt(10)
+    r2 = p_inst2.add_run("KHOA CÔNG NGHỆ THÔNG TIN")
     r2.font.name = 'Times New Roman'
     r2.font.size = Pt(13)
     r2.font.bold = True
@@ -25,72 +30,98 @@ def add_cover_page(doc):
 
     # Logo
     logo_path = 'e:/DAU-Chat-Team5/extracted_logo.png'
-    add_figure(doc, logo_path, "", width=Inches(1.6))
+    add_figure(doc, logo_path, "", width=Inches(1.5))
 
     # Title
-    p_title = doc.add_paragraph()
-    p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_title.paragraph_format.space_before = Pt(10)
-    p_title.paragraph_format.space_after = Pt(4)
-    r_t1 = p_title.add_run("BÁO CÁO PHÂN TÍCH HỆ THỐNG THÔNG TIN\n")
+    p_title1 = doc.add_paragraph()
+    p_title1.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_title1.paragraph_format.space_before = Pt(12)
+    p_title1.paragraph_format.space_after = Pt(4)
+    r_t1 = p_title1.add_run("BÁO CÁO PHÂN TÍCH HỆ THỐNG THÔNG TIN")
     r_t1.font.name = 'Times New Roman'
     r_t1.font.size = Pt(18)
     r_t1.font.bold = True
     r_t1.font.color.rgb = RGBColor(0, 0, 0)
 
-    r_sub = p_title.add_run("HỌC PHẦN: LẬP TRÌNH MẠNG (MÃ HỌC PHẦN: IT311)\n")
+    p_title2 = doc.add_paragraph()
+    p_title2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_title2.paragraph_format.space_before = Pt(0)
+    p_title2.paragraph_format.space_after = Pt(16)
+    r_sub = p_title2.add_run("HỌC PHẦN: LẬP TRÌNH MẠNG (MÃ HỌC PHẦN: IT311)")
     r_sub.font.name = 'Times New Roman'
     r_sub.font.size = Pt(13)
     r_sub.font.bold = True
     r_sub.font.color.rgb = RGBColor(0, 0, 0)
 
-    p_proj = doc.add_paragraph()
-    p_proj.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_proj.paragraph_format.space_before = Pt(8)
-    p_proj.paragraph_format.space_after = Pt(24)
-    r_p1 = p_proj.add_run("ĐỀ TÀI:\n")
+    # Project topic
+    p_de = doc.add_paragraph()
+    p_de.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_de.paragraph_format.space_before = Pt(0)
+    p_de.paragraph_format.space_after = Pt(4)
+    r_p1 = p_de.add_run("ĐỀ TÀI:")
     r_p1.font.name = 'Times New Roman'
     r_p1.font.size = Pt(13)
     r_p1.font.bold = True
     r_p1.font.color.rgb = RGBColor(0, 0, 0)
-    r_p2 = p_proj.add_run("XÂY DỰNG HỆ THỐNG CHAT NỘI BỘ VÀ TRUYỀN TỆP TỐC ĐỘ CAO CHO SINH VIÊN VÀ GIẢNG VIÊN TRƯỜNG ĐẠI HỌC KIẾN TRÚC ĐÀ NẴNG (DAU CHAT)")
+
+    p_ten = doc.add_paragraph()
+    p_ten.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_ten.paragraph_format.space_before = Pt(0)
+    p_ten.paragraph_format.space_after = Pt(28)
+    r_p2 = p_ten.add_run("XÂY DỰNG HỆ THỐNG CHAT NỘI BỘ VÀ TRUYỀN TỆP TỐC ĐỘ CAO CHO SINH VIÊN VÀ GIẢNG VIÊN TRƯỜNG ĐẠI HỌC KIẾN TRÚC ĐÀ NẴNG (DAU CHAT)")
     r_p2.font.name = 'Times New Roman'
-    r_p2.font.size = Pt(14)
+    r_p2.font.size = Pt(13.5)
     r_p2.font.bold = True
     r_p2.font.color.rgb = RGBColor(0, 0, 0)
 
-    # Info Block
-    p_info = doc.add_paragraph()
-    p_info.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    p_info.paragraph_format.left_indent = Inches(1.2)
-    p_info.paragraph_format.line_spacing = 1.3
-    p_info.paragraph_format.space_after = Pt(36)
+    # Clean 2-column borderless table for Author block (100% immune to word spacing bugs)
+    tbl_info = doc.add_table(rows=9, cols=2)
+    set_table_no_borders(tbl_info)
+    tbl_info.alignment = WD_TABLE_ALIGNMENT.CENTER
+    col_w = [Inches(2.5), Inches(3.8)]
 
-    def add_line(p, label, val, is_bold=False):
-        r_l = p.add_run(label)
+    info_rows = [
+        ("Người hướng dẫn khoa học:", "TS. Đặng Hùng Vĩ", True),
+        ("Nhóm sinh viên thực hiện:", "Nhóm Team 5 (5 Thành viên)", False),
+        ("", "1. Bùi Trần Nhật Hưng (Trưởng nhóm - TV1) - MSSV: 2351220198", True),
+        ("", "2. Phan Trung Nghĩa (Thành viên 2 - TV2)", False),
+        ("", "3. Nguyễn Thành Long (Thành viên 3 - TV3)", False),
+        ("", "4. Dương Thị Yến Nhi (Thành viên 4 - TV4)", False),
+        ("", "5. Hồng Quốc Tuấn (Thành viên 5 - TV5)", False),
+        ("Lớp sinh hoạt:", "23CT1", False),
+        ("Khóa học:", "2023 – 2027", False)
+    ]
+
+    for idx, (label, val, is_bold) in enumerate(info_rows):
+        row = tbl_info.rows[idx]
+        cell_lbl, cell_val = row.cells[0], row.cells[1]
+        cell_lbl.width, cell_val.width = col_w[0], col_w[1]
+        
+        p_lbl = cell_lbl.paragraphs[0]
+        p_lbl.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p_lbl.paragraph_format.space_before = Pt(1.5)
+        p_lbl.paragraph_format.space_after = Pt(1.5)
+        r_l = p_lbl.add_run(label)
         r_l.font.name = 'Times New Roman'
         r_l.font.size = Pt(12)
         r_l.font.bold = True
         r_l.font.color.rgb = RGBColor(0, 0, 0)
-        r_v = p.add_run(val + "\n")
+
+        p_val = cell_val.paragraphs[0]
+        p_val.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p_val.paragraph_format.space_before = Pt(1.5)
+        p_val.paragraph_format.space_after = Pt(1.5)
+        r_v = p_val.add_run(val)
         r_v.font.name = 'Times New Roman'
         r_v.font.size = Pt(12)
         r_v.font.bold = is_bold
         r_v.font.color.rgb = RGBColor(0, 0, 0)
 
-    add_line(p_info, "Người hướng dẫn khoa học:  ", "TS. Đặng Hùng Vĩ", is_bold=True)
-    add_line(p_info, "Nhóm sinh viên thực hiện:  ", "Nhóm Team 5 (5 Thành viên)")
-    add_line(p_info, "  1. Bùi Trần Nhật Hưng  ", "(Trưởng nhóm - TV1) - MSSV: 2351220198", is_bold=True)
-    add_line(p_info, "  2. Phan Trung Nghĩa   ", "(Thành viên 2 - TV2)")
-    add_line(p_info, "  3. Nguyễn Thành Long  ", "(Thành viên 3 - TV3)")
-    add_line(p_info, "  4. Dương Thị Yến Nhi  ", "(Thành viên 4 - TV4)")
-    add_line(p_info, "  5. Hồng Quốc Tuấn     ", "(Thành viên 5 - TV5)")
-    add_line(p_info, "Lớp sinh hoạt:           ", "23CT1")
-    add_line(p_info, "Khóa học:                ", "2023 – 2027")
-
+    # City & Year
     p_bot = doc.add_paragraph()
     p_bot.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_bot.paragraph_format.space_before = Pt(20)
+    p_bot.paragraph_format.space_before = Pt(36)
+    p_bot.paragraph_format.space_after = Pt(0)
     r_bot = p_bot.add_run("ĐÀ NẴNG, NĂM 2026")
     r_bot.font.name = 'Times New Roman'
     r_bot.font.size = Pt(12)
@@ -102,36 +133,71 @@ def add_cover_page(doc):
 def add_table_of_contents(doc):
     p_toc = doc.add_heading("MỤC LỤC TỔNG QUAN BÁO CÁO", level=1)
     p_toc.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    
-    toc_items = [
-        ("1. ĐẶT TÊN ĐỀ TÀI", "1.1. Đề xuất tên ứng dụng theo cấu trúc 3 thành phần\n1.2. Đặt vấn đề & Định hướng kiến trúc lưu trữ thực tế tại ĐH Kiến trúc Đà Nẵng\n1.3. Bảng so sánh 5 phần mềm liên quan & định hình chức năng đề tài"),
-        ("2. ĐẶC TẢ YÊU CẦU CHỨC NĂNG (FUNCTIONAL REQUIREMENTS)", "2.1. Bảng đặc tả yêu cầu chức năng (FR-01 đến FR-25)\n2.2. Đặc tả yêu cầu phi chức năng (Non-Functional Requirements – NFR)\n2.3. Phạm vi và ràng buộc kỹ thuật hệ thống"),
-        ("3. PHÂN TÍCH ĐỐI TƯỢNG & NHÓM CHỨC NĂNG (PHÂN HỆ)", "3.1. Danh sách Đối tượng hệ thống (Entities ENT-01 đến ENT-12)\n3.2. Phân hệ và Nhóm chức năng (MOD-01 đến MOD-08)"),
-        ("4. PHÂN TÍCH CHỨC NĂNG ĐẾN TẬN CÙNG (CHỨC NĂNG CON → MODULE)", "4.1. Cấu trúc phân rã chức năng (Functional Decomposition Tree 63 Modules)\n4.2. Mô tả Module chi tiết (IPO – Input / Process / Output)\n4.3. Bảng tổng hợp thông số kỹ thuật toàn bộ 63 Module"),
-        ("5. LUỒNG DỮ LIỆU LIÊN QUAN ĐẾN ĐỐI TƯỢNG & CHỨC NĂNG", "5.1. Ma trận Đối tượng – Chức năng (CRUD Matrix) & Ma trận RBAC\n5.2. Danh mục các Luồng dữ liệu chính (Data Flows DF-01 đến DF-14)\n5.3. Sơ đồ kiến trúc & luồng dữ liệu chuyên sâu (Mạng TCP, Tin nhắn, File Streaming, LAN Vault Sync)"),
-        ("6. THIẾT KẾ CƠ SỞ DỮ LIỆU & KIẾN TRÚC LƯU TRỮ LAI", "6.1. Danh mục Bảng CSDL Server (SQLite) & Cấu trúc lưu trữ Client Local-First\n6.2. Chi tiết thuộc tính từng bảng (Data Dictionary đầy đủ 7 bảng SQLite & Client Data)\n6.3. Sơ đồ quan hệ thực thể (ERD) & Quan hệ lưu trữ Hybrid"),
-        ("7. CHIA & QUẢN LÝ CÔNG VIỆC THEO NHÓM (TEAM 5)", "7.1. Phân công vai trò trong nhóm (TV1 đến TV5) & Quy tắc GEMINI.md\n7.2. Cách thức chia công việc theo 7 giai đoạn phát triển\n7.3. Nhật ký theo dõi công việc (Task Tracking Log đối soát 100% mã nguồn .NET 10)\nPHỤ LỤC. Bảng đối chiếu danh mục tệp nguồn C# .NET 10 thực tế")
+
+    toc_data = [
+        ("1. ĐẶT TÊN ĐỀ TÀI", [
+            "1.1. Đề xuất tên ứng dụng theo cấu trúc 3 thành phần",
+            "1.2. Đặt vấn đề & Định hướng kiến trúc lưu trữ thực tế tại ĐH Kiến trúc Đà Nẵng",
+            "1.3. Bảng so sánh 5 phần mềm liên quan & định hình chức năng đề tài"
+        ]),
+        ("2. ĐẶC TẢ YÊU CẦU CHỨC NĂNG (FUNCTIONAL REQUIREMENTS)", [
+            "2.1. Bảng đặc tả yêu cầu chức năng (FR-01 đến FR-25)",
+            "2.2. Đặc tả yêu cầu phi chức năng (Non-Functional Requirements – NFR)",
+            "2.3. Phạm vi và ràng buộc kỹ thuật hệ thống"
+        ]),
+        ("3. PHÂN TÍCH ĐỐI TƯỢNG & NHÓM CHỨC NĂNG (PHÂN HỆ)", [
+            "3.1. Danh sách Đối tượng hệ thống (Entities ENT-01 đến ENT-12)",
+            "3.2. Phân hệ và Nhóm chức năng (MOD-01 đến MOD-08)"
+        ]),
+        ("4. PHÂN TÍCH CHỨC NĂNG ĐẾN TẬN CÙNG (CHỨC NĂNG CON → MODULE)", [
+            "4.1. Cấu trúc phân rã chức năng (Functional Decomposition Tree 63 Modules)",
+            "4.2. Mô tả Module chi tiết (IPO – Input / Process / Output)",
+            "4.3. Bảng tổng hợp thông số kỹ thuật toàn bộ 63 Module"
+        ]),
+        ("5. LUỒNG DỮ LIỆU LIÊN QUAN ĐẾN ĐỐI TƯỢNG & CHỨC NĂNG", [
+            "5.1. Ma trận Đối tượng – Chức năng (CRUD Matrix) & Ma trận RBAC",
+            "5.2. Danh mục các Luồng dữ liệu chính (Data Flows DF-01 đến DF-14)",
+            "5.3. Sơ đồ kiến trúc & luồng dữ liệu chuyên sâu (Mạng TCP, Tin nhắn, File Streaming, LAN Vault Sync)"
+        ]),
+        ("6. THIẾT KẾ CƠ SỞ DỮ LIỆU & KIẾN TRÚC LƯU TRỮ LAI", [
+            "6.1. Danh mục Bảng CSDL Server (SQLite) & Cấu trúc lưu trữ Client Local-First",
+            "6.2. Chi tiết thuộc tính từng bảng (Data Dictionary đầy đủ 7 bảng SQLite & Client Data)",
+            "6.3. Sơ đồ quan hệ thực thể (ERD) & Quan hệ lưu trữ Hybrid"
+        ]),
+        ("7. CHIA & QUẢN LÝ CÔNG VIỆC THEO NHÓM (TEAM 5)", [
+            "7.1. Phân công vai trò trong nhóm (TV1 đến TV5) & Quy tắc GEMINI.md",
+            "7.2. Cách thức chia công việc theo 7 giai đoạn phát triển",
+            "7.3. Nhật ký theo dõi công việc (Task Tracking Log đối soát 100% mã nguồn .NET 10)"
+        ]),
+        ("PHỤ LỤC. BẢNG ĐỐI CHIẾU DANH MỤC TỆP NGUỒN C# .NET 10 THỰC TẾ", [
+            "Bảng tổng hợp tệp nguồn Solution DauChat.sln đối soát kho chứa Git"
+        ])
     ]
 
-    for title, subs in toc_items:
+    for title, subs in toc_data:
+        # Main section line (Strict LEFT alignment, individual paragraph)
         p_t = doc.add_paragraph()
+        p_t.alignment = WD_ALIGN_PARAGRAPH.LEFT
         p_t.paragraph_format.space_before = Pt(6)
-        p_t.paragraph_format.space_after = Pt(1)
+        p_t.paragraph_format.space_after = Pt(2)
         r_t = p_t.add_run(title)
         r_t.font.name = 'Times New Roman'
         r_t.font.size = Pt(12)
         r_t.font.bold = True
         r_t.font.color.rgb = RGBColor(0, 0, 0)
 
-        p_s = doc.add_paragraph()
-        p_s.paragraph_format.left_indent = Inches(0.4)
-        p_s.paragraph_format.space_before = Pt(0)
-        p_s.paragraph_format.space_after = Pt(4)
-        p_s.paragraph_format.line_spacing = 1.2
-        r_s = p_s.add_run(subs)
-        r_s.font.name = 'Times New Roman'
-        r_s.font.size = Pt(11)
-        r_s.font.color.rgb = RGBColor(0, 0, 0)
+        # Subsections (EACH line is a separate paragraph with clean left indent, NEVER joined by \n)
+        for sub in subs:
+            p_s = doc.add_paragraph()
+            p_s.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            p_s.paragraph_format.left_indent = Inches(0.3)
+            p_s.paragraph_format.space_before = Pt(0)
+            p_s.paragraph_format.space_after = Pt(2)
+            p_s.paragraph_format.line_spacing = 1.2
+            r_s = p_s.add_run(sub)
+            r_s.font.name = 'Times New Roman'
+            r_s.font.size = Pt(11)
+            r_s.font.color.rgb = RGBColor(0, 0, 0)
 
     doc.add_page_break()
 
@@ -139,44 +205,33 @@ def add_section_1(doc):
     doc.add_heading("1. ĐẶT TÊN ĐỀ TÀI", level=1)
 
     doc.add_heading("1.1. Đề xuất tên ứng dụng theo cấu trúc 3 thành phần", level=2)
-    p1 = doc.add_paragraph(
-        "Theo hướng dẫn chuẩn của Bộ môn Công nghệ Phần mềm và Khoa Công nghệ Thông tin - Trường Đại học Kiến trúc Đà Nẵng, tên đề tài khoa học ứng dụng được chuẩn hóa chặt chẽ theo cấu trúc 3 thành phần bắt buộc:"
-    )
-    p1.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    add_body_p(doc, "Theo hướng dẫn chuẩn của Bộ môn Công nghệ Phần mềm và Khoa Công nghệ Thông tin - Trường Đại học Kiến trúc Đà Nẵng, tên đề tài khoa học ứng dụng được chuẩn hóa chặt chẽ theo cấu trúc 3 thành phần bắt buộc:")
 
-    add_tech_box(doc, "CẤU TRÚC 3 THÀNH PHẦN CHUẨN CỦA TÊN ĐỀ TÀI",
-                 "• Thành phần 1 (Loại hình / Hành động): Xây dựng hệ thống ứng dụng Desktop Client-Server\n"
-                 "• Thành phần 2 (Chức năng chính): Chat nội bộ thời gian thực và Truyền tệp tốc độ cao theo luồng phân mảnh (Chunking 64KB)\n"
-                 "• Thành phần 3 (Đối tượng / Lĩnh vực): Sinh viên và Giảng viên Trường Đại học Kiến trúc Đà Nẵng (DAU)\n"
-                 "→ Tên chính thức đề tài: \"Xây dựng hệ thống chat nội bộ và truyền tệp tốc độ cao cho sinh viên và giảng viên Trường Đại học Kiến trúc Đà Nẵng (DAU Chat)\"")
+    add_tech_box(doc, "CẤU TRÚC 3 THÀNH PHẦN CHUẨN CỦA TÊN ĐỀ TÀI", [
+        "• Thành phần 1 (Loại hình / Hành động): Xây dựng hệ thống ứng dụng Desktop Client-Server",
+        "• Thành phần 2 (Chức năng chính): Chat nội bộ thời gian thực và Truyền tệp tốc độ cao theo luồng phân mảnh (Chunking 64KB)",
+        "• Thành phần 3 (Đối tượng / Lĩnh vực): Sinh viên và Giảng viên Trường Đại học Kiến trúc Đà Nẵng (DAU)",
+        "→ Tên chính thức đề tài: \"Xây dựng hệ thống chat nội bộ và truyền tệp tốc độ cao cho sinh viên và giảng viên Trường Đại học Kiến trúc Đà Nẵng (DAU Chat)\""
+    ])
 
     doc.add_heading("1.2. Đặt vấn đề & Định hướng kiến trúc lưu trữ thực tế tại ĐH Kiến trúc Đà Nẵng", level=2)
-    p_prob1 = doc.add_paragraph(
-        "Trường Đại học Kiến trúc Đà Nẵng (DAU) là cơ sở đào tạo đặc thù với các khối ngành mũi nhọn bao gồm Kiến trúc, Xây dựng, Thiết kế Đồ họa và Công nghệ Thông tin. Trong quá trình học tập và làm đồ án tốt nghiệp, nhu cầu trao đổi học thuật, thảo luận nhóm và đặc biệt là chia sẻ các tệp tài liệu đồ họa kỹ thuật dung lượng lớn diễn ra với tần suất rất cao. Sinh viên liên tục phải gửi nhận các bản vẽ CAD (.dwg), mô hình không gian BIM/Revit (.rvt), khung cảnh 3ds Max (.max), tệp nguồn Photoshop (.psd) hay các bộ ảnh render đồ án chất lượng cao với dung lượng từ hàng chục Megabyte lên tới hàng Gigabyte."
-    )
-    p_prob1.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    add_body_p(doc, "Trường Đại học Kiến trúc Đà Nẵng (DAU) là cơ sở đào tạo đặc thù với các khối ngành mũi nhọn bao gồm Kiến trúc, Xây dựng, Thiết kế Đồ họa và Công nghệ Thông tin. Trong quá trình học tập và làm đồ án tốt nghiệp, nhu cầu trao đổi học thuật, thảo luận nhóm và đặc biệt là chia sẻ các tệp tài liệu đồ họa kỹ thuật dung lượng lớn diễn ra với tần suất rất cao. Sinh viên liên tục phải gửi nhận các bản vẽ CAD (.dwg), mô hình không gian BIM/Revit (.rvt), khung cảnh 3ds Max (.max), tệp nguồn Photoshop (.psd) hay các bộ ảnh render đồ án chất lượng cao với dung lượng từ hàng chục Megabyte lên tới hàng Gigabyte.")
 
-    p_prob2 = doc.add_paragraph(
-        "Tuy nhiên, việc sử dụng các nền tảng chat thương mại công cộng hiện nay (như Zalo, Facebook Messenger, Microsoft Teams, Google Drive) trong môi trường mạng nội bộ nhà trường đang bộc lộ những rào cản và bất cập nghiêm trọng:\n"
-        "1. Nghẽn băng thông kết nối ngoại mạng (Internet WAN): Khi hàng trăm sinh viên trong cùng phòng máy cùng tải các tệp đồ án nặng lên hạ tầng đám mây công cộng bên ngoài, đường truyền Internet của trường lập tức bị quá tải, gây nghẽn mạng nghiêm trọng trong khi băng thông mạng cục bộ nội bộ (LAN 1Gbps) lại bị bỏ phí.\n"
-        "2. Nén suy giảm chất lượng dữ liệu: Hầu hết các ứng dụng chat công cộng tự động nén ảnh đồ án render hoặc giới hạn kích thước tệp đính kèm (dưới 25MB đến 100MB), gây vỡ nét bản vẽ và cản trở việc chấm bài của giảng viên.\n"
-        "3. Nguy cơ mất dữ liệu do xóa tệp tự động: Điển hình như Zalo áp dụng chính sách xóa các tệp tài liệu và ảnh lưu trữ trên máy chủ sau một khoảng thời gian (khoảng 30 ngày), khiến sinh viên bị mất các tài liệu đồ án quan trọng khi cần ôn tập hoặc nộp lại.\n"
-        "4. Nguy cơ vỡ trận hạ tầng nếu lưu trữ tập trung phía Server: Nếu ứng dụng đồ án tự xây dựng cố gắng lưu toàn bộ lịch sử tin nhắn và tệp đính kèm của hàng nghìn sinh viên vào một máy chủ duy nhất (như dùng SQL Server để chứa file và chat), máy chủ nội bộ (thường là một máy tính cấu hình văn phòng hoặc laptop của giảng viên đóng vai trò server) sẽ lập tức cạn kiệt dung lượng ổ cứng, tắc nghẽn bộ nhớ RAM và sập dịch vụ Socket ngay khi nhiều phiên truyền file diễn ra đồng thời."
-    )
-    p_prob2.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    add_body_p(doc, "Tuy nhiên, việc sử dụng các nền tảng chat thương mại công cộng hiện nay (như Zalo, Facebook Messenger, Microsoft Teams, Google Drive) trong môi trường mạng nội bộ nhà trường đang bộc lộ những rào cản và bất cập nghiêm trọng:")
 
-    p_sol = doc.add_paragraph(
-        "Xuất phát từ các bài toán thực tiễn nêu trên, nhóm Team 5 quyết định đề xuất và hiện thực hóa đề tài DAU Chat dựa trên Kiến trúc Lưu trữ Lai (Hybrid Local-First Architecture) kết hợp Giao thức Mạng TCP Socket Stream độc lập. Điểm mấu chốt của giải pháp là:\n"
-        "• Máy chủ (Server Transient Relay): Không lưu lịch sử tin nhắn và không lưu giữ tệp đính kèm lâu dài. Máy chủ chỉ đóng vai trò cầu nối trung chuyển dữ liệu RAM-to-RAM trực tiếp giữa hai máy trạm khi cả hai cùng Online, hoặc giữ tạm thời trong hàng đợi PendingQueue (FIFO + TTL) khi người nhận Offline và xóa sạch ngay khi gói tin được xác nhận giao nhận thành công (PacketAck).\n"
-        "• Máy trạm (Client Local-First): Mỗi sinh viên tự chịu trách nhiệm lưu trữ lịch sử chat cục bộ dưới dạng tệp Append-only Log (.jsonl) kèm chỉ mục nhị phân (.idx), đồng thời lưu trữ các tệp tải về tại thư mục cục bộ của mình. Điều này giúp giải phóng hoàn toàn gánh nặng lưu trữ cho máy chủ trường học.\n"
-        "• Vùng đệm đồng bộ mạng LAN (LAN Socket Sync & Server Vault Hot-Cache): Để giải quyết triệt để vấn đề sinh viên phải di chuyển giữa các phòng máy thực hành (Lab PC) và máy tính xách tay cá nhân, hệ thống tích hợp kho đệm nóng Server Vault với hạn ngạch kiểm soát 1GB/user và thuật toán dọn dẹp LRU (Least Recently Used). Khi rời phòng máy, sinh viên kích hoạt chế độ \"Lab PC Mode\" để đẩy bản sao lưu nén lên Server Vault rồi tự động xóa sạch dữ liệu trên máy công cộng; khi đăng nhập máy mới, hệ thống tự động phát hiện và khôi phục toàn vẹn dữ liệu chỉ sau vài giây."
-    )
-    p_sol.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    add_bullet_p(doc, "Khi hàng trăm sinh viên trong cùng phòng máy cùng tải các tệp đồ án nặng lên hạ tầng đám mây công cộng bên ngoài, đường truyền Internet của trường lập tức bị quá tải, gây nghẽn mạng nghiêm trọng trong khi băng thông mạng cục bộ nội bộ (LAN 1Gbps) lại bị bỏ phí.", bold_prefix="1. Nghẽn băng thông kết nối ngoại mạng (Internet WAN):")
+    add_bullet_p(doc, "Hầu hết các ứng dụng chat công cộng tự động nén ảnh đồ án render hoặc giới hạn kích thước tệp đính kèm (dưới 25MB đến 100MB), gây vỡ nét bản vẽ và cản trở việc chấm bài của giảng viên.", bold_prefix="2. Nén suy giảm chất lượng dữ liệu:")
+    add_bullet_p(doc, "Điển hình như Zalo áp dụng chính sách xóa các tệp tài liệu và ảnh lưu trữ trên máy chủ sau một khoảng thời gian (khoảng 30 ngày), khiến sinh viên bị mất các tài liệu đồ án quan trọng khi cần ôn tập hoặc nộp lại.", bold_prefix="3. Nguy cơ mất dữ liệu do xóa tệp tự động:")
+    add_bullet_p(doc, "Nếu ứng dụng đồ án tự xây dựng cố gắng lưu toàn bộ lịch sử tin nhắn và tệp đính kèm của hàng nghìn sinh viên vào một máy chủ duy nhất (như dùng SQL Server để chứa file và chat), máy chủ nội bộ (thường là một máy tính cấu hình văn phòng hoặc laptop của giảng viên đóng vai trò server) sẽ lập tức cạn kiệt dung lượng ổ cứng, tắc nghẽn bộ nhớ RAM và sập dịch vụ Socket ngay khi nhiều phiên truyền file diễn ra đồng thời.", bold_prefix="4. Nguy cơ vỡ trận hạ tầng nếu lưu trữ tập trung phía Server:")
+
+    add_body_p(doc, "Xuất phát từ các bài toán thực tiễn nêu trên, nhóm Team 5 quyết định đề xuất và hiện thực hóa đề tài DAU Chat dựa trên Kiến trúc Lưu trữ Lai (Hybrid Local-First Architecture) kết hợp Giao thức Mạng TCP Socket Stream độc lập. Điểm mấu chốt của giải pháp là:")
+
+    add_bullet_p(doc, "Không lưu lịch sử tin nhắn và không lưu giữ tệp đính kèm lâu dài. Máy chủ chỉ đóng vai trò cầu nối trung chuyển dữ liệu RAM-to-RAM trực tiếp giữa hai máy trạm khi cả hai cùng Online, hoặc giữ tạm thời trong hàng đợi PendingQueue (FIFO + TTL) khi người nhận Offline và xóa sạch ngay khi gói tin được xác nhận giao nhận thành công (PacketAck).", bold_prefix="• Máy chủ (Server Transient Relay):")
+    add_bullet_p(doc, "Mỗi sinh viên tự chịu trách nhiệm lưu trữ lịch sử chat cục bộ dưới dạng tệp Append-only Log (.jsonl) kèm chỉ mục nhị phân (.idx), đồng thời lưu trữ các tệp tải về tại thư mục cục bộ của mình. Điều này giúp giải phóng hoàn toàn gánh nặng lưu trữ cho máy chủ trường học.", bold_prefix="• Máy trạm (Client Local-First):")
+    add_bullet_p(doc, "Để giải quyết triệt để vấn đề sinh viên phải di chuyển giữa các phòng máy thực hành (Lab PC) và máy tính xách tay cá nhân, hệ thống tích hợp kho đệm nóng Server Vault với hạn ngạch kiểm soát 1GB/user và thuật toán dọn dẹp LRU (Least Recently Used). Khi rời phòng máy, sinh viên kích hoạt chế độ \"Lab PC Mode\" để đẩy bản sao lưu nén lên Server Vault rồi tự động xóa sạch dữ liệu trên máy công cộng; khi đăng nhập máy mới, hệ thống tự động phát hiện và khôi phục toàn vẹn dữ liệu chỉ sau vài giây.", bold_prefix="• Vùng đệm đồng bộ mạng LAN (LAN Socket Sync & Server Vault Hot-Cache):")
 
     doc.add_heading("1.3. Bảng so sánh 5 phần mềm liên quan & định hình chức năng đề tài", level=2)
-    p_cmp = doc.add_paragraph(
-        "Bảng 1.1: Bảng đối sánh kỹ thuật chuyên sâu giữa DAU Chat và 4 nền tảng ứng dụng truyền thông phổ biến:"
-    )
+    p_cmp = doc.add_paragraph("Bảng 1.1: Bảng đối sánh kỹ thuật chuyên sâu giữa DAU Chat và 4 nền tảng ứng dụng truyền thông phổ biến:")
     p_cmp.alignment = WD_ALIGN_PARAGRAPH.LEFT
     p_cmp.paragraph_format.space_after = Pt(2)
 
@@ -218,9 +273,7 @@ def add_section_2(doc):
     doc.add_heading("2. ĐẶC TẢ YÊU CẦU CHỨC NĂNG (FUNCTIONAL REQUIREMENTS)", level=1)
 
     doc.add_heading("2.1. Bảng đặc tả yêu cầu chức năng (Functional Requirements – FR)", level=2)
-    p_fr = doc.add_paragraph(
-        "Bảng 2.1: Danh mục đặc tả 25 yêu cầu chức năng hệ thống (FR-01 đến FR-25):"
-    )
+    p_fr = doc.add_paragraph("Bảng 2.1: Danh mục đặc tả 25 yêu cầu chức năng hệ thống (FR-01 đến FR-25):")
     p_fr.alignment = WD_ALIGN_PARAGRAPH.LEFT
     p_fr.paragraph_format.space_after = Pt(2)
 
@@ -263,9 +316,7 @@ def add_section_2(doc):
         add_data_row(tbl_fr, row, is_even=(idx % 2 == 1), col_widths=widths)
 
     doc.add_heading("2.2. Đặc tả yêu cầu phi chức năng (Non-Functional Requirements – NFR)", level=2)
-    p_nfr = doc.add_paragraph(
-        "Bảng 2.2: Danh mục 16 yêu cầu phi chức năng (NFR-01 đến NFR-16):"
-    )
+    p_nfr = doc.add_paragraph("Bảng 2.2: Danh mục 16 yêu cầu phi chức năng (NFR-01 đến NFR-16):")
     p_nfr.alignment = WD_ALIGN_PARAGRAPH.LEFT
     p_nfr.paragraph_format.space_after = Pt(2)
 
@@ -299,22 +350,18 @@ def add_section_2(doc):
         add_data_row(tbl_nfr, row, is_even=(idx % 2 == 1), col_widths=nfr_widths)
 
     doc.add_heading("2.3. Phạm vi và ràng buộc kỹ thuật hệ thống", level=2)
-    p_scope = doc.add_paragraph(
-        "Nhằm đảm bảo tính khả thi cao nhất trong khuôn khổ đồ án môn học và đáp ứng quy chế ranh giới kỹ thuật theo tài liệu GEMINI.md, dự án thiết lập các ràng buộc sau:\n"
-        "• Phạm vi triển khai: Hệ thống được thiết kế và kiểm thử tối ưu cho hạ tầng mạng cục bộ (LAN) của Trường Đại học Kiến trúc Đà Nẵng, bao gồm các phòng máy thực hành và các dải địa chỉ IP nội bộ (192.168.x.x / 10.x.x.x).\n"
-        "• Nền tảng công nghệ: Ngôn ngữ C# trên nền .NET 10.0 LTS; Giao diện máy trạm xây dựng bằng WPF (Windows Presentation Foundation) áp dụng kiến trúc MVVM (Model-View-ViewModel).\n"
-        "• Giao thức truyền thông: Kết nối Raw TCP Socket sử dụng cơ chế đóng gói nhị phân Length-prefix (4 byte Big-Endian xác định độ dài gói tin, 1 byte xác định PacketType và mảng byte Payload). Nghiêm cấm sử dụng các framework trung gian như SignalR hay WCF để thể hiện rõ bản chất lập trình mạng tầng Socket.\n"
-        "• Ràng buộc lưu trữ CSDL Server: Phía Server tuyệt đối không sử dụng SQL Server để lưu tin nhắn và file. Server chỉ sử dụng thư viện siêu nhẹ Microsoft.Data.Sqlite để lưu trữ thông tin danh mục người dùng, lớp học, phòng chat và vai trò."
-    )
-    p_scope.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    add_body_p(doc, "Nhằm đảm bảo tính khả thi cao nhất trong khuôn khổ đồ án môn học và đáp ứng quy chế ranh giới kỹ thuật theo tài liệu GEMINI.md, dự án thiết lập các ràng buộc sau:")
+
+    add_bullet_p(doc, "Hệ thống được thiết kế và kiểm thử tối ưu cho hạ tầng mạng cục bộ (LAN) của Trường Đại học Kiến trúc Đà Nẵng, bao gồm các phòng máy thực hành và các dải địa chỉ IP nội bộ (192.168.x.x / 10.x.x.x).", bold_prefix="• Phạm vi triển khai:")
+    add_bullet_p(doc, "Ngôn ngữ C# trên nền .NET 10.0 LTS; Giao diện máy trạm xây dựng bằng WPF (Windows Presentation Foundation) áp dụng kiến trúc MVVM (Model-View-ViewModel).", bold_prefix="• Nền tảng công nghệ:")
+    add_bullet_p(doc, "Kết nối Raw TCP Socket sử dụng cơ chế đóng gói nhị phân Length-prefix (4 byte Big-Endian xác định độ dài gói tin, 1 byte xác định PacketType và mảng byte Payload). Nghiêm cấm sử dụng các framework trung gian như SignalR hay WCF để thể hiện rõ bản chất lập trình mạng tầng Socket.", bold_prefix="• Giao thức truyền thông:")
+    add_bullet_p(doc, "Phía Server tuyệt đối không sử dụng SQL Server để lưu tin nhắn và file. Server chỉ sử dụng thư viện siêu nhẹ Microsoft.Data.Sqlite để lưu trữ thông tin danh mục người dùng, lớp học, phòng chat và vai trò.", bold_prefix="• Ràng buộc lưu trữ CSDL Server:")
 
 def add_section_3(doc):
     doc.add_heading("3. PHÂN TÍCH ĐỐI TƯỢNG & NHÓM CHỨC NĂNG (PHÂN HỆ)", level=1)
 
     doc.add_heading("3.1. Danh sách Đối tượng hệ thống (Entities)", level=2)
-    p_ent = doc.add_paragraph(
-        "Bảng 3.1: Danh mục 12 thực thể đối tượng nghiệp vụ trong hệ thống DAU Chat (ENT-01 đến ENT-12):"
-    )
+    p_ent = doc.add_paragraph("Bảng 3.1: Danh mục 12 thực thể đối tượng nghiệp vụ trong hệ thống DAU Chat (ENT-01 đến ENT-12):")
     p_ent.alignment = WD_ALIGN_PARAGRAPH.LEFT
     p_ent.paragraph_format.space_after = Pt(2)
 
@@ -344,9 +391,7 @@ def add_section_3(doc):
         add_data_row(tbl_ent, row, is_even=(idx % 2 == 1), col_widths=widths)
 
     doc.add_heading("3.2. Phân hệ và Nhóm chức năng (Subsystems)", level=2)
-    p_mod = doc.add_paragraph(
-        "Bảng 3.2: Danh mục 8 phân hệ chức năng và phân công trách nhiệm nhóm Team 5 (MOD-01 đến MOD-08):"
-    )
+    p_mod = doc.add_paragraph("Bảng 3.2: Danh mục 8 phân hệ chức năng và phân công trách nhiệm nhóm Team 5 (MOD-01 đến MOD-08):")
     p_mod.alignment = WD_ALIGN_PARAGRAPH.LEFT
     p_mod.paragraph_format.space_after = Pt(2)
 
@@ -371,4 +416,4 @@ def add_section_3(doc):
     for idx, row in enumerate(mod_data):
         add_data_row(tbl_mod, row, is_even=(idx % 2 == 1), col_widths=widths)
 
-print("Section 1, 2, 3 builder functions updated.")
+print("Section 1, 2, 3 updated without word spacing stretching.")
