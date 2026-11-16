@@ -289,13 +289,21 @@ def add_section_7(doc):
     p_conc_h.paragraph_format.space_before = Pt(14)
     p_conc_h.paragraph_format.space_after = Pt(2)
     p_conc_h.paragraph_format.keep_with_next = True
-    r_cch = p_conc_h.add_run("KẾT LUẬN CHUNG CỦA BÁO CÁO")
+    r_cch = p_conc_h.add_run("KẾT LUẬN ĐÁNH GIÁ MỐC GIỮA KỲ & HƯỚNG PHÁT TRIỂN GIAI ĐOẠN 2")
     r_cch.font.name = 'Times New Roman'
     r_cch.font.size = Pt(13)
     r_cch.font.bold = True
     r_cch.font.color.rgb = RGBColor(0, 0, 0)
 
-    add_body_p(doc, "Báo cáo phân tích hệ thống thông tin đề tài \"DAU Chat\" đã hoàn thành xuất sắc toàn bộ 7 mục nội dung theo đúng biểu mẫu chuẩn của Khoa Công nghệ Thông tin - Trường Đại học Kiến trúc Đà Nẵng. Mọi phân tích kiến trúc, đối tượng, module và luồng dữ liệu đều được đối soát và phản ánh chính xác 100% trên mã nguồn thực tế C# .NET 10.0 LTS của nhóm Team 5. Hệ thống hoàn toàn sẵn sàng cho buổi báo cáo giữa kỳ và trình diễn thực tế (live demo) kết nối đa máy qua mạng LAN trước Giảng viên hướng dẫn TS. Đặng Hùng Vĩ.")
+    add_body_p(doc, "Báo cáo phân tích hệ thống thông tin đề tài \"DAU Chat\" ghi nhận tiến độ thực tế của nhóm Team 5 tại mốc đánh giá giữa kỳ học phần Lập trình mạng (IT311):")
+
+    add_bullet_p(doc, "Nhóm đã hoàn thành toàn diện công tác phân tích đặc tả yêu cầu (25 FR, 16 NFR), mô hình hóa 12 đối tượng nghiệp vụ, phân rã 8 phân hệ thành 63 module đơn nguyên và thiết kế chi tiết các luồng dữ liệu (C4 Component, UML Sequence, Data Flow, ERD 7 bảng SQLite kết hợp liên kết lai Local-First).", bold_prefix="1. Về công tác Phân tích & Thiết kế:")
+
+    add_bullet_p(doc, "Đã xây dựng thành công bộ khung kiến trúc cốt lõi bằng C# .NET 10.0 LTS: Giao thức mạng TCP Socket thuần với cơ chế đóng gói Length-prefix 4 byte Big-Endian, động cơ tin nhắn cục bộ Append-only (.jsonl) kèm chỉ mục nhị phân (.idx), dịch vụ truyền luồng tệp phân mảnh 64KB xác thực SHA-256, và cơ chế đồng bộ Server Vault Hot-Cache kèm chế độ Lab PC Mode. Các thuật toán nền tảng đã vượt qua các ca kiểm thử tự động trong project DauChat.SandboxTest.", bold_prefix="2. Về hiện thực hóa Mã nguồn Core:")
+
+    add_bullet_p(doc, "Do điều kiện kiểm thử giữa kỳ chủ yếu thực hiện qua môi trường máy cá nhân và kịch bản Sandbox Test giả lập, nhóm cần tiếp tục tổ chức thử nghiệm chịu tải thực tế trên mạng LAN phòng máy với 2 - 3 máy trạm đồng thời để đánh giá chính xác độ trễ, thông lượng truyền tệp CAD/BIM nặng và xử lý triệt để hiện tượng nghẽn mạch khi ngắt kết nối đột ngột.", bold_prefix="3. Các hạn chế và thách thức kỹ thuật còn tồn đọng:")
+
+    add_bullet_p(doc, "Trong nửa cuối học kỳ, nhóm Team 5 tập trung hoàn thiện toàn diện giao diện người dùng WPF (Client UI), tích hợp đầy đủ các chức năng quản trị lớp học/phòng chat môn học, tối ưu hóa cơ chế tự kết nối lại (Auto Reconnect) và chuẩn bị kịch bản thực nghiệm trực tiếp (Live Demo) phục vụ buổi báo cáo nghiệm thu cuối kỳ trước Giảng viên hướng dẫn TS. Đặng Hùng Vĩ.", bold_prefix="4. Kế hoạch triển khai giai đoạn 2 (Cuối kỳ):")
 
     # PHỤ LỤC. BẢNG ĐỐI CHIẾU DANH MỤC TỆP NGUỒN C# .NET 10 THỰC TẾ
     doc.add_page_break()
