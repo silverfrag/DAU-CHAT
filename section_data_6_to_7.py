@@ -1,10 +1,10 @@
-# Section 6 and 7 Data and Builder Functions for DAU Chat Report
+# Section 6 and 7 Data and Builder Functions for DAU Chat Report (Academic Tech Dev Edition)
 
 import docx
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx_helpers import set_table_borders, add_header_styled_row, add_data_row, add_callout, add_figure
+from docx_helpers import set_table_borders, add_header_styled_row, add_data_row, add_tech_box, add_figure
 
 def add_table_dictionary(doc, tbl_name, tbl_desc, columns_data):
     p_h = doc.add_paragraph()
@@ -15,7 +15,7 @@ def add_table_dictionary(doc, tbl_name, tbl_desc, columns_data):
     r_n.font.name = 'Times New Roman'
     r_n.font.size = Pt(11.5)
     r_n.font.bold = True
-    r_n.font.color.rgb = RGBColor(15, 45, 89)
+    r_n.font.color.rgb = RGBColor(0, 0, 0)
 
     tbl = doc.add_table(rows=1, cols=6)
     set_table_borders(tbl)
@@ -43,6 +43,10 @@ def add_section_6(doc):
     p_db_intro.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 
     # Table List
+    p_tlist = doc.add_paragraph("Bảng 6.1: Danh mục các bảng CSDL Metadata Server và Cấu trúc tệp Client Local:")
+    p_tlist.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_tlist.paragraph_format.space_after = Pt(2)
+
     tbl_list = doc.add_table(rows=1, cols=5)
     set_table_borders(tbl_list)
     tbl_list.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -156,21 +160,20 @@ def add_section_6(doc):
     r_cs.font.name = 'Times New Roman'
     r_cs.font.size = Pt(11.5)
     r_cs.font.bold = True
-    r_cs.font.color.rgb = RGBColor(15, 45, 89)
+    r_cs.font.color.rgb = RGBColor(0, 0, 0)
 
-    add_callout(doc, "CẤU TRÚC ĐỊNH DẠNG TỆP LOCAL-FIRST TRÊN Ổ ĐĨA MÁY TRẠM CLIENT",
-                "1. Tệp Tin nhắn Append-only (Messages/{RoomId}/YYYY-MM.jsonl):\n"
-                "   Mỗi dòng là một chuỗi JSON độc lập đại diện cho 1 bản tin nhắn:\n"
-                "   {\"id\":\"uuid-v4\",\"room_id\":\"room-uuid\",\"sender_id\":\"mssv\",\"timestamp\":\"2026-11-16T08:30:00Z\",\"content\":\"Nội dung tin nhắn\",\"type\":\"text\",\"attachments\":[],\"status\":\"Sent\"}\n\n"
-                "2. Tệp Chỉ mục Nhị phân Truy xuất Nhanh (Messages/{RoomId}/YYYY-MM.idx):\n"
-                "   Định dạng nhị phân thuần túy, mỗi bản ghi cố định đúng 16 bytes:\n"
-                "   [Byte 0-7: Int64 Byte-Offset vị trí dòng trong file .jsonl] + [Byte 8-15: Int64 Unix-Timestamp miligiây].\n"
-                "   -> Cho phép thuật toán dịch con trỏ FileStream.Seek đọc ngược từ cuối file O(1) mà không phải nạp toàn bộ file vào RAM.\n\n"
-                "3. Tệp Mục lục Quản lý Tệp Đính kèm (file_manifest.jsonl):\n"
-                "   {\"file_id\":\"uuid\",\"file_name\":\"DoAn.dwg\",\"file_size\":104857600,\"sha256\":\"a1b2c3...\",\"saved_path\":\"LocalData/.../Files/DoAn.dwg\",\"downloaded_at\":\"2026-11-16T08:32:00Z\",\"room_id\":\"r1\"}\n\n"
-                "4. Tệp Cấu hình Cục bộ (LocalSettings.json):\n"
-                "   Lưu trữ địa chỉ IP Server LAN đã kết nối lần cuối, tài khoản ghi nhớ, cấu hình tự động đẩy Server Vault khi đăng xuất.",
-                bg_color="F0FDF4", border_color="166534")
+    add_tech_box(doc, "CẤU TRÚC ĐỊNH DẠNG TỆP LOCAL-FIRST TRÊN Ổ ĐĨA MÁY TRẠM CLIENT",
+                 "1. Tệp Tin nhắn Append-only (Messages/{RoomId}/YYYY-MM.jsonl):\n"
+                 "   Mỗi dòng là một chuỗi JSON độc lập đại diện cho 1 bản tin nhắn:\n"
+                 "   {\"id\":\"uuid-v4\",\"room_id\":\"room-uuid\",\"sender_id\":\"mssv\",\"timestamp\":\"2026-11-16T08:30:00Z\",\"content\":\"Nội dung tin nhắn\",\"type\":\"text\",\"attachments\":[],\"status\":\"Sent\"}\n\n"
+                 "2. Tệp Chỉ mục Nhị phân Truy xuất Nhanh (Messages/{RoomId}/YYYY-MM.idx):\n"
+                 "   Định dạng nhị phân thuần túy, mỗi bản ghi cố định đúng 16 bytes:\n"
+                 "   [Byte 0-7: Int64 Byte-Offset vị trí dòng trong file .jsonl] + [Byte 8-15: Int64 Unix-Timestamp miligiây].\n"
+                 "   -> Cho phép thuật toán dịch con trỏ FileStream.Seek đọc ngược từ cuối file O(1) mà không phải nạp toàn bộ file vào RAM.\n\n"
+                 "3. Tệp Mục lục Quản lý Tệp Đính kèm (file_manifest.jsonl):\n"
+                 "   {\"file_id\":\"uuid\",\"file_name\":\"DoAn.dwg\",\"file_size\":104857600,\"sha256\":\"a1b2c3...\",\"saved_path\":\"LocalData/.../Files/DoAn.dwg\",\"downloaded_at\":\"2026-11-16T08:32:00Z\",\"room_id\":\"r1\"}\n\n"
+                 "4. Tệp Cấu hình Cục bộ (LocalSettings.json):\n"
+                 "   Lưu trữ địa chỉ IP Server LAN đã kết nối lần cuối, tài khoản ghi nhớ, cấu hình tự động đẩy Server Vault khi đăng xuất.")
 
     doc.add_heading("6.3. Sơ đồ quan hệ thực thể (ERD) & Quan hệ lưu trữ Hybrid", level=2)
     p_erd_desc = doc.add_paragraph(
@@ -199,9 +202,10 @@ def add_section_7(doc):
 
     doc.add_heading("7.1. Phân công vai trò trong nhóm (5 Thành viên) & Quy tắc Kỹ thuật", level=2)
     p_role_intro = doc.add_paragraph(
-        "Nhóm Team 5 gồm 5 thành viên thuộc lớp 23CT1 - Khoa Công nghệ Thông tin, Trường Đại học Kiến trúc Đà Nẵng. Cơ cấu phân công nhiệm vụ và ranh giới kỹ thuật được thiết lập nghiêm ngặt theo quy chế GEMINI.md:"
+        "Bảng 7.1: Cơ cấu phân công nhiệm vụ và ranh giới kỹ thuật theo tài liệu kiến trúc GEMINI.md:"
     )
-    p_role_intro.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p_role_intro.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_role_intro.paragraph_format.space_after = Pt(2)
 
     # Role Table
     tbl_role = doc.add_table(rows=1, cols=4)
@@ -222,17 +226,17 @@ def add_section_7(doc):
     for idx, row in enumerate(role_data):
         add_data_row(tbl_role, row, is_even=(idx % 2 == 1), col_widths=role_widths)
 
-    add_callout(doc, "QUY TẮC PHỐI HỢP & RANH GIỚI KỸ THUẬT THEO GEMINI.MD",
-                "1. Nguyên tắc Read-Only đối với DauChat.Shared: Dự án chung DauChat.Shared là READ-ONLY đối với TV2, TV3, TV4, TV5. Tuyệt đối không tự ý đổi tên Interface, không sửa NetworkPacket hay PacketType nếu chưa có sự thống nhất và phê duyệt từ Trưởng nhóm (TV1).\n"
-                "2. Độc quyền thư mục: Mỗi thành viên chỉ được commit mã nguồn vào đúng thư mục phụ trách trên nhánh Git của mình. Nghiêm cấm sửa chéo mã nguồn của thành viên khác.\n"
-                "3. Kiểm thử qua DauChat.SandboxTest: TV2 đến TV5 không được tự ý tạo cửa sổ XAML riêng để test; mọi thử nghiệm thuật toán và kịch bản mạng đều được viết dưới dạng Unit/Integration Test trong project DauChat.SandboxTest.",
-                bg_color="FEF2F2", border_color="991B1B")
+    add_tech_box(doc, "QUY TẮC PHỐI HỢP & RANH GIỚI KỸ THUẬT THEO GEMINI.MD",
+                 "1. Nguyên tắc Read-Only đối với DauChat.Shared: Dự án chung DauChat.Shared là READ-ONLY đối với TV2, TV3, TV4, TV5. Tuyệt đối không tự ý đổi tên Interface, không sửa NetworkPacket hay PacketType nếu chưa có sự thống nhất và phê duyệt từ Trưởng nhóm (TV1).\n"
+                 "2. Độc quyền thư mục: Mỗi thành viên chỉ được commit mã nguồn vào đúng thư mục phụ trách trên nhánh Git của mình. Nghiêm cấm sửa chéo mã nguồn của thành viên khác.\n"
+                 "3. Kiểm thử qua DauChat.SandboxTest: TV2 đến TV5 không được tự ý tạo cửa sổ XAML riêng để test; mọi thử nghiệm thuật toán và kịch bản mạng đều được viết dưới dạng Unit/Integration Test trong project DauChat.SandboxTest.")
 
     doc.add_heading("7.2. Cách thức chia công việc theo 7 giai đoạn phát triển", level=2)
     p_stage_intro = doc.add_paragraph(
-        "Kế hoạch phát triển dự án DAU Chat được chia làm 7 giai đoạn nối tiếp theo mô hình Agile/Scrum rút gọn, kết hợp chặt chẽ giữa phân tích lý thuyết và hiện thực hóa mã nguồn .NET 10:"
+        "Bảng 7.2: Kế hoạch triển khai dự án DAU Chat chia làm 7 giai đoạn nối tiếp theo mô hình Agile/Scrum rút gọn:"
     )
-    p_stage_intro.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p_stage_intro.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_stage_intro.paragraph_format.space_after = Pt(2)
 
     # Stage Table
     tbl_stage = doc.add_table(rows=1, cols=5)
@@ -257,9 +261,10 @@ def add_section_7(doc):
 
     doc.add_heading("7.3. Nhật ký theo dõi công việc (Task Tracking Log)", level=2)
     p_log_intro = doc.add_paragraph(
-        "Nhật ký theo dõi tiến độ công việc thực tế đối soát 100% với commit và mã nguồn hiện hành trong kho chứa Git của dự án DAU Chat:"
+        "Bảng 7.3: Nhật ký theo dõi tiến độ công việc thực tế đối soát 100% với commit và mã nguồn hiện hành trong kho chứa Git của dự án DAU Chat:"
     )
-    p_log_intro.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p_log_intro.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_log_intro.paragraph_format.space_after = Pt(2)
 
     # Task Tracking Table
     tbl_log = doc.add_table(rows=1, cols=6)
@@ -295,15 +300,16 @@ def add_section_7(doc):
     r_cc.font.name = 'Times New Roman'
     r_cc.font.size = Pt(12)
     r_cc.font.bold = True
-    r_cc.font.color.rgb = RGBColor(15, 45, 89)
+    r_cc.font.color.rgb = RGBColor(0, 0, 0)
 
     # PHỤ LỤC. BẢNG ĐỐI CHIẾU DANH MỤC TỆP NGUỒN C# .NET 10 THỰC TẾ
     doc.add_page_break()
     p_app = doc.add_heading("PHỤ LỤC. BẢNG ĐỐI CHIẾU DANH MỤC TỆP NGUỒN C# .NET 10 THỰC TẾ", level=1)
     p_app_desc = doc.add_paragraph(
-        "Nhằm tạo điều kiện thuận lợi nhất cho Giảng viên hướng dẫn TS. Đặng Hùng Vĩ đối soát trực tiếp giữa báo cáo phân tích thiết kế và mã nguồn thực tế của nhóm Team 5 trong kho chứa Git, bảng dưới đây liệt kê chi tiết các tệp nguồn, lớp xử lý và vai trò kỹ thuật tương ứng trong Solution DauChat.sln (.NET 10.0 LTS):"
+        "Bảng Phụ lục: Danh mục tệp nguồn C# .NET 10 và vai trò kỹ thuật đối soát trực tiếp với Solution DauChat.sln trong kho chứa Git:"
     )
-    p_app_desc.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p_app_desc.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_app_desc.paragraph_format.space_after = Pt(2)
 
     tbl_src = doc.add_table(rows=1, cols=4)
     set_table_borders(tbl_src)
@@ -335,4 +341,4 @@ def add_section_7(doc):
     for idx, row in enumerate(src_data):
         add_data_row(tbl_src, row, is_even=(idx % 2 == 1), col_widths=src_widths)
 
-print("Section 6 and 7 builder functions ready.")
+print("Section 6 and 7 builder functions updated.")

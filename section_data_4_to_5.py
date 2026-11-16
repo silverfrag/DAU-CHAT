@@ -1,10 +1,10 @@
-# Section 4 and 5 Data and Builder Functions for DAU Chat Report
+# Section 4 and 5 Data and Builder Functions for DAU Chat Report (Academic Tech Dev Edition)
 
 import docx
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx_helpers import set_table_borders, add_header_styled_row, add_data_row, add_callout, add_figure
+from docx_helpers import set_table_borders, add_header_styled_row, add_data_row, add_tech_box, add_figure
 
 def add_ipo_module_table(doc, mod_id, mod_name, subsystem, priority, input_text, process_text, output_text, exception_text, note_text):
     p_h = doc.add_paragraph()
@@ -13,15 +13,15 @@ def add_ipo_module_table(doc, mod_id, mod_name, subsystem, priority, input_text,
     p_h.paragraph_format.keep_with_next = True
     r_id = p_h.add_run(f"• Module: [{mod_id}] – {mod_name}\n")
     r_id.font.name = 'Times New Roman'
-    r_id.font.size = Pt(12)
+    r_id.font.size = Pt(11.5)
     r_id.font.bold = True
-    r_id.font.color.rgb = RGBColor(15, 45, 89)
+    r_id.font.color.rgb = RGBColor(0, 0, 0)
 
     r_sub = p_h.add_run(f"Thuộc phân hệ: {subsystem} | Mức độ ưu tiên: {priority}")
     r_sub.font.name = 'Times New Roman'
-    r_sub.font.size = Pt(11)
+    r_sub.font.size = Pt(10.5)
     r_sub.font.italic = True
-    r_sub.font.color.rgb = RGBColor(71, 85, 105)
+    r_sub.font.color.rgb = RGBColor(0, 0, 0)
 
     tbl = doc.add_table(rows=1, cols=2)
     set_table_borders(tbl)
@@ -162,7 +162,7 @@ def add_section_4(doc):
         "    └── 8.2.3. Ghi nhận và truy vấn nhật ký kiểm toán SystemAuditLogs [A/HT] (MOD_08_05)"
     )
 
-    add_callout(doc, "CÂY PHÂN RÃ CHỨC NĂNG 63 MODULES (FUNCTIONAL DECOMPOSITION TREE)", tree_text, bg_color="F8FAFC", border_color="0F2D59")
+    add_tech_box(doc, "CÂY PHÂN RÃ CHỨC NĂNG 63 MODULES (FUNCTIONAL DECOMPOSITION TREE)", tree_text)
 
     doc.add_heading("4.2. Mô tả Module chi tiết (IPO – Input / Process / Output)", level=2)
     p_ipo_intro = doc.add_paragraph(
@@ -298,9 +298,10 @@ def add_section_4(doc):
 
     doc.add_heading("4.3. Bảng tổng hợp thông số kỹ thuật toàn bộ 63 Module chức năng", level=2)
     p_sum_intro = doc.add_paragraph(
-        "Nhằm đảm bảo tính tường minh và mức độ hoàn thiện 100% của bản đặc tả, bảng dưới đây tổng hợp đầy đủ các thông số Input - Process - Output cho toàn bộ 63 module đơn nguyên trong hệ thống DAU Chat:"
+        "Bảng 4.1: Ma trận tổng hợp thông số kỹ thuật Input - Process - Output cho toàn bộ 63 module đơn nguyên trong hệ thống DAU Chat:"
     )
-    p_sum_intro.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p_sum_intro.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_sum_intro.paragraph_format.space_after = Pt(2)
 
     tbl_all = doc.add_table(rows=1, cols=6)
     set_table_borders(tbl_all)
@@ -309,7 +310,6 @@ def add_section_4(doc):
     all_widths = [Inches(0.5), Inches(1.1), Inches(1.8), Inches(1.2), Inches(1.8), Inches(1.0)]
     add_header_styled_row(tbl_all, all_headers, all_widths)
 
-    # 63 modules summary rows
     all_mods_data = [
         # Phân hệ 1
         ("1", "MOD_01_01", "Đăng nhập hệ thống", "MSSV/Username, Password", "Băm mật khẩu, tra cứu Users SQLite, cấp Token", "UserDto, AppSession"),
@@ -407,9 +407,10 @@ def add_section_5(doc):
 
     doc.add_heading("5.1. Ma trận Đối tượng – Chức năng (CRUD Matrix) & Ma trận Phân quyền RBAC", level=2)
     p_crud_intro = doc.add_paragraph(
-        "Ma trận Đối tượng – Chức năng (CRUD) thể hiện mối tương tác giữa các Thực thể dữ liệu với các Chức năng nghiệp vụ trong hệ thống (C: Create - Tạo mới, R: Read - Đọc/Truy vấn, U: Update - Cập nhật, D: Delete - Xóa):"
+        "Bảng 5.1: Ma trận Đối tượng – Chức năng (CRUD Matrix) thể hiện mối tương tác giữa các thực thể và chức năng trong hệ thống (C: Create, R: Read, U: Update, D: Delete):"
     )
-    p_crud_intro.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p_crud_intro.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_crud_intro.paragraph_format.space_after = Pt(2)
 
     # CRUD Table
     tbl_crud = doc.add_table(rows=1, cols=6)
@@ -440,10 +441,11 @@ def add_section_5(doc):
     p_rbac = doc.add_paragraph()
     p_rbac.paragraph_format.space_before = Pt(8)
     p_rbac.paragraph_format.space_after = Pt(2)
-    r_rb = p_rbac.add_run("Ma trận Phân quyền theo Vai trò (Role-Based Access Control - RBAC Matrix):")
+    r_rb = p_rbac.add_run("Bảng 5.2: Ma trận phân quyền theo vai trò (Role-Based Access Control - RBAC Matrix):")
+    r_rb.font.name = 'Times New Roman'
     r_rb.font.bold = True
-    r_rb.font.size = Pt(12)
-    r_rb.font.color.rgb = RGBColor(15, 45, 89)
+    r_rb.font.size = Pt(11)
+    r_rb.font.color.rgb = RGBColor(0, 0, 0)
 
     tbl_rbac = doc.add_table(rows=1, cols=5)
     set_table_borders(tbl_rbac)
@@ -468,9 +470,10 @@ def add_section_5(doc):
 
     doc.add_heading("5.2. Danh mục các Luồng dữ liệu chính (Data Flows)", level=2)
     p_df = doc.add_paragraph(
-        "Hệ thống vận hành dựa trên 14 luồng trao đổi dữ liệu chính (DF-01 đến DF-14) kết nối giữa Người dùng, Ứng dụng Client, Giao thức Socket và Máy chủ Server:"
+        "Bảng 5.3: Danh mục 14 luồng trao đổi dữ liệu kỹ thuật trong hệ thống (DF-01 đến DF-14):"
     )
-    p_df.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p_df.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_df.paragraph_format.space_after = Pt(2)
 
     tbl_df = doc.add_table(rows=1, cols=6)
     set_table_borders(tbl_df)
@@ -501,13 +504,13 @@ def add_section_5(doc):
 
     doc.add_heading("5.3. Sơ đồ kiến trúc & luồng dữ liệu chuyên sâu", level=2)
     p_diag_intro = doc.add_paragraph(
-        "Nhằm làm sáng tỏ tường minh cơ chế vận hành ở tầng mạng và lưu trữ, 4 sơ đồ kiến trúc và luồng dữ liệu kỹ thuật được xây dựng chi tiết dưới đây:"
+        "Nhằm làm sáng tỏ tường minh cơ chế vận hành ở tầng mạng và lưu trữ, 4 sơ đồ kiến trúc và luồng dữ liệu kỹ thuật được xây dựng chi tiết dưới đây theo đúng chuẩn kỹ thuật phần mềm:"
     )
     p_diag_intro.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 
     # Sơ đồ 1: Tổng thể
     add_figure(doc, 'e:/DAU-Chat-Team5/diagrams/diagram_system_architecture.png', 
-               "Hình 5.1: Sơ đồ kiến trúc tổng thể hệ thống DAU Chat (Mô hình Hybrid Local-First & Socket Network)")
+               "Hình 5.1: Sơ đồ kiến trúc tổng thể hệ thống DAU Chat (C4 Component Architecture & Network Protocol Specification)")
 
     p_arch_desc = doc.add_paragraph(
         "Giải thích cơ chế vận hành kiến trúc (Hình 5.1):\n"
@@ -522,7 +525,7 @@ def add_section_5(doc):
 
     # Sơ đồ 2: Luồng tin nhắn
     add_figure(doc, 'e:/DAU-Chat-Team5/diagrams/diagram_message_flow.png', 
-               "Hình 5.2: Sơ đồ luồng định tuyến tin nhắn thời gian thực và hàng đợi trung chuyển tạm thời (Transient Relay)")
+               "Hình 5.2: Biểu đồ tuần tự định tuyến tin nhắn và vòng đời hàng đợi tạm thời (UML Sequence Diagram)")
 
     p_msg_desc = doc.add_paragraph(
         "Giải thích luồng tin nhắn (Hình 5.2):\n"
@@ -536,7 +539,7 @@ def add_section_5(doc):
 
     # Sơ đồ 3: Luồng truyền file
     add_figure(doc, 'e:/DAU-Chat-Team5/diagrams/diagram_file_streaming_flow.png', 
-               "Hình 5.3: Sơ đồ luồng truyền tệp phân mảnh (Chunking 64KB), xác thực SHA-256 và cơ chế phản hồi kép")
+               "Hình 5.3: Quy trình truyền tệp phân mảnh (Chunking 64KB), xác thực SHA-256 và cơ chế phản hồi kép")
 
     p_file_desc = doc.add_paragraph(
         "Giải thích luồng truyền tệp phân mảnh và cơ chế phản hồi kép (Hình 5.3):\n"
@@ -560,4 +563,4 @@ def add_section_5(doc):
     )
     p_vault_desc.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 
-print("Section 4 and 5 builder functions ready.")
+print("Section 4 and 5 builder functions updated.")

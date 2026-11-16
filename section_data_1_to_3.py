@@ -1,10 +1,10 @@
-# Section 1, 2, 3 Data and Builder Functions for DAU Chat Report
+# Section 1, 2, 3 Data and Builder Functions for DAU Chat Report (Academic Tech Dev Edition)
 
 import docx
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx_helpers import set_table_borders, add_header_styled_row, add_data_row, add_callout, add_figure
+from docx_helpers import set_table_borders, add_header_styled_row, add_data_row, add_tech_box, add_figure
 
 def add_cover_page(doc):
     p_inst = doc.add_paragraph()
@@ -13,36 +13,36 @@ def add_cover_page(doc):
     p_inst.paragraph_format.space_after = Pt(2)
     r1 = p_inst.add_run("TRƯỜNG ĐẠI HỌC KIẾN TRÚC ĐÀ NẴNG\n")
     r1.font.name = 'Times New Roman'
-    r1.font.size = Pt(14)
+    r1.font.size = Pt(13.5)
     r1.font.bold = True
-    r1.font.color.rgb = RGBColor(15, 45, 89)
+    r1.font.color.rgb = RGBColor(0, 0, 0)
 
     r2 = p_inst.add_run("KHOA CÔNG NGHỆ THÔNG TIN")
     r2.font.name = 'Times New Roman'
     r2.font.size = Pt(13)
     r2.font.bold = True
-    r2.font.color.rgb = RGBColor(27, 77, 137)
+    r2.font.color.rgb = RGBColor(0, 0, 0)
 
     # Logo
     logo_path = 'e:/DAU-Chat-Team5/extracted_logo.png'
-    add_figure(doc, logo_path, "", width=Inches(1.8))
+    add_figure(doc, logo_path, "", width=Inches(1.6))
 
     # Title
     p_title = doc.add_paragraph()
     p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_title.paragraph_format.space_before = Pt(14)
+    p_title.paragraph_format.space_before = Pt(10)
     p_title.paragraph_format.space_after = Pt(4)
     r_t1 = p_title.add_run("BÁO CÁO PHÂN TÍCH HỆ THỐNG THÔNG TIN\n")
     r_t1.font.name = 'Times New Roman'
     r_t1.font.size = Pt(18)
     r_t1.font.bold = True
-    r_t1.font.color.rgb = RGBColor(15, 45, 89)
+    r_t1.font.color.rgb = RGBColor(0, 0, 0)
 
     r_sub = p_title.add_run("HỌC PHẦN: LẬP TRÌNH MẠNG (MÃ HỌC PHẦN: IT311)\n")
     r_sub.font.name = 'Times New Roman'
     r_sub.font.size = Pt(13)
     r_sub.font.bold = True
-    r_sub.font.color.rgb = RGBColor(71, 85, 105)
+    r_sub.font.color.rgb = RGBColor(0, 0, 0)
 
     p_proj = doc.add_paragraph()
     p_proj.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -52,11 +52,12 @@ def add_cover_page(doc):
     r_p1.font.name = 'Times New Roman'
     r_p1.font.size = Pt(13)
     r_p1.font.bold = True
+    r_p1.font.color.rgb = RGBColor(0, 0, 0)
     r_p2 = p_proj.add_run("XÂY DỰNG HỆ THỐNG CHAT NỘI BỘ VÀ TRUYỀN TỆP TỐC ĐỘ CAO CHO SINH VIÊN VÀ GIẢNG VIÊN TRƯỜNG ĐẠI HỌC KIẾN TRÚC ĐÀ NẴNG (DAU CHAT)")
     r_p2.font.name = 'Times New Roman'
-    r_p2.font.size = Pt(15)
+    r_p2.font.size = Pt(14)
     r_p2.font.bold = True
-    r_p2.font.color.rgb = RGBColor(27, 77, 137)
+    r_p2.font.color.rgb = RGBColor(0, 0, 0)
 
     # Info Block
     p_info = doc.add_paragraph()
@@ -70,10 +71,12 @@ def add_cover_page(doc):
         r_l.font.name = 'Times New Roman'
         r_l.font.size = Pt(12)
         r_l.font.bold = True
+        r_l.font.color.rgb = RGBColor(0, 0, 0)
         r_v = p.add_run(val + "\n")
         r_v.font.name = 'Times New Roman'
         r_v.font.size = Pt(12)
         r_v.font.bold = is_bold
+        r_v.font.color.rgb = RGBColor(0, 0, 0)
 
     add_line(p_info, "Người hướng dẫn khoa học:  ", "TS. Đặng Hùng Vĩ", is_bold=True)
     add_line(p_info, "Nhóm sinh viên thực hiện:  ", "Nhóm Team 5 (5 Thành viên)")
@@ -92,7 +95,7 @@ def add_cover_page(doc):
     r_bot.font.name = 'Times New Roman'
     r_bot.font.size = Pt(12)
     r_bot.font.bold = True
-    r_bot.font.color.rgb = RGBColor(100, 116, 139)
+    r_bot.font.color.rgb = RGBColor(0, 0, 0)
 
     doc.add_page_break()
 
@@ -107,7 +110,7 @@ def add_table_of_contents(doc):
         ("4. PHÂN TÍCH CHỨC NĂNG ĐẾN TẬN CÙNG (CHỨC NĂNG CON → MODULE)", "4.1. Cấu trúc phân rã chức năng (Functional Decomposition Tree 63 Modules)\n4.2. Mô tả Module chi tiết (IPO – Input / Process / Output)\n4.3. Bảng tổng hợp thông số kỹ thuật toàn bộ 63 Module"),
         ("5. LUỒNG DỮ LIỆU LIÊN QUAN ĐẾN ĐỐI TƯỢNG & CHỨC NĂNG", "5.1. Ma trận Đối tượng – Chức năng (CRUD Matrix) & Ma trận RBAC\n5.2. Danh mục các Luồng dữ liệu chính (Data Flows DF-01 đến DF-14)\n5.3. Sơ đồ kiến trúc & luồng dữ liệu chuyên sâu (Mạng TCP, Tin nhắn, File Streaming, LAN Vault Sync)"),
         ("6. THIẾT KẾ CƠ SỞ DỮ LIỆU & KIẾN TRÚC LƯU TRỮ LAI", "6.1. Danh mục Bảng CSDL Server (SQLite) & Cấu trúc lưu trữ Client Local-First\n6.2. Chi tiết thuộc tính từng bảng (Data Dictionary đầy đủ 7 bảng SQLite & Client Data)\n6.3. Sơ đồ quan hệ thực thể (ERD) & Quan hệ lưu trữ Hybrid"),
-        ("7. CHIA & QUẢN LÝ CÔNG VIỆC THEO NHÓM (TEAM 5)", "7.1. Phân công vai trò trong nhóm (TV1 đến TV5) & Quy tắc GEMINI.md\n7.2. Cách thức chia công việc theo 7 giai đoạn phát triển\n7.3. Nhật ký theo dõi công việc (Task Tracking Log đối soát 100% mã nguồn .NET 10)")
+        ("7. CHIA & QUẢN LÝ CÔNG VIỆC THEO NHÓM (TEAM 5)", "7.1. Phân công vai trò trong nhóm (TV1 đến TV5) & Quy tắc GEMINI.md\n7.2. Cách thức chia công việc theo 7 giai đoạn phát triển\n7.3. Nhật ký theo dõi công việc (Task Tracking Log đối soát 100% mã nguồn .NET 10)\nPHỤ LỤC. Bảng đối chiếu danh mục tệp nguồn C# .NET 10 thực tế")
     ]
 
     for title, subs in toc_items:
@@ -118,7 +121,7 @@ def add_table_of_contents(doc):
         r_t.font.name = 'Times New Roman'
         r_t.font.size = Pt(12)
         r_t.font.bold = True
-        r_t.font.color.rgb = RGBColor(15, 45, 89)
+        r_t.font.color.rgb = RGBColor(0, 0, 0)
 
         p_s = doc.add_paragraph()
         p_s.paragraph_format.left_indent = Inches(0.4)
@@ -128,7 +131,7 @@ def add_table_of_contents(doc):
         r_s = p_s.add_run(subs)
         r_s.font.name = 'Times New Roman'
         r_s.font.size = Pt(11)
-        r_s.font.color.rgb = RGBColor(51, 65, 85)
+        r_s.font.color.rgb = RGBColor(0, 0, 0)
 
     doc.add_page_break()
 
@@ -141,11 +144,11 @@ def add_section_1(doc):
     )
     p1.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 
-    add_callout(doc, "CẤU TRÚC 3 THÀNH PHẦN CHUẨN CỦA TÊN ĐỀ TÀI",
-                "• Thành phần 1 (Loại hình / Hành động): Xây dựng hệ thống ứng dụng Desktop Client-Server\n"
-                "• Thành phần 2 (Chức năng chính): Chat nội bộ thời gian thực và Truyền tệp tốc độ cao theo luồng phân mảnh (Chunking 64KB)\n"
-                "• Thành phần 3 (Đối tượng / Lĩnh vực): Sinh viên và Giảng viên Trường Đại học Kiến trúc Đà Nẵng (DAU)\n"
-                "→ Tên chính thức: \"Xây dựng hệ thống chat nội bộ và truyền tệp tốc độ cao cho sinh viên và giảng viên Trường Đại học Kiến trúc Đà Nẵng (DAU Chat)\"")
+    add_tech_box(doc, "CẤU TRÚC 3 THÀNH PHẦN CHUẨN CỦA TÊN ĐỀ TÀI",
+                 "• Thành phần 1 (Loại hình / Hành động): Xây dựng hệ thống ứng dụng Desktop Client-Server\n"
+                 "• Thành phần 2 (Chức năng chính): Chat nội bộ thời gian thực và Truyền tệp tốc độ cao theo luồng phân mảnh (Chunking 64KB)\n"
+                 "• Thành phần 3 (Đối tượng / Lĩnh vực): Sinh viên và Giảng viên Trường Đại học Kiến trúc Đà Nẵng (DAU)\n"
+                 "→ Tên chính thức đề tài: \"Xây dựng hệ thống chat nội bộ và truyền tệp tốc độ cao cho sinh viên và giảng viên Trường Đại học Kiến trúc Đà Nẵng (DAU Chat)\"")
 
     doc.add_heading("1.2. Đặt vấn đề & Định hướng kiến trúc lưu trữ thực tế tại ĐH Kiến trúc Đà Nẵng", level=2)
     p_prob1 = doc.add_paragraph(
@@ -172,9 +175,10 @@ def add_section_1(doc):
 
     doc.add_heading("1.3. Bảng so sánh 5 phần mềm liên quan & định hình chức năng đề tài", level=2)
     p_cmp = doc.add_paragraph(
-        "Để định hình các yêu cầu chức năng và kỹ thuật cho DAU Chat, nhóm đã tiến hành khảo sát, so sánh chuyên sâu giữa 4 phần mềm phổ biến hiện nay với DAU Chat dựa trên 10 tiêu chí kỹ thuật:"
+        "Bảng 1.1: Bảng đối sánh kỹ thuật chuyên sâu giữa DAU Chat và 4 nền tảng ứng dụng truyền thông phổ biến:"
     )
-    p_cmp.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p_cmp.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_cmp.paragraph_format.space_after = Pt(2)
 
     # Comparison Table
     tbl_cmp = doc.add_table(rows=1, cols=6)
@@ -206,17 +210,19 @@ def add_section_1(doc):
     r_c = p_post_cmp.add_run(
         "Kết luận khảo sát: Các phần mềm hiện hành đều phụ thuộc vào đường truyền Internet bên ngoài và cơ sở hạ tầng đám mây đắt đỏ, không giải quyết được bài toán chia sẻ tệp đồ án CAD/BIM dung lượng lớn trong mạng LAN trường học và gây rủi ro lộ lọt dữ liệu tại các phòng máy thực hành công cộng. DAU Chat là sự kết hợp hoàn hảo giữa mô hình Local-First tối ưu tài nguyên và Giao thức Socket thuần hướng LAN, đáp ứng trọn vẹn yêu cầu học thuật của môn Lập trình mạng."
     )
-    r_c.font.italic = True
+    r_c.font.name = 'Times New Roman'
     r_c.font.size = Pt(11)
+    r_c.font.italic = True
 
 def add_section_2(doc):
     doc.add_heading("2. ĐẶC TẢ YÊU CẦU CHỨC NĂNG (FUNCTIONAL REQUIREMENTS)", level=1)
 
     doc.add_heading("2.1. Bảng đặc tả yêu cầu chức năng (Functional Requirements – FR)", level=2)
     p_fr = doc.add_paragraph(
-        "Dựa trên kết quả khảo sát và bài toán thực tế, hệ thống DAU Chat được phân rã thành 25 yêu cầu chức năng (FR-01 đến FR-25) được chuẩn hóa theo mẫu quy định của Khoa Công nghệ Thông tin:"
+        "Bảng 2.1: Danh mục đặc tả 25 yêu cầu chức năng hệ thống (FR-01 đến FR-25):"
     )
-    p_fr.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p_fr.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_fr.paragraph_format.space_after = Pt(2)
 
     tbl_fr = doc.add_table(rows=1, cols=5)
     set_table_borders(tbl_fr)
@@ -258,9 +264,10 @@ def add_section_2(doc):
 
     doc.add_heading("2.2. Đặc tả yêu cầu phi chức năng (Non-Functional Requirements – NFR)", level=2)
     p_nfr = doc.add_paragraph(
-        "Các yêu cầu phi chức năng thiết lập các tiêu chuẩn định lượng về chất lượng, tốc độ, độ ổn định và an ninh của hệ thống:"
+        "Bảng 2.2: Danh mục 16 yêu cầu phi chức năng (NFR-01 đến NFR-16):"
     )
-    p_nfr.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p_nfr.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_nfr.paragraph_format.space_after = Pt(2)
 
     tbl_nfr = doc.add_table(rows=1, cols=4)
     set_table_borders(tbl_nfr)
@@ -306,9 +313,10 @@ def add_section_3(doc):
 
     doc.add_heading("3.1. Danh sách Đối tượng hệ thống (Entities)", level=2)
     p_ent = doc.add_paragraph(
-        "Hệ thống DAU Chat quản lý 12 đối tượng nghiệp vụ (Entities từ ENT-01 đến ENT-12). Các đối tượng được phân bổ giữa Cơ sở dữ liệu Metadata Server (SQLite), Không gian lưu trữ Local-First của Client và Vùng đệm mạng Server Vault:"
+        "Bảng 3.1: Danh mục 12 thực thể đối tượng nghiệp vụ trong hệ thống DAU Chat (ENT-01 đến ENT-12):"
     )
-    p_ent.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p_ent.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_ent.paragraph_format.space_after = Pt(2)
 
     tbl_ent = doc.add_table(rows=1, cols=5)
     set_table_borders(tbl_ent)
@@ -337,9 +345,10 @@ def add_section_3(doc):
 
     doc.add_heading("3.2. Phân hệ và Nhóm chức năng (Subsystems)", level=2)
     p_mod = doc.add_paragraph(
-        "Toàn bộ hệ thống DAU Chat được quy hoạch thành 8 phân hệ chức năng (MOD-01 đến MOD-08), phân chia ranh giới rõ ràng giữa các thành viên phụ trách kỹ thuật trong nhóm Team 5:"
+        "Bảng 3.2: Danh mục 8 phân hệ chức năng và phân công trách nhiệm nhóm Team 5 (MOD-01 đến MOD-08):"
     )
-    p_mod.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p_mod.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_mod.paragraph_format.space_after = Pt(2)
 
     tbl_mod = doc.add_table(rows=1, cols=5)
     set_table_borders(tbl_mod)
@@ -362,4 +371,4 @@ def add_section_3(doc):
     for idx, row in enumerate(mod_data):
         add_data_row(tbl_mod, row, is_even=(idx % 2 == 1), col_widths=widths)
 
-print("Section 1, 2, 3 builder functions ready.")
+print("Section 1, 2, 3 builder functions updated.")

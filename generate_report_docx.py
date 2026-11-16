@@ -10,7 +10,7 @@ from section_data_4_to_5 import add_section_4, add_section_5
 from section_data_6_to_7 import add_section_6, add_section_7
 
 def build_full_report():
-    print("=== STARTING DAU CHAT REPORT COMPILATION ===")
+    print("=== STARTING DAU CHAT REPORT COMPILATION (ACADEMIC TECH DEV EDITION) ===")
     doc = create_report()
 
     print("1. Adding Cover Page...")
@@ -40,12 +40,20 @@ def build_full_report():
     print("9. Adding Section 7: Chia & Quản lý công việc nhóm Team 5 (7 Giai đoạn & Log)...")
     add_section_7(doc)
 
-    output_path = 'e:/DAU-Chat-Team5/BAO_CAO_PHAN_TICH_HTTT_DAU_CHAT.docx'
-    print(f"10. Saving document to: {output_path} ...")
-    doc.save(output_path)
-
-    file_size_kb = os.path.getsize(output_path) / 1024
+    # Primary targets
+    primary_path = 'e:/DAU-Chat-Team5/BAO_CAO_PHAN_TICH_HTTT_DAU_CHAT_Chuan_Khoa_CNTT.docx'
+    print(f"10. Saving document to: {primary_path} ...")
+    doc.save(primary_path)
+    file_size_kb = os.path.getsize(primary_path) / 1024
     print(f"=== COMPILATION SUCCESSFUL! File size: {file_size_kb:.2f} KB ===")
+
+    # Also try to update the original file if unlocked
+    orig_path = 'e:/DAU-Chat-Team5/BAO_CAO_PHAN_TICH_HTTT_DAU_CHAT.docx'
+    try:
+        doc.save(orig_path)
+        print(f"Successfully updated original file: {orig_path}")
+    except PermissionError:
+        print(f"Notice: {orig_path} is currently locked by Word. The new version is available at {primary_path}.")
 
 if __name__ == '__main__':
     build_full_report()

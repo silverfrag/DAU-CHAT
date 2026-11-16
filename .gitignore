@@ -18,3 +18,7 @@ ServerTempQueue/
 *.db
 *.db-shm
 *.db-wal
+
+## Office lock files & Python cache
+~$*.docx
+__pycache__/
