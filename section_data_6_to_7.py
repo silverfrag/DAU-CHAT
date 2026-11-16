@@ -297,4 +297,42 @@ def add_section_7(doc):
     r_cc.font.bold = True
     r_cc.font.color.rgb = RGBColor(15, 45, 89)
 
+    # PHỤ LỤC. BẢNG ĐỐI CHIẾU DANH MỤC TỆP NGUỒN C# .NET 10 THỰC TẾ
+    doc.add_page_break()
+    p_app = doc.add_heading("PHỤ LỤC. BẢNG ĐỐI CHIẾU DANH MỤC TỆP NGUỒN C# .NET 10 THỰC TẾ", level=1)
+    p_app_desc = doc.add_paragraph(
+        "Nhằm tạo điều kiện thuận lợi nhất cho Giảng viên hướng dẫn TS. Đặng Hùng Vĩ đối soát trực tiếp giữa báo cáo phân tích thiết kế và mã nguồn thực tế của nhóm Team 5 trong kho chứa Git, bảng dưới đây liệt kê chi tiết các tệp nguồn, lớp xử lý và vai trò kỹ thuật tương ứng trong Solution DauChat.sln (.NET 10.0 LTS):"
+    )
+    p_app_desc.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+
+    tbl_src = doc.add_table(rows=1, cols=4)
+    set_table_borders(tbl_src)
+    tbl_src.alignment = WD_TABLE_ALIGNMENT.CENTER
+    src_headers = ["Phân hệ / Nhánh Git", "Đường dẫn Tệp nguồn trong Repository", "Lớp / Interface Chính", "Nhiệm vụ Kỹ thuật Cốt lõi"]
+    src_widths = [Inches(1.5), Inches(2.3), Inches(1.8), Inches(1.6)]
+    add_header_styled_row(tbl_src, src_headers, src_widths)
+
+    src_data = [
+        ("Shared (Dùng chung)", "DauChat.Shared/Networking/NetworkPacket.cs", "NetworkPacket", "Định nghĩa cấu trúc gói tin mạng nhị phân chuẩn 4-byte Length-prefix"),
+        ("Shared (Dùng chung)", "DauChat.Shared/Enums/PacketType.cs", "PacketType (Enum)", "Danh mục mã gói tin từ 101 (Login) đến 706 (VaultStatusReply)"),
+        ("Shared (Dùng chung)", "DauChat.Shared/Models/StorageSyncDtos.cs", "VaultPushRequest, VaultPull...", "DTOs phục vụ đồng bộ dữ liệu đa máy và Server Vault LAN"),
+        ("TV1: Client UI", "DauChat.Client.UI/Views/MainShellView.xaml", "MainShellView, MainShellViewModel", "Giao diện chính WPF MVVM, quản lý danh bạ, chuyển tab và thanh trạng thái"),
+        ("TV1: Client UI", "DauChat.Client.UI/Views/ChatWorkspaceView.xaml", "ChatWorkspaceView, ChatViewModel", "Không gian trò chuyện, bong bóng tin nhắn, khay tệp chờ Staged Tray"),
+        ("TV1: Client UI", "DauChat.Client.UI/Views/ModalsOverlay.xaml", "ModalsOverlay, ModalDialogService", "Cửa sổ Modal đồng bộ LAN Vault và xác nhận Lab PC Mode khi đăng xuất"),
+        ("TV1: Client UI", "DauChat.Client.UI/Views/StorageBackupView.xaml", "StorageBackupView, StorageViewModel", "Màn hình quản lý dung lượng, sao lưu .zip và đẩy/kéo LAN Server Vault"),
+        ("TV2: Network & Server", "DauChat.Server/Program.cs", "ServerProgram, TcpListener", "Điểm khởi động máy chủ TCP Socket, quản lý đa luồng Async/Await"),
+        ("TV2: Network & Server", "DauChat.Core/Networking/TcpNetworkService.cs", "TcpNetworkService, INetworkService", "Bộ điều hợp mạng Client: đóng gói 4B Big-Endian, phát Heartbeat"),
+        ("TV2: Network & Server", "DauChat.Server/Vault/ServerVaultHandler.cs", "ServerVaultHandler", "Xử lý kho đệm nóng LAN: lưu snapshot, hạn ngạch 1GB và dọn dẹp LRU"),
+        ("TV3: Auth & Metadata", "DauChat.Core/AuthAndRooms/SqliteStore.cs", "SqliteMetadataStore, IAuthRoom", "Quản trị CSDL SQLite: Users, Roles, Classes, Rooms, AuditLogs"),
+        ("TV3: Auth & Metadata", "DauChat.Server/dauchat-metadata.db", "SQLite Database File", "Tệp CSDL cục bộ phía Server lưu danh mục người dùng và phân quyền"),
+        ("TV4: Messaging", "DauChat.Core/Messaging/JsonlMessageStorage.cs", "JsonlMessageStorage, IMessaging", "Động cơ Local-First ghi nối tiếp Append-only tệp YYYY-MM.jsonl"),
+        ("TV4: Messaging", "DauChat.Core/Messaging/BinaryIndexManager.cs", "BinaryIndexManager", "Quản lý file chỉ mục nhị phân .idx (offset 8B + time 8B) đọc nhanh O(1)"),
+        ("TV5: File & Storage", "DauChat.Core/FileAndStorage/ChunkTransfer.cs", "ChunkFileTransferService, IFile", "Cắt/ghép chunk 64KB, kiểm tra SHA-256, ghi file_manifest.jsonl"),
+        ("TV5: File & Storage", "DauChat.Core/FileAndStorage/BackupService.cs", "LocalStorageBackupService", "Nén/giải nén .zip, dọn dẹp dung lượng đĩa cũ quá hạn"),
+        ("Kiểm thử Tự động", "DauChat.SandboxTest/Program.cs", "SandboxTestRunner", "Bộ kiểm thử tự động toàn diện cho TV2, TV3, TV4, TV5 (100% Pass)")
+    ]
+
+    for idx, row in enumerate(src_data):
+        add_data_row(tbl_src, row, is_even=(idx % 2 == 1), col_widths=src_widths)
+
 print("Section 6 and 7 builder functions ready.")
