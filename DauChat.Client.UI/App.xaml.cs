@@ -6,9 +6,29 @@ namespace DauChat.Client.UI;
 
 public partial class App : Application
 {
+    private static void FreezeResources(ResourceDictionary dictionary)
+    {
+        foreach (var key in dictionary.Keys)
+        {
+            if (dictionary[key] is Freezable { CanFreeze: true, IsFrozen: false } freezable)
+            {
+                freezable.Freeze();
+            }
+        }
+
+        foreach (var merged in dictionary.MergedDictionaries)
+        {
+            FreezeResources(merged);
+        }
+    }
+
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        Resources["FrostedGrainBrush"] = Infrastructure.FrostedTextureGenerator.CreateFrostedGrainBrush(0.032, isDarkSurface: false);
+        Resources["DarkFrostedGrainBrush"] = Infrastructure.FrostedTextureGenerator.CreateFrostedGrainBrush(0.048, isDarkSurface: true);
+        FreezeResources(Resources);
 
         DispatcherUnhandledException += (_, args) =>
         {

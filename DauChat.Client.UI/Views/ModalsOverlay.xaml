@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:infra="clr-namespace:DauChat.Client.UI.Infrastructure"
              mc:Ignorable="d"
              d:DesignHeight="820"
              d:DesignWidth="1280">
@@ -24,7 +25,7 @@
                                     Width="18"
                                     Height="18"
                                     CornerRadius="5"
-                                    Background="White"
+                                    Background="{StaticResource SurfaceElevatedBrush}"
                                     BorderBrush="{StaticResource BorderStrongBrush}"
                                     BorderThickness="1.5"
                                     VerticalAlignment="Center">
@@ -43,12 +44,12 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Box" Property="Background" Value="{StaticResource DauRedBrush}" />
-                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource DauRedBrush}" />
+                                <Setter TargetName="Box" Property="Background" Value="{StaticResource BrandSlateBrush}" />
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource BrandSlateBrush}" />
                                 <Setter TargetName="CheckMark" Property="Visibility" Value="Visible" />
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource DauRedBrush}" />
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource BrandSlateBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -60,11 +61,17 @@
     <Grid>
         <!-- 1. Modal Tạo / Sửa phòng trò chuyện -->
         <Grid Background="{StaticResource ModalBackdropBrush}"
-              Visibility="{Binding IsCreateRoomOpen, Converter={StaticResource BoolToVis}}">
+              infra:MotionBehavior.Preset="ModalBackdropFade"
+              infra:MotionBehavior.IsShown="{Binding IsCreateRoomOpen}">
             <Border MaxWidth="470"
+                    infra:MotionBehavior.IsShown="{Binding IsCreateRoomOpen}"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Background="{StaticResource SurfaceWhiteBrush}"
+                    infra:MotionBehavior.Preset="ScaleFade"
+                    Background="{StaticResource GlassModalBrush}"
+                    BorderBrush="{StaticResource GlassBorderBrush}"
+                    BorderThickness="1.2"
+                    Effect="{StaticResource GlassModalShadow}"
                     CornerRadius="22"
                     Padding="28">
                 <StackPanel MinWidth="400">
@@ -170,11 +177,17 @@
 
         <!-- 2. Modal Hồ sơ cá nhân, Đổi mật khẩu & Đăng xuất -->
         <Grid Background="{StaticResource ModalBackdropBrush}"
-              Visibility="{Binding IsProfileOpen, Converter={StaticResource BoolToVis}}">
+              infra:MotionBehavior.Preset="ModalBackdropFade"
+              infra:MotionBehavior.IsShown="{Binding IsProfileOpen}">
             <Border MaxWidth="500"
+                    infra:MotionBehavior.IsShown="{Binding IsProfileOpen}"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Background="{StaticResource SurfaceWhiteBrush}"
+                    infra:MotionBehavior.Preset="ScaleFade"
+                    Background="{StaticResource GlassModalBrush}"
+                    BorderBrush="{StaticResource GlassBorderBrush}"
+                    BorderThickness="1.2"
+                    Effect="{StaticResource GlassModalShadow}"
                     CornerRadius="22"
                     Padding="28">
                 <StackPanel MinWidth="420">
@@ -307,11 +320,17 @@
 
         <!-- 3. Modal Admin Tạo / Sửa tài khoản -->
         <Grid Background="{StaticResource ModalBackdropBrush}"
-              Visibility="{Binding IsCreateAccountOpen, Converter={StaticResource BoolToVis}}">
+              infra:MotionBehavior.Preset="ModalBackdropFade"
+              infra:MotionBehavior.IsShown="{Binding IsCreateAccountOpen}">
             <Border MaxWidth="470"
+                    infra:MotionBehavior.IsShown="{Binding IsCreateAccountOpen}"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Background="{StaticResource SurfaceWhiteBrush}"
+                    infra:MotionBehavior.Preset="ScaleFade"
+                    Background="{StaticResource GlassModalBrush}"
+                    BorderBrush="{StaticResource GlassBorderBrush}"
+                    BorderThickness="1.2"
+                    Effect="{StaticResource GlassModalShadow}"
                     CornerRadius="22"
                     Padding="28">
                 <StackPanel MinWidth="400">
@@ -380,11 +399,17 @@
 
         <!-- 4. Modal Khóa tài khoản nhập lý do -->
         <Grid Background="{StaticResource ModalBackdropBrush}"
-              Visibility="{Binding IsLockModalOpen, Converter={StaticResource BoolToVis}}">
+              infra:MotionBehavior.Preset="ModalBackdropFade"
+              infra:MotionBehavior.IsShown="{Binding IsLockModalOpen}">
             <Border MaxWidth="420"
+                    infra:MotionBehavior.IsShown="{Binding IsLockModalOpen}"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Background="{StaticResource SurfaceWhiteBrush}"
+                    infra:MotionBehavior.Preset="ScaleFade"
+                    Background="{StaticResource GlassModalBrush}"
+                    BorderBrush="{StaticResource GlassBorderBrush}"
+                    BorderThickness="1.2"
+                    Effect="{StaticResource GlassModalShadow}"
                     CornerRadius="22"
                     Padding="26">
                 <StackPanel MinWidth="360">
@@ -404,11 +429,17 @@
 
         <!-- 5. Modal Tạo / Sửa lớp học phần (Admin & Giảng viên) -->
         <Grid Background="{StaticResource ModalBackdropBrush}"
-              Visibility="{Binding IsCreateClassOpen, Converter={StaticResource BoolToVis}}">
+              infra:MotionBehavior.Preset="ModalBackdropFade"
+              infra:MotionBehavior.IsShown="{Binding IsCreateClassOpen}">
             <Border MaxWidth="480"
+                    infra:MotionBehavior.IsShown="{Binding IsCreateClassOpen}"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Background="{StaticResource SurfaceWhiteBrush}"
+                    infra:MotionBehavior.Preset="ScaleFade"
+                    Background="{StaticResource GlassModalBrush}"
+                    BorderBrush="{StaticResource GlassBorderBrush}"
+                    BorderThickness="1.2"
+                    Effect="{StaticResource GlassModalShadow}"
                     CornerRadius="22"
                     Padding="28">
                 <StackPanel MinWidth="400">
@@ -477,11 +508,17 @@
 
         <!-- 6. Modal Thêm thành viên hàng loạt (2 Tab: Chọn CheckBox & Nhập danh sách MSSV / CSV) -->
         <Grid Background="{StaticResource ModalBackdropBrush}"
-              Visibility="{Binding IsAddMemberOpen, Converter={StaticResource BoolToVis}}">
+              infra:MotionBehavior.Preset="ModalBackdropFade"
+              infra:MotionBehavior.IsShown="{Binding IsAddMemberOpen}">
             <Border MaxWidth="620"
+                    infra:MotionBehavior.IsShown="{Binding IsAddMemberOpen}"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Background="{StaticResource SurfaceWhiteBrush}"
+                    infra:MotionBehavior.Preset="ScaleFade"
+                    Background="{StaticResource GlassModalBrush}"
+                    BorderBrush="{StaticResource GlassBorderBrush}"
+                    BorderThickness="1.2"
+                    Effect="{StaticResource GlassModalShadow}"
                     CornerRadius="22"
                     Padding="28">
                 <StackPanel MinWidth="540">
@@ -638,18 +675,12 @@
                             <Button Style="{StaticResource SecondaryButtonStyle}"
                                     MinHeight="32"
                                     Padding="12,5"
-                                    Margin="0,0,8,0"
                                     Command="{Binding ImportMssvFileCommand}">
                                 <StackPanel Orientation="Horizontal">
                                     <Path Data="{StaticResource IconUpload}" Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.9" Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
                                     <TextBlock Text="Nhập file .csv / .txt" Margin="6,0,0,0" FontSize="11.5" FontWeight="SemiBold" />
                                 </StackPanel>
                             </Button>
-                            <Button Style="{StaticResource SecondaryButtonStyle}"
-                                    MinHeight="32"
-                                    Padding="12,5"
-                                    Content="Điền nhanh SV mẫu chưa tham gia"
-                                    Command="{Binding FillAvailableStudentsMssvCommand}" />
                         </StackPanel>
 
                         <TextBox Style="{StaticResource ModernTextBoxStyle}"
@@ -707,11 +738,17 @@
 
         <!-- 7. Modal Admin Quản lý thành viên Lớp / Phòng -->
         <Grid Background="{StaticResource ModalBackdropBrush}"
-              Visibility="{Binding IsMembersManagerOpen, Converter={StaticResource BoolToVis}}">
+              infra:MotionBehavior.Preset="ModalBackdropFade"
+              infra:MotionBehavior.IsShown="{Binding IsMembersManagerOpen}">
             <Border MaxWidth="540"
+                    infra:MotionBehavior.IsShown="{Binding IsMembersManagerOpen}"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Background="{StaticResource SurfaceWhiteBrush}"
+                    infra:MotionBehavior.Preset="ScaleFade"
+                    Background="{StaticResource GlassModalBrush}"
+                    BorderBrush="{StaticResource GlassBorderBrush}"
+                    BorderThickness="1.2"
+                    Effect="{StaticResource GlassModalShadow}"
                     CornerRadius="22"
                     Padding="28">
                 <StackPanel MinWidth="460">
@@ -801,11 +838,17 @@
 
         <!-- 8. Modal Sinh viên Tham gia lớp học bằng Mã lớp (Kiểu Google Classroom) -->
         <Grid Background="{StaticResource ModalBackdropBrush}"
-              Visibility="{Binding IsJoinByCodeOpen, Converter={StaticResource BoolToVis}}">
+              infra:MotionBehavior.Preset="ModalBackdropFade"
+              infra:MotionBehavior.IsShown="{Binding IsJoinByCodeOpen}">
             <Border MaxWidth="460"
+                    infra:MotionBehavior.IsShown="{Binding IsJoinByCodeOpen}"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Background="{StaticResource SurfaceWhiteBrush}"
+                    infra:MotionBehavior.Preset="ScaleFade"
+                    Background="{StaticResource GlassModalBrush}"
+                    BorderBrush="{StaticResource GlassBorderBrush}"
+                    BorderThickness="1.2"
+                    Effect="{StaticResource GlassModalShadow}"
                     CornerRadius="22"
                     Padding="28">
                 <StackPanel MinWidth="390">
@@ -832,34 +875,6 @@
                              FontWeight="Bold"
                              Text="{Binding JoinCodeInput, UpdateSourceTrigger=PropertyChanged}" />
 
-                    <!-- Gợi ý lớp Demo chưa tham gia -->
-                    <StackPanel Visibility="{Binding AvailableJoinCodeHints.Count, Converter={StaticResource NotZeroToVis}}" Margin="0,16,0,0">
-                        <TextBlock Text="LỚP ĐANG MỞ MÃ THAM GIA (BẤM ĐỂ ĐIỀN NHANH)" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextFaintBrush}" Margin="0,0,0,8" />
-                        <ItemsControl ItemsSource="{Binding AvailableJoinCodeHints}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Button Margin="0,0,0,6"
-                                            Style="{StaticResource SecondaryButtonStyle}"
-                                            MinHeight="40"
-                                            Padding="12,6"
-                                            HorizontalContentAlignment="Stretch"
-                                            Command="{Binding DataContext.PickJoinCodeHintCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}">
-                                        <Grid>
-                                            <StackPanel VerticalAlignment="Center" Margin="0,0,105,0">
-                                                <TextBlock Text="{Binding ClassName}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
-                                                <TextBlock Text="{Binding LecturerName}" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" />
-                                            </StackPanel>
-                                            <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="{StaticResource DauRedSoftBrush}" CornerRadius="7" Padding="8,4">
-                                                <TextBlock Text="{Binding JoinCode}" FontFamily="{StaticResource MonoFont}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" />
-                                            </Border>
-                                        </Grid>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
                         <Button Style="{StaticResource SecondaryButtonStyle}" Content="Hủy" Command="{Binding CloseModalsCommand}" Margin="0,0,10,0" />
                         <Button Style="{StaticResource PrimaryButtonStyle}" Content="Tham gia lớp ngay" Command="{Binding SubmitJoinByCodeCommand}" />
@@ -870,11 +885,17 @@
 
         <!-- 9. Modal Ghim thông báo giảng viên -->
         <Grid Background="{StaticResource ModalBackdropBrush}"
-              Visibility="{Binding IsPinModalOpen, Converter={StaticResource BoolToVis}}">
+              infra:MotionBehavior.Preset="ModalBackdropFade"
+              infra:MotionBehavior.IsShown="{Binding IsPinModalOpen}">
             <Border MaxWidth="460"
+                    infra:MotionBehavior.IsShown="{Binding IsPinModalOpen}"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Background="{StaticResource SurfaceWhiteBrush}"
+                    infra:MotionBehavior.Preset="ScaleFade"
+                    Background="{StaticResource GlassModalBrush}"
+                    BorderBrush="{StaticResource GlassBorderBrush}"
+                    BorderThickness="1.2"
+                    Effect="{StaticResource GlassModalShadow}"
                     CornerRadius="22"
                     Padding="26">
                 <StackPanel MinWidth="380">
@@ -899,11 +920,17 @@
 
         <!-- 10. Modal Admin Cấp tài khoản hàng loạt (.CSV / .TXT) -->
         <Grid Background="{StaticResource ModalBackdropBrush}"
-              Visibility="{Binding IsBatchAccountModalOpen, Converter={StaticResource BoolToVis}}">
+              infra:MotionBehavior.Preset="ModalBackdropFade"
+              infra:MotionBehavior.IsShown="{Binding IsBatchAccountModalOpen}">
             <Border MaxWidth="640"
+                    infra:MotionBehavior.IsShown="{Binding IsBatchAccountModalOpen}"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Background="{StaticResource SurfaceWhiteBrush}"
+                    infra:MotionBehavior.Preset="ScaleFade"
+                    Background="{StaticResource GlassModalBrush}"
+                    BorderBrush="{StaticResource GlassBorderBrush}"
+                    BorderThickness="1.2"
+                    Effect="{StaticResource GlassModalShadow}"
                     CornerRadius="22"
                     Padding="28">
                 <StackPanel MinWidth="560">
@@ -928,18 +955,12 @@
                             <Button Style="{StaticResource SecondaryButtonStyle}"
                                     MinHeight="32"
                                     Padding="12,5"
-                                    Margin="0,0,8,0"
                                     Command="{Binding ImportBatchAccountsCsvCommand}">
                                 <StackPanel Orientation="Horizontal">
                                     <Path Data="{StaticResource IconUpload}" Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.9" Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
                                     <TextBlock Text="Nhập file .csv / .txt" Margin="6,0,0,0" FontSize="11.5" FontWeight="SemiBold" />
                                 </StackPanel>
                             </Button>
-                            <Button Style="{StaticResource SecondaryButtonStyle}"
-                                    MinHeight="32"
-                                    Padding="12,5"
-                                    Content="Điền dữ liệu mẫu"
-                                    Command="{Binding FillSampleBatchAccountsCommand}" />
                         </StackPanel>
 
                         <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
@@ -1062,7 +1083,7 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <TextBlock Text="Chưa có dữ liệu. Nhập danh sách hoặc bấm 'Điền dữ liệu mẫu' để xem trước."
+                                <TextBlock Text="Chưa có dữ liệu. Nhập danh sách hoặc tải file .csv / .txt để xem trước."
                                            Margin="16,42"
                                            HorizontalAlignment="Center"
                                            FontSize="12"
@@ -1086,8 +1107,12 @@
         <!-- 9. MODAL: ĐỒNG BỘ DỮ LIỆU TỪ SERVER LAN (LAN SOCKET SYNC)  -->
         <!-- ========================================================= -->
         <Grid Background="{StaticResource ModalBackdropBrush}"
-              Visibility="{Binding IsLanSyncPromptVisible, Converter={StaticResource BoolToVis}}">
-            <Border Style="{StaticResource ModalCardBorderStyle}" MaxWidth="480">
+              infra:MotionBehavior.Preset="ModalBackdropFade"
+              infra:MotionBehavior.IsShown="{Binding IsLanSyncPromptVisible}">
+            <Border Style="{StaticResource ModalCardBorderStyle}"
+                    infra:MotionBehavior.Preset="ModalCard"
+                    infra:MotionBehavior.IsShown="{Binding IsLanSyncPromptVisible}"
+                    MaxWidth="480">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
                         <Border Width="42" Height="42" CornerRadius="12" Background="{StaticResource BlueSoftBrush}">

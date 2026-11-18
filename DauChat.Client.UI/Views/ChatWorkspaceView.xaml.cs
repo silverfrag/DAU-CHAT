@@ -1,6 +1,9 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using DauChat.Client.UI.Models;
 using DauChat.Client.UI.ViewModels;
@@ -25,6 +28,7 @@ public partial class ChatWorkspaceView : UserControl
             _boundVm.ScrollToEndRequested -= OnScrollToEndRequested;
             _boundVm.ThreadMessageAppended -= OnThreadMessageAppended;
             _boundVm.FocusComposerRequested -= OnFocusComposerRequested;
+            _boundVm.PropertyChanged -= OnBoundVmPropertyChanged;
         }
 
         _boundVm = DataContext as ChatWorkspaceViewModel;
@@ -33,7 +37,60 @@ public partial class ChatWorkspaceView : UserControl
             _boundVm.ScrollToEndRequested += OnScrollToEndRequested;
             _boundVm.ThreadMessageAppended += OnThreadMessageAppended;
             _boundVm.FocusComposerRequested += OnFocusComposerRequested;
+            _boundVm.PropertyChanged += OnBoundVmPropertyChanged;
         }
+    }
+
+    private void OnBoundVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ChatWorkspaceViewModel.SelectedConversation))
+        {
+            Dispatcher.BeginInvoke(PlayConversationSwitchMotion, DispatcherPriority.Render);
+        }
+    }
+
+    private static readonly KeySpline ThreadSweepSpline = CreateFrozenSweepSpline();
+    private int _threadAnimToken;
+
+    private static KeySpline CreateFrozenSweepSpline()
+    {
+        var s = new KeySpline(0.16, 1.0, 0.30, 1.0);
+        s.Freeze();
+        return s;
+    }
+
+    private void PlayConversationSwitchMotion()
+    {
+        var token = ++_threadAnimToken;
+        MessagesScrollViewer.CacheMode = new BitmapCache { EnableClearType = true };
+
+        var opacityAnim = new DoubleAnimationUsingKeyFrames();
+        opacityAnim.KeyFrames.Add(new DiscreteDoubleKeyFrame(0.18, KeyTime.FromTimeSpan(TimeSpan.Zero)));
+        opacityAnim.KeyFrames.Add(new SplineDoubleKeyFrame(1.0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(220)), ThreadSweepSpline));
+        MessagesScrollViewer.BeginAnimation(UIElement.OpacityProperty, opacityAnim, HandoffBehavior.SnapshotAndReplace);
+
+        if (MessagesScrollViewer.RenderTransform is not TranslateTransform translate)
+        {
+            translate = new TranslateTransform(0, 0);
+            MessagesScrollViewer.RenderTransform = translate;
+        }
+
+        var xAnim = new DoubleAnimationUsingKeyFrames();
+        xAnim.KeyFrames.Add(new DiscreteDoubleKeyFrame(16, KeyTime.FromTimeSpan(TimeSpan.Zero)));
+        xAnim.KeyFrames.Add(new SplineDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(260)), ThreadSweepSpline));
+        xAnim.Completed += (_, _) =>
+        {
+            if (_threadAnimToken == token)
+            {
+                MessagesScrollViewer.CacheMode = null;
+            }
+        };
+        translate.BeginAnimation(TranslateTransform.XProperty, xAnim, HandoffBehavior.SnapshotAndReplace);
+
+        var yAnim = new DoubleAnimationUsingKeyFrames();
+        yAnim.KeyFrames.Add(new DiscreteDoubleKeyFrame(5, KeyTime.FromTimeSpan(TimeSpan.Zero)));
+        yAnim.KeyFrames.Add(new SplineDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(260)), ThreadSweepSpline));
+        translate.BeginAnimation(TranslateTransform.YProperty, yAnim, HandoffBehavior.SnapshotAndReplace);
     }
 
     private void OnScrollToEndRequested()

@@ -6,33 +6,45 @@
              mc:Ignorable="d"
              d:DesignHeight="800"
              d:DesignWidth="1120"
-             Background="{StaticResource CanvasBgBrush}">
+             Background="Transparent">
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="74" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0"
-                Background="{StaticResource SurfaceWhiteBrush}"
-                BorderBrush="{StaticResource BorderSubtleBrush}"
-                BorderThickness="0,0,0,1"
-                Padding="28,0">
+                Height="74"
+                Margin="0,0,0,12"
+                Background="{StaticResource GlassPanelBrush}"
+                BorderBrush="{StaticResource GlassBorderBrush}"
+                BorderThickness="1.2"
+                CornerRadius="22"
+                Padding="26,0"
+                Effect="{StaticResource GlassPanelShadow}">
             <Grid>
-                <StackPanel VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
                     <TextBlock Text="DỮ LIỆU LOCAL-FIRST"
                                FontSize="10.5"
                                FontWeight="Bold"
-                               Foreground="{StaticResource DauRedTextBrush}" />
+                               Foreground="{StaticResource DauRedTextBrush}"
+                               TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="Lưu trữ &amp; sao lưu"
                                FontSize="20"
                                FontWeight="Bold"
                                Foreground="{StaticResource TextPrimaryBrush}"
+                               TextTrimming="CharacterEllipsis"
                                Margin="0,2,0,0" />
                 </StackPanel>
 
-                <TextBlock HorizontalAlignment="Right"
+                <TextBlock Grid.Column="1"
+                           MaxWidth="420"
+                           TextTrimming="CharacterEllipsis"
                            VerticalAlignment="Center"
                            Text="{Binding LocalFolderPathLabel}"
                            FontFamily="{StaticResource MonoFont}"
@@ -42,12 +54,16 @@
         </Border>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel MaxWidth="1080" Margin="28,24,28,36">
+            <StackPanel MaxWidth="1560" Margin="28,24,28,36">
                 <!-- Thẻ tổng dung lượng -->
                 <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
                     <StackPanel>
                         <Grid>
-                            <StackPanel>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,12,0">
                                 <TextBlock Text="Dung lượng dữ liệu Local đã dùng" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" />
                                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                                     <TextBlock Text="{Binding UsedCapacityText}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
@@ -55,7 +71,7 @@
                                 </StackPanel>
                             </StackPanel>
 
-                            <Border HorizontalAlignment="Right" VerticalAlignment="Top" Background="{StaticResource EmeraldSoftBrush}" CornerRadius="10" Padding="12,7">
+                            <Border Grid.Column="1" VerticalAlignment="Top" Background="{StaticResource EmeraldSoftBrush}" CornerRadius="10" Padding="12,7">
                                 <TextBlock Text="Ổ đĩa đồng bộ ổn định" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource EmeraldTextBrush}" />
                             </Border>
                         </Grid>
@@ -145,11 +161,15 @@
                                     <DataTemplate>
                                         <StackPanel Margin="0,0,0,18">
                                             <Grid Margin="0,0,0,6">
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding DisplayName}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
-                                                    <TextBlock Text="{Binding DetailText}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                                    <TextBlock Text="{Binding DisplayName}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="{Binding DetailText}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
                                                 </StackPanel>
-                                                <TextBlock HorizontalAlignment="Right"
+                                                <TextBlock Grid.Column="1"
                                                            VerticalAlignment="Center"
                                                            Text="{Binding UsedText}"
                                                            FontSize="12.5"

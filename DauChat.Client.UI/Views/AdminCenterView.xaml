@@ -3,38 +3,49 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:infra="clr-namespace:DauChat.Client.UI.Infrastructure"
              mc:Ignorable="d"
              d:DesignHeight="820"
              d:DesignWidth="1120"
-             Background="{StaticResource CanvasBgBrush}">
+             Background="Transparent">
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="74" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Header -->
+        <!-- Header Kính Nhám Nổi -->
         <Border Grid.Row="0"
-                Background="{StaticResource SurfaceWhiteBrush}"
-                BorderBrush="{StaticResource BorderSubtleBrush}"
-                BorderThickness="0,0,0,1"
-                Padding="28,0">
+                Height="74"
+                Margin="0,0,0,12"
+                Background="{StaticResource GlassPanelBrush}"
+                BorderBrush="{StaticResource GlassBorderBrush}"
+                BorderThickness="1.2"
+                CornerRadius="22"
+                Padding="26,0"
+                Effect="{StaticResource GlassPanelShadow}">
             <Grid>
-                <StackPanel VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,14,0" VerticalAlignment="Center">
                     <TextBlock Text="QUẢN TRỊ VIÊN HỆ THỐNG (ADMIN ONLY)"
                                FontSize="10.5"
                                FontWeight="Bold"
-                               Foreground="{StaticResource DauRedTextBrush}" />
+                               Foreground="{StaticResource DauRedTextBrush}"
+                               TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="Trung tâm quản trị"
                                FontSize="20"
                                FontWeight="Bold"
                                Foreground="{StaticResource TextPrimaryBrush}"
+                               TextTrimming="CharacterEllipsis"
                                Margin="0,2,0,0" />
                 </StackPanel>
 
                 <!-- 4 Tab con điều hướng phân hệ Admin -->
-                <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal">
                     <RadioButton Content="Tài khoản &amp; RBAC"
                                  Style="{StaticResource FilterPillRadioStyle}"
                                  IsChecked="{Binding ActiveTab, Converter={StaticResource EnumEquals}, ConverterParameter=OverviewAndUsers, Mode=OneWay}"
@@ -63,7 +74,7 @@
         </Border>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel MaxWidth="1120" Margin="28,24,28,36">
+            <StackPanel MaxWidth="1560" Margin="28,24,28,36">
                 <!-- 4 Thẻ KPI -->
                 <Grid Margin="0,0,0,22">
                     <Grid.ColumnDefinitions>
@@ -118,7 +129,7 @@
                 </Grid>
 
                 <!-- TAB 1: TỔNG QUAN & TÀI KHOẢN RBAC -->
-                <Grid Visibility="{Binding ActiveTab, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=OverviewAndUsers}">
+                <Grid infra:MotionBehavior.Preset="SlideUpFade" Visibility="{Binding ActiveTab, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=OverviewAndUsers}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1.5*" />
                         <ColumnDefinition Width="20" />
@@ -127,12 +138,13 @@
 
                     <!-- Bảng Tài khoản cấp phát nội bộ -->
                     <Border Grid.Column="0"
-                            Background="{StaticResource SurfaceWhiteBrush}"
-                            BorderBrush="{StaticResource BorderSubtleBrush}"
-                            BorderThickness="1"
-                            CornerRadius="16">
+                            Background="{StaticResource GlassCardBrush}"
+                            BorderBrush="{StaticResource GlassBorderBrush}"
+                            BorderThickness="1.2"
+                            CornerRadius="20"
+                            Effect="{StaticResource GlassSoftShadow}">
                         <StackPanel>
-                            <Border BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,16">
+                            <Border BorderBrush="{StaticResource GlassDividerBrush}" BorderThickness="0,0,0,1" Padding="20,16">
                                 <StackPanel>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -140,7 +152,7 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0" Margin="0,0,14,0" VerticalAlignment="Center">
-                                            <TextBlock Text="Danh sách tài khoản (Demo nội bộ)" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Danh sách tài khoản nội bộ" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
                                             <TextBlock Text="Admin tạo nick, nhập CSV hàng loạt, gán quyền RBAC, đặt lại mật khẩu hoặc khóa phiên" FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
@@ -265,9 +277,7 @@
                                                 <Button Grid.Column="2"
                                                         Margin="0,0,10,0"
                                                         VerticalAlignment="Center"
-                                                        Cursor="Hand"
-                                                        BorderThickness="0"
-                                                        Background="Transparent"
+                                                        Style="{StaticResource GhostLiftButtonStyle}"
                                                         ToolTip="Bấm để chuyển vai trò RBAC"
                                                         Command="{Binding DataContext.CycleRoleCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}">
@@ -350,16 +360,20 @@
                         <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,18">
                             <StackPanel>
                                 <Grid>
-                                    <StackPanel Orientation="Horizontal">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,10,0">
                                         <Border Width="40" Height="40" CornerRadius="12" Background="{StaticResource EmeraldSoftBrush}">
                                             <Path Data="{StaticResource IconServer}" Stroke="{StaticResource EmeraldTextBrush}" StrokeThickness="1.9" Width="19" Height="19" Stretch="Uniform" />
                                         </Border>
                                         <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-                                            <TextBlock Text="Socket Server" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
-                                            <TextBlock Text="{Binding ServerStatusSummary}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                                            <TextBlock Text="Socket Server" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding ServerStatusSummary}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
                                         </StackPanel>
                                     </StackPanel>
-                                    <CheckBox HorizontalAlignment="Right"
+                                    <CheckBox Grid.Column="1"
                                               VerticalAlignment="Center"
                                               Style="{StaticResource ServerToggleSwitchStyle}"
                                               IsChecked="{Binding IsServerRunning, Mode=OneWay}"
@@ -421,7 +435,7 @@
                 </Grid>
 
                 <!-- TAB 2: QUẢN LÝ LỚP HỌC -->
-                <Border Visibility="{Binding ActiveTab, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Classes}"
+                <Border infra:MotionBehavior.Preset="SlideUpFade" Visibility="{Binding ActiveTab, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Classes}"
                         Background="{StaticResource SurfaceWhiteBrush}"
                         BorderBrush="{StaticResource BorderSubtleBrush}"
                         BorderThickness="1"
@@ -538,7 +552,7 @@
                 </Border>
 
                 <!-- TAB 3: QUẢN LÝ PHÒNG CHAT -->
-                <Border Visibility="{Binding ActiveTab, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Rooms}"
+                <Border infra:MotionBehavior.Preset="SlideUpFade" Visibility="{Binding ActiveTab, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Rooms}"
                         Background="{StaticResource SurfaceWhiteBrush}"
                         BorderBrush="{StaticResource BorderSubtleBrush}"
                         BorderThickness="1"
@@ -644,7 +658,7 @@
                 </Border>
 
                 <!-- TAB 4: SOCKET SERVER & GIÁM SÁT KẾT NỐI -->
-                <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=ServerMonitoring}">
+                <StackPanel infra:MotionBehavior.Preset="SlideUpFade" Visibility="{Binding ActiveTab, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=ServerMonitoring}">
                     <!-- Cấu hình TCP Endpoint & Lưu lượng Byte -->
                     <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
                         <Grid>
