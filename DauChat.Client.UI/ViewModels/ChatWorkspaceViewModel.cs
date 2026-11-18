@@ -464,8 +464,8 @@ public sealed class ChatWorkspaceViewModel : ObservableObject
                     Title = room.RoomName,
                     IsRoom = true,
                     Initials = DemoDataStore.GetInitials(room.RoomName),
-                    AvatarBgHex = "#FFF1F1",
-                    AvatarFgHex = "#B70C16",
+                    AvatarBgHex = "#E2ECF2",
+                    AvatarFgHex = "#16314A",
                     Subtitle = last is null
                         ? (room.Description ?? "Phòng học nội bộ DAU")
                         : (last.Type == MessageType.FileAttachment

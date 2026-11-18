@@ -1,48 +1,77 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
+                    mc:Ignorable="po">
 
-    <!-- Thương hiệu Đại học Kiến trúc Đà Nẵng (DAU Brand Red) -->
-    <Color x:Key="DauRedColor">#CB0914</Color>
-    <Color x:Key="DauRedHoverColor">#A90811</Color>
-    <Color x:Key="DauRedPressedColor">#8E060E</Color>
-    <Color x:Key="DauRedTextColor">#C41313</Color>
-    <Color x:Key="DauRedSelectedTextColor">#9F0A12</Color>
-    <Color x:Key="DauRedSoftColor">#FFF1F1</Color>
-    <Color x:Key="DauRedTintColor">#FEF2F2</Color>
-    <Color x:Key="DauRedBorderColor">#FECACA</Color>
+    <!-- ========================================================================= -->
+    <!-- BẢNG MÀU THIẾT KẾ RIÊNG: ARCTIC HARBOR × SILK BURGUNDY × FROSTED MATTE    -->
+    <!-- Tổng hợp từ bộ mã màu tuyển chọn: #08131F • #16314A • #2E4F6B • #5F7F98   -->
+    <!-- #A9BDC9 • #E8EFF3 • #6D001A (Burgundy) • #7F1D1A (Falu Red) • #DF0139     -->
+    <!-- ========================================================================= -->
 
-    <!-- Nền & Bề mặt (Crisp Light Minimal Surface) -->
-    <Color x:Key="CanvasBgColor">#F7F8FA</Color>
-    <Color x:Key="SurfaceWhiteColor">#FFFFFF</Color>
-    <Color x:Key="SurfaceSubtleColor">#F8FAFC</Color>
-    <Color x:Key="SurfaceInputColor">#F1F5F9</Color>
-    <Color x:Key="SurfaceHoverColor">#F8FAFC</Color>
+    <!-- 1. Thương hiệu DAU (Silk Burgundy & Falu Crimson — sâu, sang, không phô) -->
+    <Color x:Key="DauBurgundyColor">#6D001A</Color>
+    <Color x:Key="DauFaluRedColor">#7F1D1A</Color>
+    <Color x:Key="DauRedColor">#9E1428</Color>
+    <Color x:Key="DauRedVibrantColor">#C91834</Color>
+    <Color x:Key="DauRedHoverColor">#840F20</Color>
+    <Color x:Key="DauRedPressedColor">#6D001A</Color>
+    <Color x:Key="DauRedTextColor">#8C1123</Color>
+    <Color x:Key="DauRedSelectedTextColor">#6D001A</Color>
+    <Color x:Key="DauRedSoftColor">#F6E9EC</Color>
+    <Color x:Key="DauRedTintColor">#F9EFF1</Color>
+    <Color x:Key="DauRedBorderColor">#DFBEC5</Color>
 
-    <!-- Đường viền & Chia tách -->
-    <Color x:Key="BorderSubtleColor">#E2E8F0</Color>
-    <Color x:Key="BorderLightColor">#F1F5F9</Color>
-    <Color x:Key="BorderStrongColor">#CBD5E1</Color>
+    <!-- 2. Màu cân bằng chủ đạo: Arctic Harbor Cool Blues -->
+    <Color x:Key="HarborAbyssColor">#08131F</Color>
+    <Color x:Key="BrandSlateDarkColor">#0E2133</Color>
+    <Color x:Key="BrandSlateColor">#16314A</Color>
+    <Color x:Key="BrandSlateMidColor">#2E4F6B</Color>
+    <Color x:Key="BrandSlateHoverColor">#24425D</Color>
+    <Color x:Key="BrandSlatePressedColor">#0D2032</Color>
+    <Color x:Key="BrandSlateMistColor">#5F7F98</Color>
+    <Color x:Key="BrandSlateIceColor">#A9BDC9</Color>
+    <Color x:Key="BrandSlateTextColor">#16314A</Color>
+    <Color x:Key="BrandSlateSoftColor">#E2ECF2</Color>
+    <Color x:Key="BrandSlateTintColor">#EDF3F7</Color>
+    <Color x:Key="BrandSlateBorderColor">#B9CBD8</Color>
 
-    <!-- Chữ (Ink Typography) -->
-    <Color x:Key="TextPrimaryColor">#0F172A</Color>
-    <Color x:Key="TextBodyColor">#1E293B</Color>
-    <Color x:Key="TextSecondaryColor">#475569</Color>
-    <Color x:Key="TextMutedColor">#64748B</Color>
-    <Color x:Key="TextFaintColor">#94A3B8</Color>
+    <!-- 3. Nền & Bề mặt Trắng Băng Đặc Biệt (Arctic Ice White #E8EFF3 & Porcelain) -->
+    <Color x:Key="CanvasBgColor">#DFE8EE</Color>
+    <Color x:Key="SurfaceWhiteColor">#F3F7F9</Color>
+    <Color x:Key="SurfaceElevatedColor">#FAFDFE</Color>
+    <Color x:Key="SurfaceSubtleColor">#E8EFF3</Color>
+    <Color x:Key="SurfaceInputColor">#DDE7EE</Color>
+    <Color x:Key="SurfaceHoverColor">#E5EEF4</Color>
 
-    <!-- Trạng thái & Ngữ nghĩa -->
-    <Color x:Key="EmeraldColor">#10B981</Color>
-    <Color x:Key="EmeraldTextColor">#047857</Color>
-    <Color x:Key="EmeraldSoftColor">#ECFDF5</Color>
-    <Color x:Key="BlueColor">#2563EB</Color>
-    <Color x:Key="BlueSoftColor">#EFF6FF</Color>
-    <Color x:Key="AmberColor">#D97706</Color>
-    <Color x:Key="AmberSoftColor">#FFFBEB</Color>
-    <Color x:Key="VioletColor">#7C3AED</Color>
-    <Color x:Key="VioletSoftColor">#F5F3FF</Color>
-    <Color x:Key="DangerTextColor">#DC2626</Color>
+    <!-- 4. Đường viền & Chia tách -->
+    <Color x:Key="BorderSubtleColor">#CCD9E3</Color>
+    <Color x:Key="BorderLightColor">#DEE7EE</Color>
+    <Color x:Key="BorderStrongColor">#A9BDC9</Color>
 
-    <!-- Brushes -->
+    <!-- 5. Chữ (Abyssal Navy & Mineral Slate Ink) -->
+    <Color x:Key="TextPrimaryColor">#08131F</Color>
+    <Color x:Key="TextBodyColor">#162B3F</Color>
+    <Color x:Key="TextSecondaryColor">#38536B</Color>
+    <Color x:Key="TextMutedColor">#5F7F98</Color>
+    <Color x:Key="TextFaintColor">#859EB0</Color>
+
+    <!-- 6. Trạng thái & Ngữ nghĩa -->
+    <Color x:Key="EmeraldColor">#0E9672</Color>
+    <Color x:Key="EmeraldTextColor">#066A50</Color>
+    <Color x:Key="EmeraldSoftColor">#E5F5F0</Color>
+    <Color x:Key="BlueColor">#2E4F6B</Color>
+    <Color x:Key="BlueSoftColor">#E6EFF5</Color>
+    <Color x:Key="AmberColor">#B86A0E</Color>
+    <Color x:Key="AmberSoftColor">#FBF2E4</Color>
+    <Color x:Key="VioletColor">#5A4896</Color>
+    <Color x:Key="VioletSoftColor">#EFEBF8</Color>
+    <Color x:Key="DangerTextColor">#B41628</Color>
+
+    <!-- Solid Brushes -->
+    <SolidColorBrush x:Key="DauBurgundyBrush" Color="{StaticResource DauBurgundyColor}" />
+    <SolidColorBrush x:Key="DauFaluRedBrush" Color="{StaticResource DauFaluRedColor}" />
     <SolidColorBrush x:Key="DauRedBrush" Color="{StaticResource DauRedColor}" />
     <SolidColorBrush x:Key="DauRedHoverBrush" Color="{StaticResource DauRedHoverColor}" />
     <SolidColorBrush x:Key="DauRedPressedBrush" Color="{StaticResource DauRedPressedColor}" />
@@ -52,8 +81,22 @@
     <SolidColorBrush x:Key="DauRedTintBrush" Color="{StaticResource DauRedTintColor}" />
     <SolidColorBrush x:Key="DauRedBorderBrush" Color="{StaticResource DauRedBorderColor}" />
 
+    <SolidColorBrush x:Key="HarborAbyssBrush" Color="{StaticResource HarborAbyssColor}" />
+    <SolidColorBrush x:Key="BrandSlateDarkBrush" Color="{StaticResource BrandSlateDarkColor}" />
+    <SolidColorBrush x:Key="BrandSlateBrush" Color="{StaticResource BrandSlateColor}" />
+    <SolidColorBrush x:Key="BrandSlateMidBrush" Color="{StaticResource BrandSlateMidColor}" />
+    <SolidColorBrush x:Key="BrandSlateHoverBrush" Color="{StaticResource BrandSlateHoverColor}" />
+    <SolidColorBrush x:Key="BrandSlatePressedBrush" Color="{StaticResource BrandSlatePressedColor}" />
+    <SolidColorBrush x:Key="BrandSlateMistBrush" Color="{StaticResource BrandSlateMistColor}" />
+    <SolidColorBrush x:Key="BrandSlateIceBrush" Color="{StaticResource BrandSlateIceColor}" />
+    <SolidColorBrush x:Key="BrandSlateTextBrush" Color="{StaticResource BrandSlateTextColor}" />
+    <SolidColorBrush x:Key="BrandSlateSoftBrush" Color="{StaticResource BrandSlateSoftColor}" />
+    <SolidColorBrush x:Key="BrandSlateTintBrush" Color="{StaticResource BrandSlateTintColor}" />
+    <SolidColorBrush x:Key="BrandSlateBorderBrush" Color="{StaticResource BrandSlateBorderColor}" />
+
     <SolidColorBrush x:Key="CanvasBgBrush" Color="{StaticResource CanvasBgColor}" />
     <SolidColorBrush x:Key="SurfaceWhiteBrush" Color="{StaticResource SurfaceWhiteColor}" />
+    <SolidColorBrush x:Key="SurfaceElevatedBrush" Color="{StaticResource SurfaceElevatedColor}" />
     <SolidColorBrush x:Key="SurfaceSubtleBrush" Color="{StaticResource SurfaceSubtleColor}" />
     <SolidColorBrush x:Key="SurfaceInputBrush" Color="{StaticResource SurfaceInputColor}" />
     <SolidColorBrush x:Key="SurfaceHoverBrush" Color="{StaticResource SurfaceHoverColor}" />
@@ -79,12 +122,172 @@
     <SolidColorBrush x:Key="VioletSoftBrush" Color="{StaticResource VioletSoftColor}" />
     <SolidColorBrush x:Key="DangerTextBrush" Color="{StaticResource DangerTextColor}" />
 
-    <SolidColorBrush x:Key="ModalBackdropBrush" Color="#660F172A" />
-    <SolidColorBrush x:Key="DarkAvatarBrush" Color="#1F2937" />
+    <SolidColorBrush x:Key="ModalBackdropBrush" Color="#7308131F" />
+    <SolidColorBrush x:Key="DarkAvatarBrush" Color="{StaticResource BrandSlateColor}" />
+
+    <!-- Fallback Design-Time cho lớp vân hạt nhám (Runtime được App.xaml.cs nạp GPU texture thật) -->
+    <SolidColorBrush x:Key="FrostedGrainBrush" Color="Transparent" />
+    <SolidColorBrush x:Key="DarkFrostedGrainBrush" Color="Transparent" />
+
+    <!-- ========================================================================= -->
+    <!-- HỆ THỐNG KÍNH NHÁM CAO CẤP (ARCHITECTURAL SATIN GLASS — KHÔNG LIQUID)     -->
+    <!-- Độ trong vừa đủ để màu Arctic Harbor & Burgundy khúc xạ hài hòa qua kính  -->
+    <!-- ========================================================================= -->
+
+    <!-- Nền tổng thể có chiều sâu khí quyển Arctic Harbor để kính nhám bắt sáng -->
+    <LinearGradientBrush x:Key="AmbientCanvasGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#9AB4C8" Offset="0.0" />
+        <GradientStop Color="#CFDDE7" Offset="0.32" />
+        <GradientStop Color="#E8EFF3" Offset="0.60" />
+        <GradientStop Color="#B6C9D8" Offset="0.86" />
+        <GradientStop Color="#8FAAC0" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- Thanh AppRail: Kính khói Xanh Lam Arctic Harbor (Smoked Sapphire Satin Glass) -->
+    <LinearGradientBrush x:Key="DarkHarborRailBrush" StartPoint="0,0" EndPoint="0.45,1">
+        <GradientStop Color="#EC08131F" Offset="0.0" />
+        <GradientStop Color="#E216314A" Offset="0.44" />
+        <GradientStop Color="#D82B4C6A" Offset="0.78" />
+        <GradientStop Color="#E80D2032" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- Viền khúc xạ ánh sáng 2 lớp cho kính Xanh Lam sâu -->
+    <LinearGradientBrush x:Key="DarkGlassBorderBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#A8E8EFF3" Offset="0.0" />
+        <GradientStop Color="#38A9BDC9" Offset="0.45" />
+        <GradientStop Color="#225F7F98" Offset="0.72" />
+        <GradientStop Color="#7AA9BDC9" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="DarkGlassInnerRimBrush" StartPoint="0,0" EndPoint="0.3,0.65">
+        <GradientStop Color="#4CE8EFF3" Offset="0.0" />
+        <GradientStop Color="#14A9BDC9" Offset="0.42" />
+        <GradientStop Color="#0016314A" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- Ánh sáng lụa chéo (Directional Satin Sheen — sang trọng, không bóng nước) -->
+    <LinearGradientBrush x:Key="DarkGlassSheenBrush" StartPoint="0,0" EndPoint="1,0.85">
+        <GradientStop Color="#28E8EFF3" Offset="0.0" />
+        <GradientStop Color="#0BA9BDC9" Offset="0.34" />
+        <GradientStop Color="#0016314A" Offset="0.58" />
+        <GradientStop Color="#145F7F98" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="GlassDiagonalSheenBrush" StartPoint="0,0" EndPoint="1,0.9">
+        <GradientStop Color="#5CFFFFFF" Offset="0.0" />
+        <GradientStop Color="#18FFFFFF" Offset="0.34" />
+        <GradientStop Color="#00FFFFFF" Offset="0.56" />
+        <GradientStop Color="#22E8EFF3" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- Hào quang ánh sáng tán xạ phía sau Logo DAU trên nền Xanh đậm (KHÔNG hộp trắng) -->
+    <RadialGradientBrush x:Key="LogoSpotlightHaloBrush" Center="0.5,0.5" GradientOrigin="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
+        <GradientStop Color="#FCE8EFF3" Offset="0.0" />
+        <GradientStop Color="#E8DCE8F0" Offset="0.34" />
+        <GradientStop Color="#76A9BDC9" Offset="0.62" />
+        <GradientStop Color="#1C5F7F98" Offset="0.82" />
+        <GradientStop Color="#0016314A" Offset="1.0" />
+    </RadialGradientBrush>
+
+    <!-- Gradient Đỏ Burgundy → Crimson kính lụa sang trọng (Ảnh 4 + 5 + 6) -->
+    <LinearGradientBrush x:Key="DauSilkRedGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#6D001A" Offset="0.0" />
+        <GradientStop Color="#9A1226" Offset="0.52" />
+        <GradientStop Color="#C91934" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="DauSilkRedHoverGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#570014" Offset="0.0" />
+        <GradientStop Color="#820E20" Offset="0.55" />
+        <GradientStop Color="#AE152C" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="DauSilkRedTopHighlightBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#52FFFFFF" Offset="0.0" />
+        <GradientStop Color="#14FFFFFF" Offset="0.38" />
+        <GradientStop Color="#00FFFFFF" Offset="0.72" />
+    </LinearGradientBrush>
+
+    <!-- Dải chuyển màu signature: Deep Harbor → Burgundy Crimson (Ảnh 6) -->
+    <LinearGradientBrush x:Key="HarborToBurgundyBarBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#2E4F6B" Offset="0.0" />
+        <GradientStop Color="#6D001A" Offset="0.45" />
+        <GradientStop Color="#D41936" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- Kính Nhám Sáng Arctic Satin (bán trong suốt để màu nền xanh lam & burgundy khúc xạ nhẹ) -->
+    <LinearGradientBrush x:Key="GlassPanelBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#CCF7FBFC" Offset="0.0" />
+        <GradientStop Color="#B0E8EFF3" Offset="0.54" />
+        <GradientStop Color="#BEDCE8F1" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- Sân khấu Chat Kính Nhám Satin chuyển sáng tâm điểm (Ảnh 2 + Ảnh 3) -->
+    <RadialGradientBrush x:Key="GlassStageBrush" Center="0.5,0.44" GradientOrigin="0.5,0.38" RadiusX="0.76" RadiusY="0.78">
+        <GradientStop Color="#C6FBFEFF" Offset="0.0" />
+        <GradientStop Color="#A8E8EFF3" Offset="0.52" />
+        <GradientStop Color="#9ECBDCE8" Offset="1.0" />
+    </RadialGradientBrush>
+
+    <!-- Cột nhận diện Login: Kính khói Xanh Lam sâu có tâm sáng khuếch tán -->
+    <RadialGradientBrush x:Key="GlassLoginShowcaseBrush" Center="0.32,0.26" GradientOrigin="0.26,0.18" RadiusX="0.94" RadiusY="0.98">
+        <GradientStop Color="#DF2E4F6B" Offset="0.0" />
+        <GradientStop Color="#E816314A" Offset="0.50" />
+        <GradientStop Color="#F008131F" Offset="1.0" />
+    </RadialGradientBrush>
+
+    <!-- Kính Xanh Lam cho bong bóng gửi đi (chuyển sắc khói xanh mượt mà) -->
+    <LinearGradientBrush x:Key="GlassSlateBubbleBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#EE0C1F33" Offset="0.0" />
+        <GradientStop Color="#EA16314A" Offset="0.50" />
+        <GradientStop Color="#E62E4F6B" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="GlassHeaderBrush" Color="#C6F5FAFC" />
+    <SolidColorBrush x:Key="GlassDockBrush" Color="#DCF9FCFD" />
+    <SolidColorBrush x:Key="GlassCardBrush" Color="#C4F4F9FC" />
+    <SolidColorBrush x:Key="GlassInputBrush" Color="#92CEE0EC" />
+    <SolidColorBrush x:Key="GlassHoverBrush" Color="#C2FFFFFF" />
+    <SolidColorBrush x:Key="GlassSelectedRowBrush" Color="#EAFAFDFF" />
+    <SolidColorBrush x:Key="GlassIncomingBubbleBrush" Color="#EAFBFEFF" />
+    <SolidColorBrush x:Key="GlassDividerBrush" Color="#728BA5B9" />
+    <SolidColorBrush x:Key="GlassModalBrush" Color="#EEF6FAFC" />
+
+    <!-- Viền ánh sáng kính 2 lớp sắc nét (Outer Specular Rim + Inner Bevel Reflection) -->
+    <LinearGradientBrush x:Key="GlassBorderBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FFFFFFFF" Offset="0.0" />
+        <GradientStop Color="#C4D4E3ED" Offset="0.46" />
+        <GradientStop Color="#8887A3B8" Offset="0.74" />
+        <GradientStop Color="#E0E8EFF3" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="GlassInnerRimBrush" StartPoint="0,0" EndPoint="0.35,0.65">
+        <GradientStop Color="#BDFFFFFF" Offset="0.0" />
+        <GradientStop Color="#30FFFFFF" Offset="0.38" />
+        <GradientStop Color="#00FFFFFF" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="GlassSelectedBorderBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FFFFFFFF" Offset="0" />
+        <GradientStop Color="#9AB4C8" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Màu cho thanh AppRail tối -->
+    <SolidColorBrush x:Key="RailTextBrush" Color="#B6C9D6" />
+    <SolidColorBrush x:Key="RailHoverBgBrush" Color="#28E8EFF3" />
+    <SolidColorBrush x:Key="RailHoverBorderBrush" Color="#5CA9BDC9" />
+    <SolidColorBrush x:Key="DarkCardGlassBrush" Color="#24E8EFF3" />
+    <SolidColorBrush x:Key="DarkCardGlassBorderBrush" Color="#54A9BDC9" />
+
+    <!-- Hiệu ứng bóng nổi kiến trúc (RenderingBias="Performance" + GPU Freeze — mượt 60 FPS) -->
+    <DropShadowEffect x:Key="GlassPanelShadow" po:Freeze="True" RenderingBias="Performance" Color="#08131F" Opacity="0.18" BlurRadius="22" ShadowDepth="7" Direction="275" />
+    <DropShadowEffect x:Key="GlassSoftShadow" po:Freeze="True" RenderingBias="Performance" Color="#08131F" Opacity="0.11" BlurRadius="14" ShadowDepth="4" Direction="275" />
+    <DropShadowEffect x:Key="GlassModalShadow" po:Freeze="True" RenderingBias="Performance" Color="#08131F" Opacity="0.28" BlurRadius="28" ShadowDepth="10" Direction="275" />
+    <DropShadowEffect x:Key="SlatePillShadow" po:Freeze="True" RenderingBias="Performance" Color="#08131F" Opacity="0.30" BlurRadius="10" ShadowDepth="3" Direction="270" />
+    <DropShadowEffect x:Key="RedGlowShadow" po:Freeze="True" RenderingBias="Performance" Color="#6D001A" Opacity="0.30" BlurRadius="12" ShadowDepth="3" Direction="270" />
 
     <!-- Font Family chuẩn tiếng Việt -->
     <FontFamily x:Key="PrimaryFont">Be Vietnam Pro, Segoe UI Variable Text, Segoe UI</FontFamily>
     <FontFamily x:Key="MonoFont">JetBrains Mono, Cascadia Mono, Consolas</FontFamily>
 
 </ResourceDictionary>
-

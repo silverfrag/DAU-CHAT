@@ -6,16 +6,16 @@
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
     </Style>
 
-    <!-- Primary Brand Button (#CB0914) -->
+    <!-- Primary Brand Button (Silk Burgundy → DAU Crimson Gradient + Specular Rim) -->
     <Style x:Key="PrimaryButtonStyle" TargetType="Button">
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="White" />
-        <Setter Property="Background" Value="{StaticResource DauRedBrush}" />
+        <Setter Property="Background" Value="{StaticResource DauSilkRedGradientBrush}" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="18,10" />
-        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Padding" Value="20,10" />
+        <Setter Property="MinHeight" Value="42" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -24,21 +24,79 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="RootBorder"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="12"
-                            Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                            BorderBrush="#54FFFFFF"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            RenderTransformOrigin="0.5,0.5"
+                            Effect="{StaticResource RedGlowShadow}">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="BtnScale" ScaleX="1" ScaleY="1" />
+                        </Border.RenderTransform>
+                        <Grid>
+                            <Border CornerRadius="13"
+                                    IsHitTestVisible="False"
+                                    Background="{StaticResource DauSilkRedTopHighlightBrush}" />
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource DauRedHoverBrush}" />
+                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource DauSilkRedHoverGradientBrush}" />
+                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="#7AFFFFFF" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="BtnScale" Storyboard.TargetProperty="ScaleX" To="1.012" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="BtnScale" Storyboard.TargetProperty="ScaleY" To="1.012" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="BtnScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.20">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="BtnScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.20">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource DauRedPressedBrush}" />
+                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource DauBurgundyBrush}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="BtnScale" Storyboard.TargetProperty="ScaleX" To="0.972" Duration="0:0:0.09" />
+                                        <DoubleAnimation Storyboard.TargetName="BtnScale" Storyboard.TargetProperty="ScaleY" To="0.972" Duration="0:0:0.09" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="BtnScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction><BackEase Amplitude="0.32" EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="BtnScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction><BackEase Amplitude="0.32" EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="RootBorder" Property="Background" Value="#E2E8F0" />
-                            <Setter Property="Foreground" Value="#94A3B8" />
+                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource BorderSubtleBrush}" />
+                            <Setter TargetName="RootBorder" Property="Effect" Value="{x:Null}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -46,14 +104,14 @@
         </Setter>
     </Style>
 
-    <!-- Secondary Outlined Button -->
+    <!-- Secondary Outlined Frosted Glass Button (Hiệu ứng nổi kính mượt) -->
     <Style x:Key="SecondaryButtonStyle" TargetType="Button">
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
         <Setter Property="FontSize" Value="12.5" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
-        <Setter Property="Background" Value="{StaticResource SurfaceWhiteBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
+        <Setter Property="Background" Value="{StaticResource GlassCardBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource GlassBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="14,9" />
         <Setter Property="MinHeight" Value="38" />
@@ -67,18 +125,76 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="11"
-                            Padding="{TemplateBinding Padding}">
+                            CornerRadius="12"
+                            Padding="{TemplateBinding Padding}"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="SecScale" ScaleX="1" ScaleY="1" />
+                                <TranslateTransform x:Name="SecTrans" X="0" Y="0" />
+                            </TransformGroup>
+                        </Border.RenderTransform>
                         <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource SurfaceSubtleBrush}" />
-                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
+                            <Setter TargetName="RootBorder" Property="Background" Value="#F2FAFDFF" />
+                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="#FAFFFFFF" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="SecScale" Storyboard.TargetProperty="ScaleX" To="1.022" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="SecScale" Storyboard.TargetProperty="ScaleY" To="1.022" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="SecTrans" Storyboard.TargetProperty="Y" To="-1.5" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="SecScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="SecScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="SecTrans" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource SurfaceInputBrush}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="SecScale" Storyboard.TargetProperty="ScaleX" To="0.972" Duration="0:0:0.08" />
+                                        <DoubleAnimation Storyboard.TargetName="SecScale" Storyboard.TargetProperty="ScaleY" To="0.972" Duration="0:0:0.08" />
+                                        <DoubleAnimation Storyboard.TargetName="SecTrans" Storyboard.TargetProperty="Y" To="0.5" Duration="0:0:0.08" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="SecScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.24">
+                                            <DoubleAnimation.EasingFunction><BackEase Amplitude="0.32" EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="SecScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.24">
+                                            <DoubleAnimation.EasingFunction><BackEase Amplitude="0.32" EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="SecTrans" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.22" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.55" />
@@ -89,22 +205,250 @@
         </Setter>
     </Style>
 
-    <!-- Subtle Soft Button (Slate Input bg) -->
+    <!-- Subtle Soft Button (Frosted Input bg) -->
     <Style x:Key="SoftSlateButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
-        <Setter Property="Background" Value="{StaticResource SurfaceInputBrush}" />
-        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background" Value="{StaticResource GlassInputBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="#88FFFFFF" />
         <Setter Property="Foreground" Value="{StaticResource TextBodyBrush}" />
     </Style>
 
-    <!-- Ghost Danger Button -->
-    <Style x:Key="DangerGhostButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+    <!-- Ghost Danger Button (Nổi kính đỏ rượu nhẹ khi hover) -->
+    <Style x:Key="DangerGhostButtonStyle" TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Foreground" Value="{StaticResource DangerTextBrush}" />
+        <Setter Property="Padding" Value="12,9" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="Cursor" Value="Hand" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="RootBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="Transparent"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="{TemplateBinding Padding}"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="DgScale" ScaleX="1" ScaleY="1" />
+                                <TranslateTransform x:Name="DgTrans" X="0" Y="0" />
+                            </TransformGroup>
+                        </Border.RenderTransform>
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="RootBorder" Property="Background" Value="#D6F7EAEB" />
+                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="{StaticResource DauRedBorderBrush}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="DgScale" Storyboard.TargetProperty="ScaleX" To="1.015" Duration="0:0:0.16" />
+                                        <DoubleAnimation Storyboard.TargetName="DgScale" Storyboard.TargetProperty="ScaleY" To="1.015" Duration="0:0:0.16" />
+                                        <DoubleAnimation Storyboard.TargetName="DgTrans" Storyboard.TargetProperty="Y" To="-1" Duration="0:0:0.16" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="DgScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.20" />
+                                        <DoubleAnimation Storyboard.TargetName="DgScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.20" />
+                                        <DoubleAnimation Storyboard.TargetName="DgTrans" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.20" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="DgScale" Storyboard.TargetProperty="ScaleX" To="0.975" Duration="0:0:0.08" />
+                                        <DoubleAnimation Storyboard.TargetName="DgScale" Storyboard.TargetProperty="ScaleY" To="0.975" Duration="0:0:0.08" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="DgScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.20" />
+                                        <DoubleAnimation Storyboard.TargetName="DgScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.20" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
-    <!-- Icon Button (40x40 rounded square) -->
+    <!-- Ghost Lift Button (Loại bỏ hoàn toàn hộp hover xanh dương mặc định của WPF cho Logo / Avatar / Action / Ảnh) -->
+    <Style x:Key="GhostLiftButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="LiftHost"
+                            Background="Transparent"
+                            Padding="{TemplateBinding Padding}"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="LiftScale" ScaleX="1" ScaleY="1" />
+                                <TranslateTransform x:Name="LiftTrans" X="0" Y="0" />
+                            </TransformGroup>
+                        </Border.RenderTransform>
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="LiftScale" Storyboard.TargetProperty="ScaleX" To="1.06" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="LiftScale" Storyboard.TargetProperty="ScaleY" To="1.06" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="LiftTrans" Storyboard.TargetProperty="Y" To="-1.8" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="LiftScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="LiftScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="LiftTrans" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="LiftScale" Storyboard.TargetProperty="ScaleX" To="0.94" Duration="0:0:0.08" />
+                                        <DoubleAnimation Storyboard.TargetName="LiftScale" Storyboard.TargetProperty="ScaleY" To="0.94" Duration="0:0:0.08" />
+                                        <DoubleAnimation Storyboard.TargetName="LiftTrans" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.08" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="LiftScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.24">
+                                            <DoubleAnimation.EasingFunction><BackEase Amplitude="0.35" EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="LiftScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.24">
+                                            <DoubleAnimation.EasingFunction><BackEase Amplitude="0.35" EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Inline Glass Link Button (Nổi viên kính mảnh cho link Máy chủ TCP / Tất cả / Đóng / Hủy) -->
+    <Style x:Key="InlineGlassLinkButtonStyle" TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="LinkPill"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="1"
+                            CornerRadius="9"
+                            Padding="{TemplateBinding Padding}"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="LkScale" ScaleX="1" ScaleY="1" />
+                                <TranslateTransform x:Name="LkTrans" X="0" Y="0" />
+                            </TransformGroup>
+                        </Border.RenderTransform>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="LinkPill" Property="Background" Value="#CCFFFFFF" />
+                            <Setter TargetName="LinkPill" Property="BorderBrush" Value="{StaticResource GlassBorderBrush}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="LkScale" Storyboard.TargetProperty="ScaleX" To="1.03" Duration="0:0:0.16" />
+                                        <DoubleAnimation Storyboard.TargetName="LkScale" Storyboard.TargetProperty="ScaleY" To="1.03" Duration="0:0:0.16" />
+                                        <DoubleAnimation Storyboard.TargetName="LkTrans" Storyboard.TargetProperty="Y" To="-1" Duration="0:0:0.16" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="LkScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.20" />
+                                        <DoubleAnimation Storyboard.TargetName="LkScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.20" />
+                                        <DoubleAnimation Storyboard.TargetName="LkTrans" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.20" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="LkScale" Storyboard.TargetProperty="ScaleX" To="0.96" Duration="0:0:0.08" />
+                                        <DoubleAnimation Storyboard.TargetName="LkScale" Storyboard.TargetProperty="ScaleY" To="0.96" Duration="0:0:0.08" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="LkScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.20" />
+                                        <DoubleAnimation Storyboard.TargetName="LkScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.20" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Icon Button (38x38 Khuôn kính nổi mượt khi hover) -->
     <Style x:Key="IconButtonStyle" TargetType="Button">
         <Setter Property="Width" Value="38" />
         <Setter Property="Height" Value="38" />
@@ -117,17 +461,73 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="RootBorder"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="11">
+                            BorderBrush="Transparent"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="IcScale" ScaleX="1" ScaleY="1" />
+                                <TranslateTransform x:Name="IcTrans" X="0" Y="0" />
+                            </TransformGroup>
+                        </Border.RenderTransform>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource SurfaceInputBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                            <Setter TargetName="RootBorder" Property="Background" Value="#E6FAFDFF" />
+                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="{StaticResource GlassBorderBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource BrandSlateTextBrush}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="IcScale" Storyboard.TargetProperty="ScaleX" To="1.07" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="IcScale" Storyboard.TargetProperty="ScaleY" To="1.07" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="IcTrans" Storyboard.TargetProperty="Y" To="-1.2" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="IcScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.20" />
+                                        <DoubleAnimation Storyboard.TargetName="IcScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.20" />
+                                        <DoubleAnimation Storyboard.TargetName="IcTrans" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.20" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="IcScale" Storyboard.TargetProperty="ScaleX" To="0.93" Duration="0:0:0.08" />
+                                        <DoubleAnimation Storyboard.TargetName="IcScale" Storyboard.TargetProperty="ScaleY" To="0.93" Duration="0:0:0.08" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="IcScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction><BackEase Amplitude="0.35" EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="IcScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction><BackEase Amplitude="0.35" EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="Tag" Value="Active">
-                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource DauRedSoftBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource DauRedTextBrush}" />
+                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource BrandSlateSoftBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource BrandSlateTextBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -135,11 +535,94 @@
         </Setter>
     </Style>
 
-    <!-- Small Red Action Icon Button (+ Button in Conversation Header) -->
+    <!-- Minimal Hairline Glass Mold Icon Button trên Dark Arctic Harbor AppRail (Khớp khuôn 42x42) -->
+    <Style x:Key="RailIconButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="42" />
+        <Setter Property="Height" Value="42" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource RailTextBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="RootBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="Transparent"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="RlScale" ScaleX="1" ScaleY="1" />
+                                <TranslateTransform x:Name="RlTrans" X="0" Y="0" />
+                            </TransformGroup>
+                        </Border.RenderTransform>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="RootBorder" Property="Background" Value="#2CE8EFF3" />
+                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="#90E8EFF3" />
+                            <Setter Property="Foreground" Value="White" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="RlScale" Storyboard.TargetProperty="ScaleX" To="1.07" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="RlScale" Storyboard.TargetProperty="ScaleY" To="1.07" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="RlTrans" Storyboard.TargetProperty="Y" To="-1.5" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="RlScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.20" />
+                                        <DoubleAnimation Storyboard.TargetName="RlScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.20" />
+                                        <DoubleAnimation Storyboard.TargetName="RlTrans" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.20" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="RlScale" Storyboard.TargetProperty="ScaleX" To="0.93" Duration="0:0:0.08" />
+                                        <DoubleAnimation Storyboard.TargetName="RlScale" Storyboard.TargetProperty="ScaleY" To="0.93" Duration="0:0:0.08" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="RlScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction><BackEase Amplitude="0.35" EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="RlScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction><BackEase Amplitude="0.35" EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Small Brand Action Icon Button (+ / Send với Silk Burgundy Gradient) -->
     <Style x:Key="BrandSquareIconButtonStyle" TargetType="Button">
         <Setter Property="Width" Value="40" />
         <Setter Property="Height" Value="40" />
-        <Setter Property="Background" Value="{StaticResource DauRedBrush}" />
+        <Setter Property="Background" Value="{StaticResource DauSilkRedGradientBrush}" />
         <Setter Property="Foreground" Value="White" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Cursor" Value="Hand" />
@@ -148,16 +631,77 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="RootBorder"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="12">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            BorderBrush="#54FFFFFF"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            RenderTransformOrigin="0.5,0.5"
+                            Effect="{StaticResource RedGlowShadow}">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="IconBtnScale" ScaleX="1" ScaleY="1" />
+                        </Border.RenderTransform>
+                        <Grid>
+                            <Border CornerRadius="13"
+                                    IsHitTestVisible="False"
+                                    Background="{StaticResource DauSilkRedTopHighlightBrush}" />
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource DauRedHoverBrush}" />
+                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource DauSilkRedHoverGradientBrush}" />
+                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="#7AFFFFFF" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="IconBtnScale" Storyboard.TargetProperty="ScaleX" To="1.05" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="IconBtnScale" Storyboard.TargetProperty="ScaleY" To="1.05" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="IconBtnScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.20">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="IconBtnScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.20">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource DauBurgundyBrush}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="IconBtnScale" Storyboard.TargetProperty="ScaleX" To="0.93" Duration="0:0:0.08" />
+                                        <DoubleAnimation Storyboard.TargetName="IconBtnScale" Storyboard.TargetProperty="ScaleY" To="0.93" Duration="0:0:0.08" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="IconBtnScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.24">
+                                            <DoubleAnimation.EasingFunction><BackEase Amplitude="0.38" EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="IconBtnScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.24">
+                                            <DoubleAnimation.EasingFunction><BackEase Amplitude="0.38" EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="RootBorder" Property="Background" Value="#E2E8F0" />
-                            <Setter Property="Foreground" Value="#94A3B8" />
+                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource BorderSubtleBrush}" />
+                            <Setter TargetName="RootBorder" Property="Effect" Value="{x:Null}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -165,18 +709,18 @@
         </Setter>
     </Style>
 
-    <!-- Modern Clean TextBox -->
+    <!-- Modern Clean Frosted TextBox -->
     <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-        <Setter Property="Background" Value="{StaticResource SurfaceWhiteBrush}" />
+        <Setter Property="Background" Value="{StaticResource GlassDockBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="12,8" />
         <Setter Property="MinHeight" Value="40" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="CaretBrush" Value="{StaticResource DauRedBrush}" />
+        <Setter Property="CaretBrush" Value="{StaticResource BrandSlateBrush}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
@@ -184,7 +728,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="11">
+                            CornerRadius="12">
                         <ScrollViewer x:Name="PART_ContentHost"
                                       VerticalAlignment="Center"
                                       Focusable="False"
@@ -193,7 +737,8 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsKeyboardFocused" Value="True">
-                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="{StaticResource DauRedBrush}" />
+                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="{StaticResource BrandSlateBrush}" />
+                            <Setter TargetName="RootBorder" Property="Background" Value="#FAFFFFFF" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="RootBorder" Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
@@ -203,7 +748,7 @@
                                 <Condition Property="IsKeyboardFocused" Value="True" />
                                 <Condition Property="IsMouseOver" Value="True" />
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="{StaticResource DauRedBrush}" />
+                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="{StaticResource BrandSlateBrush}" />
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -211,18 +756,18 @@
         </Setter>
     </Style>
 
-    <!-- Modern PasswordBox -->
+    <!-- Modern Frosted PasswordBox -->
     <Style x:Key="ModernPasswordBoxStyle" TargetType="PasswordBox">
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-        <Setter Property="Background" Value="{StaticResource SurfaceWhiteBrush}" />
+        <Setter Property="Background" Value="{StaticResource GlassDockBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="12,8" />
         <Setter Property="MinHeight" Value="40" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="CaretBrush" Value="{StaticResource DauRedBrush}" />
+        <Setter Property="CaretBrush" Value="{StaticResource BrandSlateBrush}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="PasswordBox">
@@ -230,7 +775,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="11">
+                            CornerRadius="12">
                         <ScrollViewer x:Name="PART_ContentHost"
                                       VerticalAlignment="Center"
                                       Focusable="False"
@@ -239,7 +784,8 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsKeyboardFocused" Value="True">
-                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="{StaticResource DauRedBrush}" />
+                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="{StaticResource BrandSlateBrush}" />
+                            <Setter TargetName="RootBorder" Property="Background" Value="#FAFFFFFF" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="RootBorder" Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
@@ -249,7 +795,7 @@
                                 <Condition Property="IsKeyboardFocused" Value="True" />
                                 <Condition Property="IsMouseOver" Value="True" />
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="{StaticResource DauRedBrush}" />
+                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="{StaticResource BrandSlateBrush}" />
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -257,36 +803,38 @@
         </Setter>
     </Style>
 
-    <!-- Card Surface Style -->
+    <!-- Frosted Glass Card Surface Style -->
     <Style x:Key="CardBorderStyle" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource SurfaceWhiteBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Background" Value="{StaticResource GlassCardBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource GlassBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1.2" />
+        <Setter Property="CornerRadius" Value="20" />
         <Setter Property="Padding" Value="20" />
+        <Setter Property="Effect" Value="{StaticResource GlassSoftShadow}" />
     </Style>
 
-    <!-- Modal Dialog Card Surface Style -->
+    <!-- Elevated Frosted Glass Modal Dialog Card Style -->
     <Style x:Key="ModalCardBorderStyle" TargetType="Border">
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="Background" Value="{StaticResource SurfaceWhiteBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="22" />
+        <Setter Property="Background" Value="{StaticResource GlassModalBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource GlassBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1.2" />
+        <Setter Property="CornerRadius" Value="26" />
         <Setter Property="Padding" Value="28" />
+        <Setter Property="Effect" Value="{StaticResource GlassModalShadow}" />
     </Style>
 
-    <!-- Filter Pill RadioButton -->
+    <!-- Frosted Filter Pill RadioButton (Sculpted Blueprint Slate Active) -->
     <Style x:Key="FilterPillRadioStyle" TargetType="RadioButton">
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
-        <Setter Property="Background" Value="{StaticResource SurfaceWhiteBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+        <Setter Property="Background" Value="{StaticResource GlassCardBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource GlassBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="13,7" />
+        <Setter Property="Padding" Value="14,7" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
@@ -295,18 +843,51 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="10"
-                            Padding="{TemplateBinding Padding}">
+                            CornerRadius="11"
+                            Padding="{TemplateBinding Padding}"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="PillScale" ScaleX="1" ScaleY="1" />
+                                <TranslateTransform x:Name="PillTrans" X="0" Y="0" />
+                            </TransformGroup>
+                        </Border.RenderTransform>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource SurfaceSubtleBrush}" />
+                            <Setter TargetName="RootBorder" Property="Background" Value="#F2FAFDFF" />
+                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="#FAFFFFFF" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PillScale" Storyboard.TargetProperty="ScaleX" To="1.035" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="PillScale" Storyboard.TargetProperty="ScaleY" To="1.035" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="PillTrans" Storyboard.TargetProperty="Y" To="-1.5" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PillScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.20" />
+                                        <DoubleAnimation Storyboard.TargetName="PillScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.20" />
+                                        <DoubleAnimation Storyboard.TargetName="PillTrans" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.20" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource DauRedSoftBrush}" />
-                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="{StaticResource DauRedBorderBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource DauRedTextBrush}" />
+                            <Setter TargetName="RootBorder" Property="Background" Value="{StaticResource GlassSlateBubbleBrush}" />
+                            <Setter TargetName="RootBorder" Property="BorderBrush" Value="#48A9BDC9" />
+                            <Setter TargetName="RootBorder" Property="Effect" Value="{StaticResource SlatePillShadow}" />
+                            <Setter Property="Foreground" Value="White" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -326,18 +907,18 @@
                             Width="44"
                             Height="24"
                             CornerRadius="12"
-                            Background="#E2E8F0">
+                            Background="{StaticResource BorderStrongBrush}">
                         <Grid Margin="3">
                             <Ellipse x:Name="Thumb"
                                      Width="18"
                                      Height="18"
                                      HorizontalAlignment="Left"
-                                     Fill="White" />
+                                     Fill="{StaticResource SurfaceElevatedBrush}" />
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Track" Property="Background" Value="{StaticResource DauRedBrush}" />
+                            <Setter TargetName="Track" Property="Background" Value="{StaticResource BrandSlateBrush}" />
                             <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right" />
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -355,13 +936,13 @@
                             Width="44"
                             Height="24"
                             CornerRadius="12"
-                            Background="#E2E8F0">
+                            Background="{StaticResource BorderStrongBrush}">
                         <Grid Margin="3">
                             <Ellipse x:Name="Thumb"
                                      Width="18"
                                      Height="18"
                                      HorizontalAlignment="Left"
-                                     Fill="White" />
+                                     Fill="{StaticResource SurfaceElevatedBrush}" />
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>

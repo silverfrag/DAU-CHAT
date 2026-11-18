@@ -6,34 +6,44 @@
              mc:Ignorable="d"
              d:DesignHeight="800"
              d:DesignWidth="1120"
-             Background="{StaticResource CanvasBgBrush}">
+             Background="Transparent">
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="74" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Header -->
+        <!-- Header Kính Nhám Nổi -->
         <Border Grid.Row="0"
-                Background="{StaticResource SurfaceWhiteBrush}"
-                BorderBrush="{StaticResource BorderSubtleBrush}"
-                BorderThickness="0,0,0,1"
-                Padding="28,0">
+                Height="74"
+                Margin="0,0,0,12"
+                Background="{StaticResource GlassPanelBrush}"
+                BorderBrush="{StaticResource GlassBorderBrush}"
+                BorderThickness="1.2"
+                CornerRadius="22"
+                Padding="26,0"
+                Effect="{StaticResource GlassPanelShadow}">
             <Grid>
-                <StackPanel VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,14,0" VerticalAlignment="Center">
                     <TextBlock Text="KHO TỆP LOCAL (FILE_MANIFEST.JSONL)"
                                FontSize="10.5"
                                FontWeight="Bold"
-                               Foreground="{StaticResource DauRedTextBrush}" />
+                               Foreground="{StaticResource DauRedTextBrush}"
+                               TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="Thư viện tài liệu"
                                FontSize="20"
                                FontWeight="Bold"
                                Foreground="{StaticResource TextPrimaryBrush}"
+                               TextTrimming="CharacterEllipsis"
                                Margin="0,2,0,0" />
                 </StackPanel>
 
-                <Border HorizontalAlignment="Right"
+                <Border Grid.Column="1"
                         VerticalAlignment="Center"
                         Background="{StaticResource EmeraldSoftBrush}"
                         CornerRadius="10"
@@ -104,11 +114,12 @@
                     </Border>
                 </Grid>
 
-                <!-- Bảng kho tệp -->
-                <Border Background="{StaticResource SurfaceWhiteBrush}"
-                        BorderBrush="{StaticResource BorderSubtleBrush}"
-                        BorderThickness="1"
-                        CornerRadius="16">
+                <!-- Bảng kho tệp (Kính nhám nổi) -->
+                <Border Background="{StaticResource GlassCardBrush}"
+                        BorderBrush="{StaticResource GlassBorderBrush}"
+                        BorderThickness="1.2"
+                        CornerRadius="20"
+                        Effect="{StaticResource GlassSoftShadow}">
                     <StackPanel>
                         <!-- Toolbar tìm kiếm & lọc FileCategory -->
                         <Border BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,16">
@@ -119,14 +130,21 @@
                                 </Grid.RowDefinitions>
 
                                 <Grid Grid.Row="0" Margin="0,0,0,14">
-                                    <TextBlock Text="Tệp trên thiết bị"
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="Tệp trên thiết bị"
                                                FontSize="14.5"
                                                FontWeight="Bold"
                                                Foreground="{StaticResource TextPrimaryBrush}"
+                                               TextTrimming="CharacterEllipsis"
+                                               Margin="0,0,12,0"
                                                VerticalAlignment="Center" />
 
-                                    <Border HorizontalAlignment="Right"
-                                            Width="280"
+                                    <Border Grid.Column="1"
+                                            Width="260"
                                             Height="38"
                                             Background="{StaticResource SurfaceInputBrush}"
                                             CornerRadius="10"

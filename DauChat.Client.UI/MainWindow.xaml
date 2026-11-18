@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:views="clr-namespace:DauChat.Client.UI.Views"
+        xmlns:infra="clr-namespace:DauChat.Client.UI.Infrastructure"
         mc:Ignorable="d"
         Title="DAU Chat • Hệ thống Giao tiếp &amp; Chia sẻ Tài liệu Nội bộ ĐH Kiến trúc Đà Nẵng"
         Height="840"
@@ -11,62 +12,108 @@
         MinHeight="680"
         MinWidth="1060"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource CanvasBgBrush}"
+        Background="{StaticResource AmbientCanvasGradientBrush}"
         Foreground="{StaticResource TextBodyBrush}"
         FontFamily="{StaticResource PrimaryFont}">
 
     <Window.Resources>
-        <!-- Style nút điều hướng AppRail -->
+        <!-- Style nút điều hướng AppRail (Khuôn kính 42x42 ôm gọn đúng icon + hiệu ứng nổi tinh tế) -->
         <Style x:Key="AppRailRadioStyle" TargetType="RadioButton">
-            <Setter Property="Width" Value="72" />
-            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="Width" Value="64" />
+            <Setter Property="Margin" Value="0,0,0,10" />
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource RailTextBrush}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Grid Background="Transparent">
-                            <Border x:Name="ActiveBar"
-                                    Width="4"
-                                    Height="30"
-                                    HorizontalAlignment="Left"
-                                    VerticalAlignment="Top"
-                                    Margin="-8,8,0,0"
-                                    CornerRadius="0,3,3,0"
-                                    Background="{StaticResource DauRedBrush}"
-                                    Visibility="Collapsed" />
-
-                            <Border x:Name="HoverBox"
+                        <StackPanel HorizontalAlignment="Center" Background="Transparent" Margin="0,4,0,0">
+                            <Border x:Name="IconPill"
+                                    Width="42" Height="42"
                                     CornerRadius="14"
-                                    Padding="4,8"
-                                    Background="Transparent">
-                                <StackPanel HorizontalAlignment="Center">
-                                    <Border x:Name="IconPill"
-                                            Width="36" Height="36"
-                                            CornerRadius="11"
-                                            Background="Transparent"
-                                            HorizontalAlignment="Center">
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <TextBlock Text="{TemplateBinding Tag}"
-                                               FontSize="10.5"
-                                               FontWeight="SemiBold"
-                                               Foreground="{TemplateBinding Foreground}"
-                                               HorizontalAlignment="Center"
-                                               Margin="0,4,0,0" />
-                                </StackPanel>
+                                    BorderThickness="1"
+                                    BorderBrush="Transparent"
+                                    Background="Transparent"
+                                    HorizontalAlignment="Center"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <Border.RenderTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform x:Name="NavScale" ScaleX="1" ScaleY="1" />
+                                        <TranslateTransform x:Name="NavTrans" X="0" Y="0" />
+                                    </TransformGroup>
+                                </Border.RenderTransform>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
-                        </Grid>
+                            <TextBlock x:Name="NavLabel"
+                                       Text="{TemplateBinding Tag}"
+                                       FontSize="10"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource RailTextBrush}"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,5,0,0" />
+                        </StackPanel>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="HoverBox" Property="Background" Value="{StaticResource SurfaceSubtleBrush}" />
-                                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True" />
+                                    <Condition Property="IsChecked" Value="False" />
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="IconPill" Property="Background" Value="#2CE8EFF3" />
+                                <Setter TargetName="IconPill" Property="BorderBrush" Value="#90E8EFF3" />
+                                <Setter Property="Foreground" Value="White" />
+                                <Setter TargetName="NavLabel" Property="Foreground" Value="#F2F7FA" />
+                                <MultiTrigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="NavScale" Storyboard.TargetProperty="ScaleX" To="1.07" Duration="0:0:0.17">
+                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetName="NavScale" Storyboard.TargetProperty="ScaleY" To="1.07" Duration="0:0:0.17">
+                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetName="NavTrans" Storyboard.TargetProperty="Y" To="-1.6" Duration="0:0:0.17">
+                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </MultiTrigger.EnterActions>
+                                <MultiTrigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="NavScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.20" />
+                                            <DoubleAnimation Storyboard.TargetName="NavScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.20" />
+                                            <DoubleAnimation Storyboard.TargetName="NavTrans" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.20" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </MultiTrigger.ExitActions>
+                            </MultiTrigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="NavScale" Storyboard.TargetProperty="ScaleX" To="0.93" Duration="0:0:0.08" />
+                                            <DoubleAnimation Storyboard.TargetName="NavScale" Storyboard.TargetProperty="ScaleY" To="0.93" Duration="0:0:0.08" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="NavScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.22">
+                                                <DoubleAnimation.EasingFunction><BackEase Amplitude="0.32" EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetName="NavScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.22">
+                                                <DoubleAnimation.EasingFunction><BackEase Amplitude="0.32" EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="ActiveBar" Property="Visibility" Value="Visible" />
-                                <Setter TargetName="IconPill" Property="Background" Value="{StaticResource DauRedSoftBrush}" />
-                                <Setter TargetName="HoverBox" Property="Background" Value="Transparent" />
-                                <Setter Property="Foreground" Value="{StaticResource DauRedTextBrush}" />
+                                <Setter TargetName="IconPill" Property="Background" Value="Transparent" />
+                                <Setter TargetName="IconPill" Property="BorderBrush" Value="Transparent" />
+                                <Setter Property="Foreground" Value="White" />
+                                <Setter TargetName="NavLabel" Property="Foreground" Value="#F5FAFC" />
+                                <Setter TargetName="NavLabel" Property="FontWeight" Value="Bold" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -76,50 +123,159 @@
     </Window.Resources>
 
     <Grid>
-        <!-- 1. MÀN HÌNH ĐĂNG NHẬP -->
+        <!-- LỚP NỀN KHÍ QUYỂN ARCTIC HARBOR CACHED TRÊN GPU (RENDER 1 LẦN — ZERO LAG 60 FPS) -->
+        <Grid IsHitTestVisible="False" CacheMode="BitmapCache">
+            <!-- Sương Xanh Lam Arctic Harbor góc trên trái -->
+            <Rectangle x:Name="AmbientHarborLayer">
+                <Rectangle.Fill>
+                    <RadialGradientBrush Center="0.06,0.10" GradientOrigin="0.06,0.10" RadiusX="0.58" RadiusY="0.66">
+                        <GradientStop Color="#8E16314A" Offset="0.00" />
+                        <GradientStop Color="#5C2E4F6B" Offset="0.32" />
+                        <GradientStop Color="#285F7F98" Offset="0.64" />
+                        <GradientStop Color="#0B5F7F98" Offset="0.86" />
+                        <GradientStop Color="#005F7F98" Offset="1.00" />
+                    </RadialGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+
+            <!-- Điểm sáng Arctic Ice giữa khung làm nổi tấm kính -->
+            <Rectangle>
+                <Rectangle.Fill>
+                    <RadialGradientBrush Center="0.52,0.44" GradientOrigin="0.52,0.40" RadiusX="0.54" RadiusY="0.54">
+                        <GradientStop Color="#D6FBFEFF" Offset="0.00" />
+                        <GradientStop Color="#88E8EFF3" Offset="0.45" />
+                        <GradientStop Color="#26E8EFF3" Offset="0.78" />
+                        <GradientStop Color="#00E8EFF3" Offset="1.00" />
+                    </RadialGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+
+            <!-- Ánh Silk Burgundy tán sắc cực êm góc trên phải (tan dần 0%, không lộ đường viền) -->
+            <Rectangle x:Name="AmbientBurgundyLayer">
+                <Rectangle.Fill>
+                    <RadialGradientBrush Center="0.92,0.08" GradientOrigin="0.92,0.08" RadiusX="0.48" RadiusY="0.54">
+                        <GradientStop Color="#3B6D001A" Offset="0.00" />
+                        <GradientStop Color="#228C1123" Offset="0.30" />
+                        <GradientStop Color="#0D7F1D1A" Offset="0.62" />
+                        <GradientStop Color="#007F1D1A" Offset="1.00" />
+                    </RadialGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+
+            <!-- Sương Steel Harbor góc dưới phải -->
+            <Rectangle>
+                <Rectangle.Fill>
+                    <RadialGradientBrush Center="0.92,0.92" GradientOrigin="0.92,0.92" RadiusX="0.58" RadiusY="0.64">
+                        <GradientStop Color="#8016314A" Offset="0.00" />
+                        <GradientStop Color="#482E4F6B" Offset="0.36" />
+                        <GradientStop Color="#1C5F7F98" Offset="0.68" />
+                        <GradientStop Color="#005F7F98" Offset="1.00" />
+                    </RadialGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+
+            <!-- Cân bằng sương lạnh Mist Slate góc dưới trái -->
+            <Rectangle>
+                <Rectangle.Fill>
+                    <RadialGradientBrush Center="0.08,0.92" GradientOrigin="0.08,0.92" RadiusX="0.48" RadiusY="0.50">
+                        <GradientStop Color="#525F7F98" Offset="0.00" />
+                        <GradientStop Color="#225F7F98" Offset="0.50" />
+                        <GradientStop Color="#005F7F98" Offset="1.00" />
+                    </RadialGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+
+            <!-- Dải ánh sáng kính chéo tổng thể + lớp vi tinh thể nhám -->
+            <Rectangle Fill="{StaticResource GlassDiagonalSheenBrush}" Opacity="0.40" />
+            <Rectangle Fill="{DynamicResource FrostedGrainBrush}" />
+        </Grid>
+
+        <!-- 1. MÀN HÌNH ĐĂNG NHẬP (ENTER + EXIT CROSS-MORPH) -->
         <views:LoginView DataContext="{Binding Login}"
-                         Visibility="{Binding DataContext.IsAuthenticated, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBoolToVis}}" />
+                         infra:MotionBehavior.Preset="AuthCardEntrance"
+                         infra:MotionBehavior.IsShown="{Binding DataContext.IsAuthenticated, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBool}}" />
 
-        <!-- 2. KHÔNG GIAN LÀM VIỆC CHÍNH SAU KHI ĐĂNG NHẬP -->
+        <!-- 2. KHÔNG GIAN LÀM VIỆC CHÍNH SAU KHI ĐĂNG NHẬP (ENTER + EXIT CROSS-MORPH) -->
         <Grid DataContext="{Binding Shell}"
-              Visibility="{Binding DataContext.IsAuthenticated, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="88" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+              infra:MotionBehavior.Preset="WorkspaceReveal"
+              infra:MotionBehavior.IsShown="{Binding DataContext.IsAuthenticated, RelativeSource={RelativeSource AncestorType=Window}}">
+            <Grid Margin="14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="92" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-            <!-- THANH ĐIỀU HƯỚNG TRÁI (APP RAIL) -->
-            <Border Grid.Column="0"
-                    Background="{StaticResource SurfaceWhiteBrush}"
-                    BorderBrush="{StaticResource BorderSubtleBrush}"
-                    BorderThickness="0,0,1,0"
-                    Padding="8,18">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+                <!-- THANH ĐIỀU HƯỚNG TRÁI: KÍNH KHÓI SATIN XANH LAM ARCTIC HARBOR (TÁCH LỚP BÓNG CACHED GPU) -->
+                <Grid Grid.Column="0" Margin="0,0,12,0">
+                    <Border CornerRadius="24"
+                            Background="#FF0E2133"
+                            Effect="{StaticResource GlassPanelShadow}"
+                            CacheMode="BitmapCache"
+                            IsHitTestVisible="False" />
+                    <Border Background="{StaticResource DarkHarborRailBrush}"
+                            BorderBrush="{StaticResource DarkGlassBorderBrush}"
+                            BorderThickness="1.25"
+                            CornerRadius="24">
+                    <Grid>
+                        <!-- Lớp ánh sáng kính chéo + viền vát trong 1px + vi tinh thể nhám -->
+                        <Border CornerRadius="23" IsHitTestVisible="False" Background="{StaticResource DarkGlassSheenBrush}" />
+                        <Border Margin="1" CornerRadius="22" BorderBrush="{StaticResource DarkGlassInnerRimBrush}" BorderThickness="1" IsHitTestVisible="False" />
+                        <Border CornerRadius="23" IsHitTestVisible="False" Background="{DynamicResource DarkFrostedGrainBrush}" />
 
-                    <!-- Logo DAU -->
-                    <Button Grid.Row="0"
-                            Margin="0,0,0,22"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Cursor="Hand"
-                            HorizontalAlignment="Center"
-                            Command="{Binding NavigateHomeCommand}"
-                            ToolTip="DAU Chat • Đại học Kiến trúc Đà Nẵng">
-                        <Image Source="pack://application:,,,/Assets/dau-logo.png"
-                               Width="44"
-                               Height="44"
-                               Stretch="Uniform" />
-                    </Button>
+                        <Grid Margin="6,16">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
 
-                    <!-- Điều hướng phân quyền RBAC -->
-                    <StackPanel Grid.Row="1" HorizontalAlignment="Center">
-                        <!-- Quản trị (Chỉ hiện cho tài khoản Admin - màn hình chính của Admin) -->
-                        <RadioButton Tag="Quản trị"
+                            <!-- Logo DAU đặt nổi trên quầng sáng khuếch tán (hiệu ứng nổi mượt, không hộp trắng/xanh) -->
+                            <Button Grid.Row="0"
+                                    Margin="0,0,0,14"
+                                    Style="{StaticResource GhostLiftButtonStyle}"
+                                    HorizontalAlignment="Center"
+                                    Command="{Binding NavigateHomeCommand}"
+                                    ToolTip="DAU Chat • Đại học Kiến trúc Đà Nẵng">
+                                <Grid Width="64" Height="64">
+                                    <Ellipse Fill="{StaticResource LogoSpotlightHaloBrush}" />
+                                    <Image Source="pack://application:,,,/Assets/dau-logo.png"
+                                           Width="40"
+                                           Height="40"
+                                           Stretch="Uniform"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           RenderOptions.BitmapScalingMode="HighQuality" />
+                                </Grid>
+                            </Button>
+
+                            <!-- Điều hướng phân quyền RBAC + Viên kính Burgundy trượt nam châm (khớp tuyệt đối khuôn 42x42) -->
+                            <Grid x:Name="NavRailHost" Grid.Row="1">
+                                <Border x:Name="ActiveRailIndicator"
+                                        Width="42"
+                                        Height="42"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Top"
+                                        CornerRadius="14"
+                                        Background="{StaticResource DauSilkRedGradientBrush}"
+                                        BorderBrush="#66FFFFFF"
+                                        BorderThickness="1"
+                                        Effect="{StaticResource RedGlowShadow}"
+                                        IsHitTestVisible="False"
+                                        Opacity="0"
+                                        RenderTransformOrigin="0.5,0.5">
+                                    <Border.RenderTransform>
+                                        <TransformGroup>
+                                            <ScaleTransform x:Name="ActiveRailIndicatorScale" ScaleX="1" ScaleY="1" />
+                                            <TranslateTransform x:Name="ActiveRailIndicatorTranslate" X="0" Y="4" />
+                                        </TransformGroup>
+                                    </Border.RenderTransform>
+                                    <Border CornerRadius="13" Background="{StaticResource DauSilkRedTopHighlightBrush}" />
+                                </Border>
+
+                                <StackPanel x:Name="NavButtonsPanel" HorizontalAlignment="Center">
+                                    <!-- Quản trị (Chỉ hiện cho tài khoản Admin - màn hình chính của Admin) -->
+                                    <RadioButton x:Name="NavAdminBtn"
+                                                 Tag="Quản trị"
                                      Style="{StaticResource AppRailRadioStyle}"
                                      Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"
                                      IsChecked="{Binding ActiveSection, Converter={StaticResource EnumEquals}, ConverterParameter=Admin, Mode=OneWay}"
@@ -131,8 +287,9 @@
                                   Width="19" Height="19" Stretch="Uniform" />
                         </RadioButton>
 
-                        <!-- Tin nhắn 1-1 (GV & SV) -->
-                        <RadioButton Tag="Tin nhắn"
+                                    <!-- Tin nhắn 1-1 (GV & SV) -->
+                                    <RadioButton x:Name="NavMessagesBtn"
+                                                 Tag="Tin nhắn"
                                      Style="{StaticResource AppRailRadioStyle}"
                                      Visibility="{Binding IsNotAdmin, Converter={StaticResource BoolToVis}}"
                                      IsChecked="{Binding ActiveSection, Converter={StaticResource EnumEquals}, ConverterParameter=Messages, Mode=OneWay}"
@@ -172,8 +329,9 @@
                             </Grid>
                         </RadioButton>
 
-                        <!-- Phòng học (GV/SV) / Phòng chat (Admin) -->
-                        <RadioButton Tag="{Binding RoomsNavLabel}"
+                                    <!-- Phòng học (GV/SV) / Phòng chat (Admin) -->
+                                    <RadioButton x:Name="NavRoomsBtn"
+                                                 Tag="{Binding RoomsNavLabel}"
                                      Style="{StaticResource AppRailRadioStyle}"
                                      IsChecked="{Binding ActiveSection, Converter={StaticResource EnumEquals}, ConverterParameter=Rooms, Mode=OneWay}"
                                      Command="{Binding NavigateCommand}"
@@ -184,8 +342,9 @@
                                   Width="19" Height="19" Stretch="Uniform" />
                         </RadioButton>
 
-                        <!-- Lớp học phần (Chỉ hiện cho Giảng viên) -->
-                        <RadioButton Tag="Lớp học"
+                                    <!-- Lớp học phần (Chỉ hiện cho Giảng viên) -->
+                                    <RadioButton x:Name="NavClassesBtn"
+                                                 Tag="Lớp học"
                                      Style="{StaticResource AppRailRadioStyle}"
                                      Visibility="{Binding IsLecturer, Converter={StaticResource BoolToVis}}"
                                      IsChecked="{Binding ActiveSection, Converter={StaticResource EnumEquals}, ConverterParameter=Classes, Mode=OneWay}"
@@ -197,8 +356,9 @@
                                   Width="20" Height="20" Stretch="Uniform" />
                         </RadioButton>
 
-                        <!-- Tài liệu (GV & SV) -->
-                        <RadioButton Tag="Tài liệu"
+                                    <!-- Tài liệu (GV & SV) -->
+                                    <RadioButton x:Name="NavFilesBtn"
+                                                 Tag="Tài liệu"
                                      Style="{StaticResource AppRailRadioStyle}"
                                      Visibility="{Binding IsNotAdmin, Converter={StaticResource BoolToVis}}"
                                      IsChecked="{Binding ActiveSection, Converter={StaticResource EnumEquals}, ConverterParameter=Files, Mode=OneWay}"
@@ -210,91 +370,105 @@
                                   Width="19" Height="19" Stretch="Uniform" />
                         </RadioButton>
 
-                        <!-- Lưu trữ (GV & SV) -->
-                        <RadioButton Tag="Lưu trữ"
-                                     Style="{StaticResource AppRailRadioStyle}"
-                                     Visibility="{Binding IsNotAdmin, Converter={StaticResource BoolToVis}}"
-                                     IsChecked="{Binding ActiveSection, Converter={StaticResource EnumEquals}, ConverterParameter=Storage, Mode=OneWay}"
-                                     Command="{Binding NavigateCommand}"
-                                     CommandParameter="Storage">
-                            <Path Data="{StaticResource IconHardDrive}"
-                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
-                                  StrokeThickness="2"
-                                  Width="19" Height="19" Stretch="Uniform" />
-                        </RadioButton>
-                    </StackPanel>
-
-                    <!-- Cài đặt & Hồ sơ người dùng -->
-                    <StackPanel Grid.Row="2" HorizontalAlignment="Center">
-                        <Button Style="{StaticResource IconButtonStyle}"
-                                Command="{Binding OpenProfileCommand}"
-                                ToolTip="Hồ sơ cá nhân, Đổi mật khẩu &amp; Đăng xuất"
-                                Margin="0,0,0,10">
-                            <Path Data="{StaticResource IconSettings}"
-                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                  StrokeThickness="1.9"
-                                  Width="19" Height="19" Stretch="Uniform" />
-                        </Button>
-
-                        <Button Background="Transparent"
-                                BorderThickness="0"
-                                Cursor="Hand"
-                                Command="{Binding OpenProfileCommand}"
-                                ToolTip="{Binding CurrentUserName}">
-                            <Grid Width="38" Height="38">
-                                <Border CornerRadius="13" Background="{StaticResource DarkAvatarBrush}">
-                                    <TextBlock Text="{Binding CurrentUserInitials}"
-                                               FontSize="11.5"
-                                               FontWeight="Bold"
-                                               Foreground="White"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center" />
-                                </Border>
-                                <Ellipse Width="11" Height="11"
-                                         Fill="{Binding CurrentPresence, Converter={StaticResource PresenceToBrush}}"
-                                         Stroke="White"
-                                         StrokeThickness="2"
-                                         HorizontalAlignment="Right"
-                                         VerticalAlignment="Bottom"
-                                         Margin="0,0,-1,-1" />
+                                    <!-- Lưu trữ (GV & SV) -->
+                                    <RadioButton x:Name="NavStorageBtn"
+                                                 Tag="Lưu trữ"
+                                                 Style="{StaticResource AppRailRadioStyle}"
+                                                 Visibility="{Binding IsNotAdmin, Converter={StaticResource BoolToVis}}"
+                                                 IsChecked="{Binding ActiveSection, Converter={StaticResource EnumEquals}, ConverterParameter=Storage, Mode=OneWay}"
+                                                 Command="{Binding NavigateCommand}"
+                                                 CommandParameter="Storage">
+                                        <Path Data="{StaticResource IconHardDrive}"
+                                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                                              StrokeThickness="2"
+                                              Width="19" Height="19" Stretch="Uniform" />
+                                    </RadioButton>
+                                </StackPanel>
                             </Grid>
-                        </Button>
-                    </StackPanel>
+
+                            <!-- Cài đặt & Hồ sơ người dùng -->
+                            <StackPanel Grid.Row="2" HorizontalAlignment="Center">
+                                <Button Style="{StaticResource RailIconButtonStyle}"
+                                        Command="{Binding OpenProfileCommand}"
+                                        ToolTip="Hồ sơ cá nhân, Đổi mật khẩu &amp; Đăng xuất"
+                                        Margin="0,0,0,10">
+                                    <Path Data="{StaticResource IconSettings}"
+                                          Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                          StrokeThickness="1.9"
+                                          Width="19" Height="19" Stretch="Uniform" />
+                                </Button>
+
+                                <Button Style="{StaticResource GhostLiftButtonStyle}"
+                                        Command="{Binding OpenProfileCommand}"
+                                        ToolTip="{Binding CurrentUserName}">
+                                    <Grid Width="42" Height="42">
+                                        <Border CornerRadius="14"
+                                                Background="{StaticResource DarkCardGlassBrush}"
+                                                BorderBrush="{StaticResource DarkCardGlassBorderBrush}"
+                                                BorderThickness="1">
+                                            <TextBlock Text="{Binding CurrentUserInitials}"
+                                                       FontSize="11.5"
+                                                       FontWeight="Bold"
+                                                       Foreground="White"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center" />
+                                        </Border>
+                                        <Ellipse Width="11" Height="11"
+                                                 Fill="{Binding CurrentPresence, Converter={StaticResource PresenceToBrush}}"
+                                                 Stroke="{StaticResource BrandSlateBrush}"
+                                                 StrokeThickness="2"
+                                                 HorizontalAlignment="Right"
+                                                 VerticalAlignment="Bottom"
+                                                 Margin="0,0,-1,-1" />
+                                    </Grid>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                    </Border>
                 </Grid>
-            </Border>
 
-            <!-- VÙNG HIỂN THỊ PHÂN HỆ CHÍNH -->
-            <Grid x:Name="MainContentHost" Grid.Column="1">
-                <views:ChatWorkspaceView DataContext="{Binding Chat}"
-                                         Visibility="{Binding DataContext.IsChatViewVisible, ElementName=MainContentHost, Converter={StaticResource BoolToVis}}" />
+                <!-- VÙNG HIỂN THỊ PHÂN HỆ CHÍNH (CHUYỂN CẢNH CÓ HƯỚNG KHÔNG GIAN THEO APPRAIL) -->
+                <Grid x:Name="MainContentHost" Grid.Column="1">
+                    <views:ChatWorkspaceView x:Name="ChatModuleView"
+                                             DataContext="{Binding Chat}"
+                                             Visibility="{Binding DataContext.IsChatViewVisible, ElementName=MainContentHost, Converter={StaticResource BoolToVis}}" />
 
-                <views:LecturerClassesView DataContext="{Binding Classes}"
-                                           Visibility="{Binding DataContext.ActiveSection, ElementName=MainContentHost, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Classes}" />
+                    <views:LecturerClassesView x:Name="ClassesModuleView"
+                                               DataContext="{Binding Classes}"
+                                               Visibility="{Binding DataContext.ActiveSection, ElementName=MainContentHost, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Classes}" />
 
-                <views:FilesLibraryView DataContext="{Binding Files}"
-                                        Visibility="{Binding DataContext.ActiveSection, ElementName=MainContentHost, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Files}" />
+                    <views:FilesLibraryView x:Name="FilesModuleView"
+                                            DataContext="{Binding Files}"
+                                            Visibility="{Binding DataContext.ActiveSection, ElementName=MainContentHost, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Files}" />
 
-                <views:StorageBackupView DataContext="{Binding Storage}"
-                                         Visibility="{Binding DataContext.ActiveSection, ElementName=MainContentHost, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Storage}" />
+                    <views:StorageBackupView x:Name="StorageModuleView"
+                                             DataContext="{Binding Storage}"
+                                             Visibility="{Binding DataContext.ActiveSection, ElementName=MainContentHost, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Storage}" />
 
-                <views:AdminCenterView DataContext="{Binding Admin}"
-                                       Visibility="{Binding DataContext.ActiveSection, ElementName=MainContentHost, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Admin}" />
+                    <views:AdminCenterView x:Name="AdminModuleView"
+                                           DataContext="{Binding Admin}"
+                                           Visibility="{Binding DataContext.ActiveSection, ElementName=MainContentHost, Converter={StaticResource EnumEqualsToVis}, ConverterParameter=Admin}" />
+                </Grid>
             </Grid>
 
-            <!-- OVERLAY CÁC MODAL -->
-            <views:ModalsOverlay Grid.Column="0" Grid.ColumnSpan="2" DataContext="{Binding}" />
+            <!-- OVERLAY CÁC MODAL (phủ toàn cửa sổ) -->
+            <views:ModalsOverlay DataContext="{Binding}" />
 
-            <!-- TOAST THÔNG BÁO NỔI -->
-            <Border Grid.Column="1"
-                    HorizontalAlignment="Right"
+            <!-- TOAST THÔNG BÁO NỔI (TOP-CENTER + KHÔNG CHẶN CLICK, KHÔNG CHE NÚT GÓC PHẢI) -->
+            <Border HorizontalAlignment="Center"
                     VerticalAlignment="Top"
-                    Margin="0,88,24,0"
-                    Background="#0F172A"
-                    CornerRadius="12"
-                    Padding="14,10"
-                    Visibility="{Binding HasToast, Converter={StaticResource BoolToVis}}">
+                    Margin="0,20,0,0"
+                    IsHitTestVisible="False"
+                    Background="{StaticResource BrandSlateDarkBrush}"
+                    BorderBrush="#48A9BDC9"
+                    BorderThickness="1"
+                    CornerRadius="14"
+                    Padding="16,10"
+                    infra:MotionBehavior.Preset="SlideDownFade"
+                    infra:MotionBehavior.IsShown="{Binding HasToast}">
                 <Border.Effect>
-                    <DropShadowEffect Color="#0F172A" Opacity="0.24" BlurRadius="18" ShadowDepth="4" />
+                    <DropShadowEffect Color="#152230" Opacity="0.26" BlurRadius="22" ShadowDepth="6" />
                 </Border.Effect>
                 <StackPanel Orientation="Horizontal">
                     <Path Data="{StaticResource IconCheck}"

@@ -155,7 +155,7 @@ public sealed class StorageBackupViewModel : ObservableObject
         MessagesSharePercent = Math.Max(2, msgBytes * 100d / denom);
         OtherSharePercent = Math.Max(otherBytes > 0 ? 6 : 0, otherBytes * 100d / denom);
 
-        var barColors = new[] { "#CB0914", "#F59E0B", "#2563EB", "#7C3AED" };
+        var barColors = new[] { "#16314A", "#9E1428", "#5F7F98", "#0E9672" };
         var maxRoom = Math.Max(1L, stats.BreakdownByConversation.Select(b => b.FilesBytes + b.MessagesBytes).DefaultIfEmpty(1L).Max());
 
         RoomBreakdowns.Clear();

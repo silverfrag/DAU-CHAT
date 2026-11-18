@@ -6,35 +6,45 @@
              mc:Ignorable="d"
              d:DesignHeight="800"
              d:DesignWidth="1180"
-             Background="{StaticResource CanvasBgBrush}">
+             Background="Transparent">
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="74" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Header -->
+        <!-- Header Kính Nhám Nổi -->
         <Border Grid.Row="0"
-                Background="{StaticResource SurfaceWhiteBrush}"
-                BorderBrush="{StaticResource BorderSubtleBrush}"
-                BorderThickness="0,0,0,1"
-                Padding="28,0">
+                Height="74"
+                Margin="0,0,0,12"
+                Background="{StaticResource GlassPanelBrush}"
+                BorderBrush="{StaticResource GlassBorderBrush}"
+                BorderThickness="1.2"
+                CornerRadius="22"
+                Padding="26,0"
+                Effect="{StaticResource GlassPanelShadow}">
             <Grid>
-                <StackPanel VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,14,0" VerticalAlignment="Center">
                     <TextBlock Text="GIẢNG VIÊN • QUẢN LÝ LỚP HỌC PHẦN"
                                FontSize="10.5"
                                FontWeight="Bold"
-                               Foreground="{StaticResource DauRedTextBrush}" />
+                               Foreground="{StaticResource DauRedTextBrush}"
+                               TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="Lớp học &amp; Sinh viên"
                                FontSize="20"
                                FontWeight="Bold"
                                Foreground="{StaticResource TextPrimaryBrush}"
+                               TextTrimming="CharacterEllipsis"
                                Margin="0,2,0,0" />
                 </StackPanel>
 
-                <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
-                    <Border Width="250" Height="38" Background="{StaticResource SurfaceInputBrush}" CornerRadius="10" Padding="12,0" Margin="0,0,12,0">
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal">
+                    <Border MinWidth="180" MaxWidth="250" Width="220" Height="38" Background="{StaticResource SurfaceInputBrush}" CornerRadius="10" Padding="12,0" Margin="0,0,12,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -69,11 +79,14 @@
                 <ColumnDefinition Width="72*" MinWidth="460" />
             </Grid.ColumnDefinitions>
 
-            <!-- CỘT TRÁI: DANH SÁCH LỚP CỦA GIẢNG VIÊN -->
+            <!-- CỘT TRÁI: DANH SÁCH LỚP CỦA GIẢNG VIÊN (KÍNH NHÁM NỔI) -->
             <Border Grid.Column="0"
-                    Background="{StaticResource SurfaceWhiteBrush}"
-                    BorderBrush="{StaticResource BorderSubtleBrush}"
-                    BorderThickness="0,0,1,0">
+                    Margin="0,0,12,0"
+                    Background="{StaticResource GlassPanelBrush}"
+                    BorderBrush="{StaticResource GlassBorderBrush}"
+                    BorderThickness="1.2"
+                    CornerRadius="24"
+                    Effect="{StaticResource GlassPanelShadow}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -81,12 +94,19 @@
                     </Grid.RowDefinitions>
 
                     <Grid Grid.Row="0" Margin="20,16,20,10">
-                        <TextBlock Text="{Binding TotalClassesCount, StringFormat='Lớp đang phụ trách ({0})'}"
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding TotalClassesCount, StringFormat='Lớp đang phụ trách ({0})'}"
                                    FontSize="12.5"
                                    FontWeight="Bold"
                                    Foreground="{StaticResource TextMutedBrush}"
+                                   TextTrimming="CharacterEllipsis"
+                                   Margin="0,0,8,0"
                                    VerticalAlignment="Center" />
-                        <Button HorizontalAlignment="Right"
+                        <Button Grid.Column="1"
                                 Style="{StaticResource IconButtonStyle}"
                                 Width="30" Height="30"
                                 Command="{Binding RefreshCommand}"
@@ -110,20 +130,46 @@
                                             <Button.Template>
                                                 <ControlTemplate TargetType="Button">
                                                     <Border x:Name="RowCard"
-                                                            CornerRadius="14"
+                                                            CornerRadius="15"
                                                             Padding="14,12"
                                                             BorderThickness="1"
                                                             BorderBrush="Transparent"
-                                                            Background="Transparent">
+                                                            Background="Transparent"
+                                                            RenderTransformOrigin="0.5,0.5">
+                                                        <Border.RenderTransform>
+                                                            <TransformGroup>
+                                                                <ScaleTransform x:Name="ClsScale" ScaleX="1" ScaleY="1" />
+                                                                <TranslateTransform x:Name="ClsTrans" X="0" Y="0" />
+                                                            </TransformGroup>
+                                                        </Border.RenderTransform>
                                                         <ContentPresenter />
                                                     </Border>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="RowCard" Property="Background" Value="{StaticResource SurfaceHoverBrush}" />
+                                                            <Setter TargetName="RowCard" Property="Background" Value="#D8FFFFFF" />
+                                                            <Setter TargetName="RowCard" Property="BorderBrush" Value="{StaticResource GlassBorderBrush}" />
+                                                            <Trigger.EnterActions>
+                                                                <BeginStoryboard>
+                                                                    <Storyboard>
+                                                                        <DoubleAnimation Storyboard.TargetName="ClsScale" Storyboard.TargetProperty="ScaleX" To="1.012" Duration="0:0:0.17" />
+                                                                        <DoubleAnimation Storyboard.TargetName="ClsScale" Storyboard.TargetProperty="ScaleY" To="1.012" Duration="0:0:0.17" />
+                                                                        <DoubleAnimation Storyboard.TargetName="ClsTrans" Storyboard.TargetProperty="Y" To="-1.2" Duration="0:0:0.17" />
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </Trigger.EnterActions>
+                                                            <Trigger.ExitActions>
+                                                                <BeginStoryboard>
+                                                                    <Storyboard>
+                                                                        <DoubleAnimation Storyboard.TargetName="ClsScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.20" />
+                                                                        <DoubleAnimation Storyboard.TargetName="ClsScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.20" />
+                                                                        <DoubleAnimation Storyboard.TargetName="ClsTrans" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.20" />
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </Trigger.ExitActions>
                                                         </Trigger>
                                                         <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                            <Setter TargetName="RowCard" Property="Background" Value="{StaticResource DauRedSoftBrush}" />
-                                                            <Setter TargetName="RowCard" Property="BorderBrush" Value="{StaticResource DauRedBorderBrush}" />
+                                                            <Setter TargetName="RowCard" Property="Background" Value="{StaticResource GlassSelectedRowBrush}" />
+                                                            <Setter TargetName="RowCard" Property="BorderBrush" Value="{StaticResource GlassSelectedBorderBrush}" />
                                                         </DataTrigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
@@ -131,16 +177,20 @@
 
                                             <StackPanel>
                                                 <Grid>
-                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                        <Border Background="{StaticResource SurfaceInputBrush}" CornerRadius="7" Padding="7,3">
-                                                            <TextBlock Text="{Binding ClassCode}" FontFamily="{StaticResource MonoFont}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource DauRedTextBrush}" />
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                        <Border Background="{StaticResource BrandSlateSoftBrush}" CornerRadius="7" Padding="7,3">
+                                                            <TextBlock Text="{Binding ClassCode}" FontFamily="{StaticResource MonoFont}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrandSlateTextBrush}" />
                                                         </Border>
-                                                        <Border Margin="6,0,0,0" Background="#ECFDF5" CornerRadius="7" Padding="7,3"
+                                                        <Border Margin="6,0,0,0" Background="{StaticResource EmeraldSoftBrush}" CornerRadius="7" Padding="7,3"
                                                                 Visibility="{Binding HasLinkedRoom, Converter={StaticResource BoolToVis}}">
                                                             <TextBlock Text="Có phòng chat" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource EmeraldTextBrush}" />
                                                         </Border>
                                                     </StackPanel>
-                                                    <TextBlock HorizontalAlignment="Right"
+                                                    <TextBlock Grid.Column="1"
                                                                VerticalAlignment="Center"
                                                                Text="{Binding MemberCount, StringFormat='{}{0} TV'}"
                                                                FontSize="11"
@@ -156,12 +206,18 @@
                                                            Margin="0,8,0,0" />
 
                                                 <Grid Margin="0,6,0,0">
-                                                    <TextBlock Text="{Binding Department}"
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0"
+                                                               Text="{Binding Department}"
                                                                FontSize="11"
                                                                Foreground="{StaticResource TextMutedBrush}"
                                                                TextTrimming="CharacterEllipsis"
-                                                               Margin="0,0,85,0" />
-                                                    <Border HorizontalAlignment="Right" Background="White" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="6" Padding="6,2">
+                                                               Margin="0,0,8,0"
+                                                               VerticalAlignment="Center" />
+                                                    <Border Grid.Column="1" Background="{StaticResource GlassDockBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="6" Padding="6,2">
                                                         <TextBlock Text="{Binding JoinCode}" FontFamily="{StaticResource MonoFont}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
                                                     </Border>
                                                 </Grid>
@@ -277,12 +333,13 @@
                         </Border>
 
                         <!-- Card 2: Thẻ Mã Lớp kiểu Google Classroom -->
-                        <Border Background="#FFF8F8"
-                                BorderBrush="{StaticResource DauRedBorderBrush}"
+                        <Border Background="{StaticResource BrandSlateTintBrush}"
+                                BorderBrush="{StaticResource BrandSlateBorderBrush}"
                                 BorderThickness="1.2"
-                                CornerRadius="16"
+                                CornerRadius="20"
                                 Padding="22"
-                                Margin="0,0,0,18">
+                                Margin="0,0,0,18"
+                                Effect="{StaticResource GlassSoftShadow}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -291,19 +348,19 @@
 
                                 <StackPanel Grid.Column="0" Margin="0,0,18,0">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Path Data="{StaticResource IconHash}" Stroke="{StaticResource DauRedTextBrush}" StrokeThickness="2.2" Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
+                                        <Path Data="{StaticResource IconHash}" Stroke="{StaticResource BrandSlateTextBrush}" StrokeThickness="2.2" Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
                                         <TextBlock Text="MÃ THAM GIA LỚP HỌC (KIỂU GOOGLE CLASSROOM)"
                                                    Margin="6,0,0,0"
                                                    FontSize="10.5"
                                                    FontWeight="Bold"
-                                                   Foreground="{StaticResource DauRedTextBrush}" />
+                                                   Foreground="{StaticResource BrandSlateTextBrush}" />
                                     </StackPanel>
 
                                     <TextBlock Text="{Binding SelectedClass.JoinCode}"
                                                FontFamily="{StaticResource MonoFont}"
                                                FontSize="28"
                                                FontWeight="Bold"
-                                               Foreground="{StaticResource DauRedBrush}"
+                                               Foreground="{StaticResource BrandSlateBrush}"
                                                Margin="0,8,0,0" />
 
                                     <TextBlock Text="Cung cấp mã này cho sinh viên nhập tại mục 'Tham gia bằng mã lớp' để tự động tham gia lớp và đồng bộ vào phòng chat."
@@ -313,12 +370,16 @@
                                                Margin="0,6,0,0" />
                                 </StackPanel>
 
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" MinWidth="215">
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" MinWidth="225">
                                     <Grid Margin="0,0,0,10">
-                                        <Button HorizontalAlignment="Left"
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Button Grid.Column="0"
                                                 Style="{StaticResource PrimaryButtonStyle}"
                                                 MinHeight="36"
-                                                Padding="14,6"
+                                                Padding="12,6"
                                                 Command="{Binding CopyJoinCodeCommand}">
                                             <StackPanel Orientation="Horizontal">
                                                 <Path Data="{StaticResource IconCopy}" Stroke="White" StrokeThickness="2" Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
@@ -326,7 +387,7 @@
                                             </StackPanel>
                                         </Button>
 
-                                        <Button HorizontalAlignment="Right"
+                                        <Button Grid.Column="1"
                                                 Margin="8,0,0,0"
                                                 Style="{StaticResource SecondaryButtonStyle}"
                                                 MinHeight="36"
@@ -340,10 +401,14 @@
                                         </Button>
                                     </Grid>
 
-                                    <Border Background="White" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="12,8">
+                                    <Border Background="{StaticResource GlassDockBrush}" BorderBrush="{StaticResource GlassBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="12,8">
                                         <Grid>
-                                            <TextBlock Text="Cho phép SV nhập mã" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                                            <CheckBox HorizontalAlignment="Right"
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Cho phép SV nhập mã" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                            <CheckBox Grid.Column="1"
                                                       Style="{StaticResource ModernToggleSwitchStyle}"
                                                       IsChecked="{Binding AllowStudentJoinByCode, Mode=OneWay}"
                                                       Command="{Binding ToggleAllowJoinCodeCommand}" />
