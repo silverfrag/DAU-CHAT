@@ -66,8 +66,8 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="340" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="28*" MinWidth="260" MaxWidth="340" />
+            <ColumnDefinition Width="72*" MinWidth="400" />
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
@@ -506,7 +506,7 @@
                     BorderBrush="{StaticResource BorderSubtleBrush}"
                     BorderThickness="0,0,0,1"
                     Padding="20,10">
-                <Border Background="{StaticResource SurfaceInputBrush}" CornerRadius="10" Padding="12,6" MaxWidth="680">
+                <Border Background="{StaticResource SurfaceInputBrush}" CornerRadius="10" Padding="12,6">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -606,9 +606,9 @@
             <Grid Grid.Row="3">
                 <ScrollViewer x:Name="MessagesScrollViewer"
                               VerticalScrollBarVisibility="Auto"
-                              Padding="22,16"
+                              Padding="24,16"
                               ScrollChanged="MessagesScrollViewer_ScrollChanged">
-                    <StackPanel MaxWidth="780">
+                    <StackPanel HorizontalAlignment="Stretch">
 
 
                         <ItemsControl ItemsSource="{Binding VisibleMessages}">
@@ -650,7 +650,7 @@
                                               ContextMenu="{StaticResource MessageContextMenu}"
                                               ContextMenuOpening="MessageRow_ContextMenuOpening">
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                                <Grid MaxWidth="520">
+                                                <Grid MaxWidth="620">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto" />
                                                         <ColumnDefinition Width="*" />
@@ -826,7 +826,7 @@
                                                     <Border Background="{StaticResource DauRedBrush}"
                                                             CornerRadius="16,6,16,16"
                                                             Padding="14,11"
-                                                            MaxWidth="500">
+                                                            MaxWidth="600">
                                                         <StackPanel>
                                                             <Border Visibility="{Binding HasReplyQuote, Converter={StaticResource BoolToVis}}"
                                                                     Background="#24FFFFFF"
@@ -1208,7 +1208,7 @@
                                               ContextMenu="{StaticResource MessageContextMenu}"
                                               ContextMenuOpening="MessageRow_ContextMenuOpening">
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                                <Grid MaxWidth="520">
+                                                <Grid MaxWidth="620">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto" />
                                                         <ColumnDefinition Width="*" />
@@ -1318,7 +1318,7 @@
                                                             BorderThickness="1"
                                                             CornerRadius="16,6,16,16"
                                                             Padding="13,9"
-                                                            MaxWidth="500">
+                                                            MaxWidth="600">
                                                         <StackPanel Orientation="Horizontal">
                                                             <Path Data="{StaticResource IconRecall}"
                                                                   Stroke="{StaticResource TextMutedBrush}"
@@ -1448,7 +1448,7 @@
                     BorderThickness="0,1,0,0"
                     Padding="20,12"
                     Visibility="{Binding CanSendMessages, Converter={StaticResource BoolToVis}}">
-                <StackPanel MaxWidth="780">
+                <StackPanel HorizontalAlignment="Stretch">
                     <Border Visibility="{Binding HasReplyingTo, Converter={StaticResource BoolToVis}}"
                             Background="{StaticResource SurfaceSubtleBrush}"
                             BorderBrush="{StaticResource DauRedBorderBrush}"
@@ -1652,7 +1652,7 @@
                     BorderThickness="0,1,0,0"
                     Padding="16,12"
                     Visibility="{Binding IsAdminMode, Converter={StaticResource BoolToVis}}">
-                <Grid MaxWidth="820">
+                <Grid HorizontalAlignment="Stretch">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />

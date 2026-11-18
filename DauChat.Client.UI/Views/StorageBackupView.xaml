@@ -42,7 +42,7 @@
         </Border>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel MaxWidth="1080" Margin="28,24,28,36">
+            <StackPanel MaxWidth="1560" Margin="28,24,28,36">
                 <!-- Thẻ tổng dung lượng -->
                 <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
                     <StackPanel>

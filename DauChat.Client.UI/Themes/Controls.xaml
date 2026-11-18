@@ -266,6 +266,17 @@
         <Setter Property="Padding" Value="20" />
     </Style>
 
+    <!-- Modal Dialog Card Surface Style -->
+    <Style x:Key="ModalCardBorderStyle" TargetType="Border">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Background" Value="{StaticResource SurfaceWhiteBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="22" />
+        <Setter Property="Padding" Value="28" />
+    </Style>
+
     <!-- Filter Pill RadioButton -->
     <Style x:Key="FilterPillRadioStyle" TargetType="RadioButton">
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
