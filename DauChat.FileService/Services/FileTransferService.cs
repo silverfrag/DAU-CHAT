@@ -1,4 +1,4 @@
-﻿using DauChat.FileService.Models;
+using DauChat.FileService.Models;
 using DauChat.FileService.Utils;
 using DauChat.Shared.Interfaces;
 using DauChat.Shared.Models;
@@ -18,12 +18,15 @@ public class FileTransferService : IFileTransferService
         _networkService = networkService;
     }
 
-    public async Task SendFileAsync(string filePath, string receiverId, IProgress<TransferProgress> progress, CancellationToken ct = default)
+    public async Task SendFileAsync(string filePath, string senderId, string receiverId, IProgress<TransferProgress> progress, CancellationToken ct = default)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(senderId);
+
         // 1. Chuẩn bị thông tin file
         var fileInfo = new FileInfo(filePath);
         long totalBytes = fileInfo.Length;
         string fileHash = await Sha256Helper.ComputeFileHashAsync(filePath, ct);
+        string transferId = Guid.NewGuid().ToString("N");
         string fileId = Guid.NewGuid().ToString("N");
         int totalChunks = (int)Math.Ceiling((double)totalBytes / ChunkSplitter.DefaultChunkSize);
 
@@ -35,10 +38,10 @@ public class FileTransferService : IFileTransferService
             // Đóng gói dữ liệu theo khuôn mẫu của TV2
             var chunkDto = new FileChunkDto
             {
-                TransferId = Guid.NewGuid().ToString("N"),
+                TransferId = transferId,
                 FileId = fileId,
                 FileName = fileInfo.Name,
-                SenderId = "TV5_TEMP", // Sẽ lấy từ User đăng nhập sau này
+                SenderId = senderId,
                 TargetId = receiverId,
                 TotalFileSize = totalBytes,
                 Sha256Checksum = fileHash,

@@ -23,6 +23,7 @@ public class NetworkService : INetworkService, IAsyncDisposable
     // === CLIENT ===
     private TcpClient? _client;
     private NetworkStream? _clientStream;
+    private readonly SemaphoreSlim _clientSendLock = new(1, 1);
     private CancellationTokenSource? _clientCts;
     private CancellationTokenSource? _clientHeartbeatCts;
 
@@ -115,8 +116,19 @@ public class NetworkService : INetworkService, IAsyncDisposable
         try
         {
             byte[] bytes = packet.ToFramedBytes();
-            await _clientStream.WriteAsync(bytes, cancellationToken);
-            await _clientStream.FlushAsync(cancellationToken);
+            await _clientSendLock.WaitAsync(cancellationToken);
+            try
+            {
+                if (!IsConnected || _clientStream == null)
+                    return OperationResult.Fail("Chưa kết nối tới Server.");
+
+                await _clientStream.WriteAsync(bytes, cancellationToken);
+                await _clientStream.FlushAsync(cancellationToken);
+            }
+            finally
+            {
+                _clientSendLock.Release();
+            }
 
             Interlocked.Increment(ref _totalPacketsSent);
             Interlocked.Add(ref _totalBytesSent, bytes.Length);
@@ -346,6 +358,46 @@ public class NetworkService : INetworkService, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Chuẩn hóa khóa phiên trên Server sau khi xác thực SQLite thành công:
+    /// chuyển khóa _sessions từ khóa tạm lúc LoginRequest (thường là Username) sang UserId (GUID thật)
+    /// để mọi request tiếp theo và FlushPendingQueueAsync khớp đúng UserId.
+    /// </summary>
+    public async Task<bool> BindAuthenticatedSessionAsync(
+        string currentSessionKey,
+        string authenticatedUserId,
+        string? username = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(currentSessionKey) || string.IsNullOrWhiteSpace(authenticatedUserId))
+            return false;
+
+        if (!_sessions.TryGetValue(currentSessionKey, out var session) || !session.IsConnected)
+            return false;
+
+        var previousKey = session.UserId;
+        session.UserId = authenticatedUserId;
+        if (!string.IsNullOrWhiteSpace(username))
+            session.Username = username;
+
+        _sessions[authenticatedUserId] = session;
+
+        if (!string.Equals(previousKey, authenticatedUserId, StringComparison.Ordinal) &&
+            !string.IsNullOrWhiteSpace(previousKey))
+        {
+            _sessions.TryRemove(previousKey, out _);
+        }
+
+        if (!string.Equals(currentSessionKey, authenticatedUserId, StringComparison.Ordinal))
+        {
+            _sessions.TryRemove(currentSessionKey, out _);
+        }
+
+        UserPresenceChanged?.Invoke(this, (authenticatedUserId, PresenceStatus.Online));
+        await FlushPendingQueueAsync(authenticatedUserId, session, cancellationToken);
+        return true;
+    }
+
     public async Task<OperationResult> SendToUserAsync(string targetUserId, NetworkPacket packet, CancellationToken cancellationToken = default)
     {
         if (_sessions.TryGetValue(targetUserId, out var session) && session.IsConnected)
@@ -430,11 +482,12 @@ public class NetworkService : INetworkService, IAsyncDisposable
     {
         var connectedClients = _sessions.Values
             .Where(s => s.UserId != null)
+            .DistinctBy(s => s.SessionId)
             .Select(s => new ClientConnectionDto
             {
                 SessionId = s.SessionId,
                 UserId = s.UserId!,
-                Username = s.UserId!,
+                Username = s.Username ?? s.UserId!,
                 IpEndPoint = s.RemoteIp,
                 Status = PresenceStatus.Online,
                 ConnectedAtUtc = s.ConnectedAt,
@@ -465,11 +518,12 @@ public class NetworkService : INetworkService, IAsyncDisposable
     {
         var clients = _sessions.Values
             .Where(s => s.UserId != null)
+            .DistinctBy(s => s.SessionId)
             .Select(s => new ClientConnectionDto
             {
                 SessionId = s.SessionId,
                 UserId = s.UserId!,
-                Username = s.UserId!,
+                Username = s.Username ?? s.UserId!,
                 IpEndPoint = s.RemoteIp,
                 Status = PresenceStatus.Online,
                 ConnectedAtUtc = s.ConnectedAt,
@@ -510,8 +564,11 @@ public class NetworkService : INetworkService, IAsyncDisposable
 
 internal class ClientSession
 {
+    private readonly SemaphoreSlim _sendLock = new(1, 1);
+
     public string SessionId { get; } = Guid.NewGuid().ToString("N");
     public string? UserId { get; set; }
+    public string? Username { get; set; }
     public TcpClient TcpClient { get; }
     public NetworkStream Stream { get; }
     public string RemoteIp { get; }
@@ -530,10 +587,20 @@ internal class ClientSession
 
     public async Task SendAsync(NetworkPacket packet, CancellationToken ct)
     {
-        if (IsConnected)
+        if (!IsConnected) return;
+
+        await _sendLock.WaitAsync(ct);
+        try
         {
-            await packet.WriteFramedAsync(Stream, ct);
-            PacketsSent++;
+            if (IsConnected)
+            {
+                await packet.WriteFramedAsync(Stream, ct);
+                PacketsSent++;
+            }
+        }
+        finally
+        {
+            _sendLock.Release();
         }
     }
 

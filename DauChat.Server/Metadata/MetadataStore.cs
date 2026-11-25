@@ -35,7 +35,8 @@ public sealed class MetadataStore : IDisposable
                     Department TEXT NOT NULL, AcademicYear TEXT NOT NULL, LecturerId TEXT NULL,
                     LinkedRoomId TEXT NULL, CreatedAtUtc TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS ClassMembers (
-                    ClassId TEXT NOT NULL, UserId TEXT NOT NULL, PRIMARY KEY (ClassId, UserId),
+                    ClassId TEXT NOT NULL, UserId TEXT NOT NULL, JoinedAtUtc TEXT NOT NULL DEFAULT '',
+                    PRIMARY KEY (ClassId, UserId),
                     FOREIGN KEY(ClassId) REFERENCES Classes(ClassId) ON DELETE CASCADE,
                     FOREIGN KEY(UserId) REFERENCES Users(UserId) ON DELETE CASCADE);
                 CREATE TABLE IF NOT EXISTS Rooms (
@@ -52,6 +53,30 @@ public sealed class MetadataStore : IDisposable
                 CREATE INDEX IF NOT EXISTS IX_RoomMembers_UserId ON RoomMembers(UserId);
                 """;
             command.ExecuteNonQuery();
+            EnsureClassMembersJoinedAtUtcColumn();
+        }
+    }
+
+    private void EnsureClassMembersJoinedAtUtcColumn()
+    {
+        using var checkCmd = _connection.CreateCommand();
+        checkCmd.CommandText = "PRAGMA table_info(ClassMembers);";
+        using var reader = checkCmd.ExecuteReader();
+        bool hasJoinedAtUtc = false;
+        while (reader.Read())
+        {
+            if (string.Equals(reader.GetString(1), "JoinedAtUtc", StringComparison.OrdinalIgnoreCase))
+            {
+                hasJoinedAtUtc = true;
+                break;
+            }
+        }
+
+        if (!hasJoinedAtUtc)
+        {
+            using var alterCmd = _connection.CreateCommand();
+            alterCmd.CommandText = "ALTER TABLE ClassMembers ADD COLUMN JoinedAtUtc TEXT NOT NULL DEFAULT '';";
+            alterCmd.ExecuteNonQuery();
         }
     }
 

@@ -1,3 +1,4 @@
+using DauChat.Core.Networking;
 using DauChat.Shared.Enums;
 using DauChat.Shared.Models;
 using DauChat.Shared.Networking;
@@ -21,7 +22,21 @@ public sealed class MetadataRequestHandler
         var response = await HandleAsync(packet);
         if (sender is DauChat.Shared.Interfaces.INetworkService network && response is not null)
         {
-            await network.SendToUserAsync(packet.SenderId, response);
+            var deliveryTargetId = packet.SenderId;
+
+            if (packet.Type == PacketType.LoginRequest &&
+                response.Type == PacketType.LoginResponse &&
+                response.GetPayload<OperationResult<LoginResultDto>>() is { Success: true, Data.User: { } authedUser })
+            {
+                if (sender is NetworkService networkService &&
+                    await networkService.BindAuthenticatedSessionAsync(packet.SenderId, authedUser.UserId, authedUser.Username))
+                {
+                    deliveryTargetId = authedUser.UserId;
+                    response.TargetId = authedUser.UserId;
+                }
+            }
+
+            await network.SendToUserAsync(deliveryTargetId, response);
         }
     }
 
@@ -72,12 +87,12 @@ public sealed class MetadataRequestHandler
         if (request is null) return Error(packet, PacketType.LoginResponse, "Dữ liệu đăng nhập không hợp lệ.", "VALIDATION_ERROR");
         await using var db = Open();
         await using var command = db.CreateCommand();
-        command.CommandText = "SELECT UserId, Username, PasswordHash, FullName, Email, AvatarPath, Role, Status, ClassId, LockReason, CreatedAtUtc, LastSeenAtUtc FROM Users WHERE Username = $username";
+        command.CommandText = "SELECT UserId, Username, FullName, Email, AvatarPath, Role, Status, ClassId, LockReason, CreatedAtUtc, LastSeenAtUtc, PasswordHash FROM Users WHERE Username = $username";
         command.Parameters.AddWithValue("$username", request.Username.Trim());
         await using var reader = await command.ExecuteReaderAsync(ct);
         if (!await reader.ReadAsync(ct)) return Error(packet, PacketType.LoginResponse, "Tên đăng nhập hoặc mật khẩu không đúng.", "INVALID_CREDENTIALS");
-        var hash = reader.GetString(2);
-        var status = (AccountStatus)reader.GetInt32(7);
+        var hash = reader.GetString(11);
+        var status = (AccountStatus)reader.GetInt32(6);
         if (!MetadataStore.VerifyPassword(request.Password, hash)) return Error(packet, PacketType.LoginResponse, "Tên đăng nhập hoặc mật khẩu không đúng.", "INVALID_CREDENTIALS");
         if (status == AccountStatus.Locked) return Error(packet, PacketType.LoginResponse, "Tài khoản đã bị khóa.", "ACCOUNT_LOCKED");
         var user = ReadUser(reader);
